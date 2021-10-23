@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="never">
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" id="viewport" name="viewport">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>抖音短视频去水印_无水印抖音短视频下载</title>
+    <meta name="keywords" content="抖音,抖音短视频,抖音去水印,抖音短视频去水印,无水印抖音短视频下载" />
+    <meta name="description" content="抖音短视频去水印,无水印抖音短视频下载,抖音,抖音短视频,抖音去水印" /> 
+    <link rel="stylesheet" href="http://g.alicdn.com/msui/sm/0.6.2/css/sm.min.css">
+    <link rel="stylesheet" href="http://g.alicdn.com/msui/sm/0.6.2/css/sm-extend.min.css">
+    <link href="https://cdn.bootcss.com/dplayer/1.25.0/DPlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
+    <style type="text/css">
+    .m-hh {max-width: 100%;word-wrap:break-word;word-break:break-all;white-space: normal}
+    .card {
+background: #fff;
+box-shadow: 0 .05rem .1rem rgba(0,0,0,.3);
+margin: .5rem auto;
+position: relative;
+border-radius: .1rem;
+font-size: .7rem;
+}
+</style>
+</head>
+<body>
+<script src="https://cdn.bootcss.com/hls.js/8.0.0-beta.3/hls.min.js"></script>
+<script src="https://cdn.bootcss.com/dplayer/1.25.0/DPlayer.min.js"></script>
+<script type="text/javascript">
+     var palyUrl = "";
+    $(document).ready(function () {
+
+    });
+    function praseDouyin() {
+        var dom=$('#input_douyin');
+        var share=dom.val();
+        if(share.toString().includes('http://v.douyin.com')){
+            var tms="http"+share.toString().split("http")[1];
+            var url=tms.split("复制此链接，")[0];
+
+                dom.val(url);//更新分享网址
+            $.ajax({
+                url:"douyin.php?url="+url,
+                type:'get',
+                dataType:'text',
+                sync:false,
+                success:function (data) {
+                    var ob=JSON.parse(data);
+                    var main=$('#douyin_title');
+                    if(ob.code===0){
+                        var text="";
+                        text=text+"<div class='card'><div class='card-content'><div class='card-content-inner'>分享网址："+ob.message+"</div></div></div><div class='card'><div class='card-content'><div class='card-content-inner'>视频作者："+ob.user_name+"</div></div></div><div class='card'><div class='card-content'><div class='card-content-inner'>视频描述："+ob.description+"</div></div></div><div class='card'><div class='card-content'><div class='card-header'>无水印视频下载地址(手机)：</div><div class='card-content-inner m-hh'>"+ob.videoUrl+"</div></div></div>";
+                        //text=text+"<br/>";
+                        main.html(text);
+                        //playUrl=ob.url;
+                        
+                    var dp = new DPlayer({
+                        element: document.getElementById('douyin_main'),
+                        video: {
+                            url: ob.videoUrl
+                        }
+                    });
+                    dp.play();
+                    }else{
+
+                    }
+                }
+            });
+        }else{
+            alert("请正确输入分享地址");
+        }
+    }
+    function toPlayDouyin() {
+        window.location.href=playUrl;
+    }
+
+</script>
+
+<div class="page-group">
+    <header class="bar bar-nav">
+  <h1 class='title'>抖音短视频去水印</h1>
+</header>
+<div class="content">
+<div class="content-padded">
+    <div class="searchbar row">
+    <div class="search-input col-80">
+      <label class="icon icon-search" for="search"></label>
+      <input type="search" id="input_douyin" placeholder='粘贴抖音视频分享地址...'/>
+    </div>
+    <a onclick="praseDouyin()" class="button button-fill button-primary col-20">解析</a>
+  </div>
+<div id="douyin_title"></div>
+<div id="douyin_main"></div>
+</body>
+</html>
