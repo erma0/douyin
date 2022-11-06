@@ -22,6 +22,7 @@ class Douyin(object):
     抖音用户类
     采集作品列表
     """
+
     def __init__(self, param: str, limit: int = 0):
         """
         初始化用户信息
@@ -263,9 +264,12 @@ class Douyin(object):
         """
         if res.get('aweme_list'):
             for item in res['aweme_list']:
-                info = item['statistics']
-                info.pop('forward_count')
-                info.pop('play_count')
+                info = item.get('statistics', {})
+                if info:
+                    info.pop('forward_count', '')
+                    info.pop('play_count', '')
+                else:
+                    info['aweme_id'] = item['aweme_id']
                 info['desc'] = Download.title2path(item['desc'])  # 需提前处理非法字符串
                 info['uri'] = item['video']['play_addr']['uri']
                 info['play_addr'] = item['video']['play_addr']['url_list'][0]
@@ -313,6 +317,7 @@ class Douyin(object):
 
 
 class Task(object):
+
     def __init__(self, type='user', limit=0):
         """
         抖音采集命令行版本
@@ -455,7 +460,7 @@ class Task(object):
 
 if __name__ == "__main__":
     # 1 实例化任务对象
-    task = Task(limit=10)  # 用户作品
+    task = Task(limit=5)  # 用户作品
     # task = Task(type='like')  # 用户喜欢
     # task = Task(type='music', limit=10)  # 音乐原声
     # task = Task(type='challenge', limit=10)  # 话题挑战
@@ -468,6 +473,7 @@ if __name__ == "__main__":
 
     # target = 'MS4wLjABAAAAaJO9L9M0scJ_njvXncvoFQj3ilCKW1qQkNGyDc2_5CQ'
     # target = 'MS4wLjABAAAAsyx8yphqC6g6CReaSLDsSuk8_gq8bHTtkl8p-03BPR4lagyUExXaw-f-WKWuH_87'
+    # target = 'https://v.douyin.com/MwXwR2p/'
     target = 'https://v.douyin.com/ehuNM7u/'
     # task.videoURL(target)
     task.download(target)
