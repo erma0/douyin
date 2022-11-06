@@ -18,7 +18,7 @@
 
 ~~支持采集喜欢列表~~（只有部分用户可用，原因不明）
 
-有问题请提交issue，或者到[https://support.qq.com/product/358554](https://support.qq.com/product/358554)反馈，在下面评论容易看不到。
+有问题请提交issue，在下面评论看不到。
 
 ## TODO
 
@@ -28,7 +28,7 @@
 - [x] 喜欢作品采集
 - [x] 导入文件批量采集
 - [x] 命令行调用
-- [x] ~~用pywebview写界面~~ 界面简单又不打包exe，感觉工作量不小却意义不大
+- [x] ~~用pywebview写界面~~ 界面写了个大概，后来没时间弄了，放弃了
 - [x] ~~打包exe~~ 直接装个[Python](https://www.python.org/ftp/python/3.8.10/python-3.8.10-amd64.exe)吧
 
 ## 使用
@@ -86,6 +86,6 @@ pip install -r requirements.txt
 
 ![支付宝微信收款][1]
 
-  [1]: https://erma0.cn/images/qrcode/shouqianma.png
-  [2]: https://erma0.cn/images/qrcode/hongbao.jpg
+  [1]: https://erma0.gitee.io/images/qrcode/shouqianma.png
+  [2]: https://erma0.gitee.io/images/qrcode/hongbao.jpg
 
