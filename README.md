@@ -12,13 +12,13 @@
 
 > 此程序为学习Python中调用Aria2的案例，仅供参考，请勿用于非法用途。
 
-2021.10.22测试仍能正常运行。
+2022.11.06测试仍能正常运行。
 
 测试环境：`Win10_x64` + `Python3.8`
 
 ~~支持采集喜欢列表~~（只有部分用户可用，原因不明）
 
-有问题请提交issue，在下面评论看不到。
+有问题请提交issue。
 
 ## TODO
 
@@ -78,14 +78,7 @@ pip install -r requirements.txt
 
 ## 支持作者
 
-### 扫码领支付宝红包
-
-![红包码][2]
-
-### 赞助支持
-
 ![支付宝微信收款][1]
 
   [1]: https://erma0.gitee.io/images/qrcode/shouqianma.png
-  [2]: https://erma0.gitee.io/images/qrcode/hongbao.jpg
 
