@@ -22,7 +22,7 @@ from loguru import logger
 
 class Douyin(object):
 
-    def __init__(self, target: str, limit: int = 0):
+    def __init__(self, target: str, limit: int = 0, v_web_id: str = ''):
         """
         初始化用户信息
         """
@@ -34,16 +34,17 @@ class Douyin(object):
         })
 
         self.limit = limit
+        self.verify_web_id = v_web_id
         self.url = self.url2redirect(target.strip())
         # 判断链接类型（user/video/challenge/music），取目标ID
         *_, self.type, self.id = urlparse(self.url).path.strip('/').split('/')
-
         self.down_path = os.path.join('.', '下载')
         if not os.path.exists(self.down_path): os.makedirs(self.down_path)
         self.has_more = True
         self.videosL = []  # 采集结果采用列表格式
 
-        self.get_verify()
+        if not self.test_cookie():
+            self.get_verify()
         self.get_target_info()
 
     def quit(self, str):
@@ -87,44 +88,62 @@ class Douyin(object):
             filename = f'{self.down_path}.txt'
             if self.type == 'like':
                 self.down_path = os.path.join(self.down_path, self.type)
-            command = f"aria2c.exe -c  --console-log-level warn -d {self.down_path} -i {filename}"
+            command = f"aria2c.exe -c --console-log-level warn -d {self.down_path} -i {filename}"
             os.system(command)  # system有输出，阻塞
             # os.popen(command)  # popen无输出，不阻塞
+
+    def test_cookie(self, v_web_id=''):
+        """
+        测试cookie有效性
+        """
+        if self.verify_web_id:
+            pass
+        elif v_web_id:
+            self.verify_web_id = v_web_id
+        elif os.path.exists('./verify'):
+            with open('./verify', 'r', encoding='utf-8') as f:
+                self.verify_web_id = f.read()
+        else:
+            return False
+
+        self.http.headers.update({'Cookie': 's_v_web_id=' + self.verify_web_id})
+        res = self.http.get('https://www.douyin.com/web/api/v2/aweme/post/').content  # 检测cookie是否有效
+        if res:  # 有返回结果，证明cookie未过期，直接销毁窗口，进入主程序
+            logger.success(f'验证成功：{self.verify_web_id}')
+            with open('./verify', 'w', encoding='utf-8') as f:
+                f.write(self.verify_web_id)
+            return True
+        else:
+            return False
 
     def __webview_start(self):
         """
         webview窗口启动程序
         """
+        logger.info('验证码加载中...')
         self.window.hide()
         self.verify_web_id = ''
-        logger.info('验证码加载中...')
         while not self.verify_web_id:
             for c in self.window.get_cookies():
                 if c.get('s_v_web_id'):
                     self.verify_web_id = c.get('s_v_web_id').value
                     break
             time.sleep(0.5)
-        self.http.headers.update({'Cookie': 's_v_web_id=' + self.verify_web_id})
-
-        res = self.http.get('https://www.douyin.com/web/api/v2/aweme/post/')  # 检测cookie是否有效
-        if res.content:  # cookie未过期,直接销毁窗口，进入主程序
-            logger.success(f'验证成功：{self.verify_web_id}')
+        if self.test_cookie():
             self.window.destroy()  # 销毁验证码窗口
             return
-        else:  # cookie无效，开始手动过验证码
-            self.window.show()  # 显示验证码窗口
-            self.window.restore()  # 显示验证码窗口，从最小化恢复
-            for i in range(60 * 2):
-                res = self.http.get('https://www.douyin.com/web/api/v2/aweme/post/')  # 检测cookie是否有效
-                if res.content:
-                    logger.success(f'验证成功：{self.verify_web_id}')
-                    self.window.destroy()  # 销毁验证码窗口
-                    return
-                else:
-                    if i % 2 == 0: logger.info(f'请在 {60-i//2}秒 之内通过验证')
-                    time.sleep(0.5)
-            self.window.destroy()  # 销毁验证码窗口
-            self.quit('验证失败，程序退出。')
+
+        self.window.show()  # 显示验证码窗口
+        self.window.restore()  # 显示验证码窗口，从最小化恢复
+        for i in range(60 * 2):
+            if self.test_cookie():
+                self.window.destroy()  # 销毁验证码窗口
+                return
+            else:
+                if i % 2 == 0: logger.info(f'请在 {60-i//2}秒 之内通过验证')
+                time.sleep(0.5)
+        self.window.destroy()  # 销毁验证码窗口
+        self.quit('验证失败，程序退出。')
 
     def get_verify(self):
         """
@@ -273,7 +292,7 @@ class Douyin(object):
                     'ratio=720p', 'ratio=1080p').replace('watermark=1', 'watermark=0')  # 去水印+高清
             else:
                 download_addr = item['video']['play_addr']['url_list'][0].replace('/playwm/', '/play/')  # 高清
-            self.videosL.append(f'{download_addr}\n\tout={id}_{filename}.mp4\n')  # 用于下载
+            self.videosL.append(f'{download_addr}\n\tdir={self.down_path}\n\tout={id}_{filename}.mp4\n')  # 用于下载
 
         if self.limit:
             more = len(self.videosL) - self.limit
@@ -285,14 +304,15 @@ class Douyin(object):
 
 
 @click.command()
-@click.option('-u', '--url', prompt='目标URL', help='必填，用户/话题/音乐/视频的URL')
-@click.option('-l', '--limit', default=0, help='选填，最大采集数量，默认不限制')
-@click.option('--like', is_flag=True, help='选填，只采集用户喜欢作品')
-def start(url, limit, like):
+@click.option('-u', '--url', prompt='目标URL', help='必填。用户/话题/音乐/视频的URL')
+@click.option('-l', '--limit', default=0, help='选填。最大采集数量，默认不限制')
+@click.option('-c', '--cookie', default='', help='选填。网页cookie中s_v_web_id的值[verify_*]，默认不指定，从程序中重新获取')
+@click.option('--like', is_flag=True, help='选填。只采集用户喜欢作品')
+def start(url, limit, like, cookie):
     """
     命令行
     """
-    a = Douyin(url, limit)  # 作品
+    a = Douyin(url, limit, cookie)  # 作品
     if like:
         a.type = 'like'
     a.crawl()
@@ -304,10 +324,10 @@ if __name__ == "__main__":
     # a = Douyin('https://v.douyin.com/BGPS8D7/', limit=5)  # 话题
     # a = Douyin('https://v.douyin.com/BGPBena/', limit=5)  # 音乐
     # a = Douyin('https://v.douyin.com/BnKHFA4/')  # 单个视频
-    # a = Douyin('https://v.douyin.com/BnmDr51/', limit=5)  # 喜欢
+    a = Douyin('https://v.douyin.com/BnmDr51/', limit=5)  # 喜欢
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAABPp-cYQw6UzgBj-3sq-a9P2weMfqCLf6FVNmmT_kdkw', limit=5)  # 长链接+喜欢
-    # a.type = 'like'
-    # a.crawl()
-    # a.download()
+    a.type = 'like'  # 喜欢
+    a.crawl()
+    a.download()
 
-    start()
+    # start()
