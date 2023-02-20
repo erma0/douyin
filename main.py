@@ -9,6 +9,7 @@
 '''
 
 import os
+import click
 import json
 import time
 import requests
@@ -30,7 +31,6 @@ class Douyin(object):
         self.http.headers.update({
             'User-Agent':
             'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36 Edg/110.0.1587.46'
-            # 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1'
         })
 
         self.limit = limit
@@ -106,7 +106,7 @@ class Douyin(object):
             time.sleep(0.5)
         self.http.headers.update({'Cookie': 's_v_web_id=' + self.verify_web_id})
 
-        res = self.http.get('https://m.douyin.com/web/api/v2/aweme/post/')  # 检测cookie是否有效
+        res = self.http.get('https://www.douyin.com/web/api/v2/aweme/post/')  # 检测cookie是否有效
         if res.content:  # cookie未过期,直接销毁窗口，进入主程序
             logger.success(f'验证成功：{self.verify_web_id}')
             self.window.destroy()  # 销毁验证码窗口
@@ -115,7 +115,7 @@ class Douyin(object):
             self.window.show()  # 显示验证码窗口
             self.window.restore()  # 显示验证码窗口，从最小化恢复
             for i in range(60 * 2):
-                res = self.http.get('https://m.douyin.com/web/api/v2/aweme/post/')  # 检测cookie是否有效
+                res = self.http.get('https://www.douyin.com/web/api/v2/aweme/post/')  # 检测cookie是否有效
                 if res.content:
                     logger.success(f'验证成功：{self.verify_web_id}')
                     self.window.destroy()  # 销毁验证码窗口
@@ -130,12 +130,16 @@ class Douyin(object):
         """
         手动过验证码
         """
+        import ctypes
+        user32 = ctypes.windll.user32
+        w, h = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+        side = 1080 * 255 // h  # 窗口大小自适应系统缩放
         self.window = webview.create_window(
             # hidden=True,# 有bug，隐藏窗口不能恢复，使用最小化代替
             minimized=True,  # 最小化
             frameless=True,  # 无边框
-            width=255,
-            height=255 - 40,  # 1080屏：无框高355，框高40；2k屏：无框高255
+            width=side,
+            height=side,  # 1080p：无框高255；125%：无框高315，框高40
             title='请手动过验证码',
             # url='https://www.douyin.com/share/user/MS4wLjABAAAA-Hb-4F9Y2cX_D0VZapSrRQ71BarAcaE1AUDI5gkZBEY'  # 指定一处验证码可以通用
             url=self.url  # 每次使用目标URL获取验证码，会出现两个域名，短期可能需要两次验证
@@ -280,16 +284,30 @@ class Douyin(object):
         logger.info(f'采集中，已采集到{len(self.videosL)}条结果')
 
 
+@click.command()
+@click.option('-u', '--url', prompt='目标URL', help='必填，用户/话题/音乐/视频的URL')
+@click.option('-l', '--limit', default=0, help='选填，最大采集数量，默认不限制')
+@click.option('--like', is_flag=True, help='选填，只采集用户喜欢作品')
+def start(url, limit, like):
+    """
+    命令行
+    """
+    a = Douyin(url, limit)  # 作品
+    if like:
+        a.type = 'like'
+    a.crawl()
+    a.download()
+
+
 if __name__ == "__main__":
-    a = Douyin('https://v.douyin.com/BGfGunr/', limit=5)  # 作品
+    # a = Douyin('https://v.douyin.com/BGfGunr/', limit=5)  # 作品
     # a = Douyin('https://v.douyin.com/BGPS8D7/', limit=5)  # 话题
     # a = Douyin('https://v.douyin.com/BGPBena/', limit=5)  # 音乐
-
     # a = Douyin('https://v.douyin.com/BnKHFA4/')  # 单个视频
-
     # a = Douyin('https://v.douyin.com/BnmDr51/', limit=5)  # 喜欢
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAABPp-cYQw6UzgBj-3sq-a9P2weMfqCLf6FVNmmT_kdkw', limit=5)  # 长链接+喜欢
     # a.type = 'like'
+    # a.crawl()
+    # a.download()
 
-    a.crawl()
-    a.download()
+    start()

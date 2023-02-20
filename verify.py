@@ -2,6 +2,7 @@ import time
 import requests
 import webview
 from webview import Window
+import ctypes
 
 
 def webview_start(window: Window):
@@ -39,13 +40,16 @@ def verify():
     """
     手动过验证码
     """
-
+    user32 = ctypes.windll.user32
+    w, h = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+    # side = 255 if h == 1080 else 315
+    side = 1080 * 255 // h
     window = webview.create_window(
         # hidden=True,# 有bug，隐藏窗口不能恢复，使用最小化代替
         minimized=True,  # 最小化
         frameless=True,  # 无边框
-        width=255,
-        height=255,  # 1080p 315，2160p 255
+        width=side,
+        height=side,  # 1080p 315，2160p 255
         title='Test Douyin',
         url='https://m.douyin.com/share/user/MS4wLjABAAAA58dutoFIvpxGtw-0QXJ4AI5OKtd_-KHt-HZDtfFnvy4')
 
