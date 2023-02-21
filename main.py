@@ -10,7 +10,7 @@
 
 import os
 import click
-import json
+# import json
 import time
 import requests
 from urllib.parse import urlparse
@@ -83,14 +83,16 @@ class Douyin(object):
         """
         作品抓取完成后，统一下载已采集的结果
         """
-        if self.videosL:
+        if self.type == 'like' and not self.down_path.endswith('_like'):
+            self.down_path = self.down_path + '_like'
+        filename = f'{self.down_path}.txt'
+        if os.path.exists(filename):
             logger.info('开始下载')
-            filename = f'{self.down_path}.txt'
-            if self.type == 'like':
-                self.down_path = os.path.join(self.down_path, self.type)
             command = f"aria2c.exe -c --console-log-level warn -d {self.down_path} -i {filename}"
             os.system(command)  # system有输出，阻塞
             # os.popen(command)  # popen无输出，不阻塞
+        else:
+            logger.error(f'没有发现可下载的结果')
 
     def test_cookie(self, v_web_id=''):
         """
@@ -217,6 +219,8 @@ class Douyin(object):
         """
         if self.type == 'video':
             return self.parse()
+        elif self.type == 'like' and not self.down_path.endswith('_like'):
+            self.down_path = self.down_path + '_like'
         cursor = 0
         retry = 0
         max_retry = 10
@@ -304,19 +308,38 @@ class Douyin(object):
 
 
 @click.command()
-@click.option('-u', '--url', prompt='目标URL', help='必填。用户/话题/音乐/视频的URL')
+@click.option('-t', '--targets', type=click.STRING, multiple=True, help='必填。用户/话题/音乐/视频的URL或文件路径（文件格式为一行一个URL），支持多次输入')
 @click.option('-l', '--limit', default=0, help='选填。最大采集数量，默认不限制')
-@click.option('-c', '--cookie', default='', help='选填。网页cookie中s_v_web_id的值[verify_*]，默认不指定，从程序中重新获取')
-@click.option('--like', is_flag=True, help='选填。只采集用户喜欢作品')
-def start(url, limit, like, cookie):
+@click.option('-c', '--cookie', default='', help='选填。网页cookie中s_v_web_id的值[verify_***]，默认不指定，从程序中重新获取')
+@click.option('-like', '--like', is_flag=True, help='选填。只采集用户喜欢作品')
+def main(targets, limit, like, cookie):
     """
     命令行
     """
-    a = Douyin(url, limit, cookie)  # 作品
-    if like:
-        a.type = 'like'
-    a.crawl()
-    a.download()
+    if not targets:
+        targets = (input('目标URL或文件路径：'), )
+    for _target in targets:
+        if os.path.isfile(_target):  # 文件路径
+            with open(_target, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            if lines:
+                for line in lines:
+                    start(line, limit, like, cookie)
+            else:
+                logger.error(f'[{_target}]中没有发现目标URL')
+        else:
+            start(_target, limit, like, cookie)
+
+
+def start(target, limit, like, cookie):
+    if urlparse(target).netloc.endswith('douyin.com'):  # 单个URL
+        a = Douyin(target, limit, cookie)  # 作品
+        if like:
+            a.type = 'like'
+        a.crawl()
+        a.download()
+    else:
+        logger.error(f'[{target}]不是目标URL格式')
 
 
 if __name__ == "__main__":
@@ -324,10 +347,10 @@ if __name__ == "__main__":
     # a = Douyin('https://v.douyin.com/BGPS8D7/', limit=5)  # 话题
     # a = Douyin('https://v.douyin.com/BGPBena/', limit=5)  # 音乐
     # a = Douyin('https://v.douyin.com/BnKHFA4/')  # 单个视频
-    a = Douyin('https://v.douyin.com/BnmDr51/', limit=5)  # 喜欢
+    # a = Douyin('https://v.douyin.com/BnmDr51/', limit=5)  # 喜欢
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAABPp-cYQw6UzgBj-3sq-a9P2weMfqCLf6FVNmmT_kdkw', limit=5)  # 长链接+喜欢
-    a.type = 'like'  # 喜欢
-    a.crawl()
-    a.download()
-
-    # start()
+    # a.type = 'like'  # 喜欢
+    # a.crawl()
+    # a.download()
+    #  python main.py -t https://v.douyin.com/BnmDr51/ -t https://v.douyin.com/BGf3Wp6/ --like
+    main()
