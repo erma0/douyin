@@ -42,6 +42,7 @@ class Douyin(object):
         if not os.path.exists(self.down_path): os.makedirs(self.down_path)
         self.has_more = True
         self.videosL = []  # 采集结果采用列表格式
+        self.over_num = 0  # 图集加入结果列表后，结果的统计数量会乱，加一个参数记录图集导致多出来的数目，初始置为0
 
         if not self.test_cookie():
             self.get_verify()
@@ -92,7 +93,7 @@ class Douyin(object):
             os.system(command)  # system有输出，阻塞
             # os.popen(command)  # popen无输出，不阻塞
         else:
-            logger.error(f'没有发现可下载的结果')
+            logger.error(f'没有发现可下载的配置文件')
 
     def test_cookie(self, v_web_id=''):
         """
@@ -155,6 +156,10 @@ class Douyin(object):
         user32 = ctypes.windll.user32
         w, h = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
         side = 1080 * 255 // h  # 窗口大小自适应系统缩放
+        if self.type == 'video':  # 单作品网页不显示验证码，但此cookie接口没数据，所以要用主页链接取验证码
+            url = 'https://www.douyin.com/share/user/MS4wLjABAAAA-Hb-4F9Y2cX_D0VZapSrRQ71BarAcaE1AUDI5gkZBEY'  # 指定一处验证码可以通用
+        else:
+            url = self.url
         self.window = webview.create_window(
             # hidden=True,# 有bug，隐藏窗口不能恢复，使用最小化代替
             minimized=True,  # 最小化
@@ -162,8 +167,7 @@ class Douyin(object):
             width=side,
             height=side,  # 1080p：无框高255；125%：无框高315，框高40
             title='请手动过验证码',
-            # url='https://www.douyin.com/share/user/MS4wLjABAAAA-Hb-4F9Y2cX_D0VZapSrRQ71BarAcaE1AUDI5gkZBEY'  # 指定一处验证码可以通用
-            url=self.url  # 每次使用目标URL获取验证码，会出现两个域名，短期可能需要两次验证
+            url=url  # 每次使用目标URL获取验证码，会出现两个域名，短期可能需要两次验证
         )
 
         webview.start(
@@ -193,32 +197,37 @@ class Douyin(object):
                 # 下载路径
                 self.down_path = os.path.join(self.down_path, self.str2path(f'{self.type}_{value[dic[self.type][1]]}_{self.id}'))
 
-    def parse(self):
+    def parse(self, id):
         """
         单个作品解析
         """
         url = 'https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/'
-        params = {'item_ids': self.id}
+        params = {'item_ids': id}
         res = self.http.get(url, params=params).json()
-        if res:
-            aweme_list = res.get('item_list')
-            if aweme_list:
-                self.__append_videos(aweme_list)
-                logger.success(f'解析完成')
-                if self.videosL:
-                    with open(f'{self.down_path}.txt', 'w', encoding='utf-8') as f:  # 保存为Aria下载文件
-                        f.writelines(self.videosL)
-                    # with open(f'{self.down_path}.json', 'w', encoding='utf-8') as f:  # 保存数据到文件
-                    #     json.dump(self.videosL, f, ensure_ascii=False)  # 中文不用Unicode编码
-                return
-        self.quit('解析失败')
+        return res.get('item_list')
 
     def crawl(self):
         """
         采集用户作品/喜欢
         """
-        if self.type == 'video':
-            return self.parse()
+        # ↓↓↓↓↓↓↓↓重置初始参数↓↓↓↓↓↓↓↓
+        # 本来这几个变量是写在类初始化代码中的，但是总感觉别扭，所以这里也加一下
+        self.has_more = True
+        self.videosL = []  # 采集结果采用列表格式
+        self.over_num = 0  # 图集加入结果列表后，结果的统计数量会乱，加一个参数记录图集导致多出来的数目，初始置为0
+        # ↑↑↑↑↑↑↑↑重置初始参数↑↑↑↑↑↑↑↑
+
+        if self.type == 'video':  # 单作品
+            aweme_list = self.parse(self.id)
+            if aweme_list:
+                self.__append_videos(aweme_list)
+                logger.success(f'单作品解析完成：{self.id}')
+                if self.videosL:
+                    with open(f'{self.down_path}.txt', 'w', encoding='utf-8') as f:  # 保存为Aria下载文件
+                        f.writelines(self.videosL)
+            else:
+                self.quit(f'单作品解析出错：{self.id}')
+            return
         elif self.type == 'like' and not self.down_path.endswith('_like'):
             self.down_path = self.down_path + '_like'
         cursor = 0
@@ -246,9 +255,9 @@ class Douyin(object):
                 if aweme_list:
                     self.__append_videos(aweme_list)
                     if retry: retry = 0  # 请求成功后重置重试次数
-                else:
-                    logger.error(f'采集未完成，但请求结果为空... 进行第{retry}次重试')
+                elif self.has_more:
                     retry += 1
+                    logger.error(f'采集未完成，但请求结果为空... 进行第{retry}次重试')
             else:
                 retry += 1
                 logger.error(f'采集请求出错... 进行第{retry}次重试')
@@ -257,7 +266,7 @@ class Douyin(object):
             if retry >= max_retry:
                 self.has_more = False
         if self.videosL:
-            logger.success(f'采集完成，共采集到{len(self.videosL)}条结果')
+            logger.success(f'采集完成，共采集到{len(self.videosL)-self.over_num}条结果')
             with open(f'{self.down_path}.txt', 'w', encoding='utf-8') as f:  # 保存为Aria下载文件
                 f.writelines(self.videosL)
             # with open(f'{self.down_path}.json', 'w', encoding='utf-8') as f:  # 保存数据到文件
@@ -289,30 +298,51 @@ class Douyin(object):
 
             # =====下载视频=====
             id = item['aweme_id']
-            filename = self.str2path(item['desc'])
-            download_addr = item['video'].get('download_addr')
-            if download_addr:
-                download_addr = item['video']['download_addr']['url_list'][0].replace('ratio=540p', 'ratio=1080p').replace(
-                    'ratio=720p', 'ratio=1080p').replace('watermark=1', 'watermark=0')  # 去水印+高清
-            else:
-                download_addr = item['video']['play_addr']['url_list'][0].replace('/playwm/', '/play/')  # 高清
-            self.videosL.append(f'{download_addr}\n\tdir={self.down_path}\n\tout={id}_{filename}.mp4\n')  # 用于下载
+            images = item.get('images')
+            vid = item['video'].get('vid')
+            desc = self.str2path(item['desc'])
+            if vid:  # 视频
+                filename = f'{id}_{desc}.mp4'
+                down_path = self.down_path
+                download_addr = item['video'].get('download_addr')
+                if download_addr:
+                    download_addr = download_addr['url_list'][0].replace('ratio=540p', 'ratio=1080p').replace(
+                        'ratio=720p', 'ratio=1080p').replace('watermark=1', 'watermark=0')  # 去水印+高清
+                else:
+                    download_addr = item['video']['play_addr']['url_list'][0].replace('/playwm/', '/play/')  # 高清
+                self.videosL.append(f'{download_addr}\n\tdir={down_path}\n\tout={filename}\n')  # 用于下载
+            elif images:  # 图集作品
+                self.over_num += len(images) - 1
+                for index, image in enumerate(images):
+                    down_path = os.path.join(self.down_path, f'{id}_{desc}')
+                    download_addr = image['url_list'][-1]  # 最后一个是jpeg格式，其他的是heic格式
+                    filename = urlparse(download_addr).path  # 以防格式变化，直接从网址提取后缀
+                    suffix = filename[filename.rindex('.'):]
+                    filename = f'{id}_{index + 1}{suffix}'
+                    self.videosL.append(f'{download_addr}\n\tdir={down_path}\n\tout={filename}\n')  # 用于下载
+            else:  # 作品列表中有图集
+                i_list = self.parse(id)
+                if i_list and i_list[0].get('images'):
+                    self.__append_videos(i_list)
+                else:
+                    logger.error('图集作品解析出错')
 
         if self.limit:
-            more = len(self.videosL) - self.limit
+            more = len(self.videosL) - self.over_num - self.limit
             if more >= 0:
                 # 如果给出了限制采集数目，超出的删除后直接返回
                 self.videosL = self.videosL[:self.limit]
                 self.has_more = False
-        logger.info(f'采集中，已采集到{len(self.videosL)}条结果')
+        logger.info(f'采集中，已采集到{len(self.videosL)-self.over_num}条结果')
 
 
 @click.command()
 @click.option('-t', '--targets', type=click.STRING, multiple=True, help='必填。用户/话题/音乐/视频的URL或文件路径（文件格式为一行一个URL），支持多次输入')
 @click.option('-l', '--limit', default=0, help='选填。最大采集数量，默认不限制')
 @click.option('-c', '--cookie', default='', help='选填。网页cookie中s_v_web_id的值[verify_***]，默认不指定，从程序中重新获取')
+@click.option('-d', '--download', is_flag=True, help='选填。直接下载采集完成的配置文件，用于采集时下载失败后重试')
 @click.option('-like', '--like', is_flag=True, help='选填。只采集用户喜欢作品')
-def main(targets, limit, like, cookie):
+def main(targets, limit, like, download, cookie):
     """
     命令行
     """
@@ -324,19 +354,20 @@ def main(targets, limit, like, cookie):
                 lines = f.readlines()
             if lines:
                 for line in lines:
-                    start(line, limit, like, cookie)
+                    start(line, limit, like, download, cookie)
             else:
                 logger.error(f'[{_target}]中没有发现目标URL')
         else:
-            start(_target, limit, like, cookie)
+            start(_target, limit, like, download, cookie)
 
 
-def start(target, limit, like, cookie):
+def start(target, limit, like, download, cookie):
     if urlparse(target).netloc.endswith('douyin.com'):  # 单个URL
         a = Douyin(target, limit, cookie)  # 作品
         if like:
             a.type = 'like'
-        a.crawl()
+        if not download:  #不直接下载
+            a.crawl()
         a.download()
     else:
         logger.error(f'[{target}]不是目标URL格式')
@@ -346,6 +377,7 @@ if __name__ == "__main__":
     # a = Douyin('https://v.douyin.com/BGfGunr/', limit=5)  # 作品
     # a = Douyin('https://v.douyin.com/BGPS8D7/', limit=5)  # 话题
     # a = Douyin('https://v.douyin.com/BGPBena/', limit=5)  # 音乐
+    # a = Douyin('https://v.douyin.com/BK2VMkG/')  # 图集
     # a = Douyin('https://v.douyin.com/BnKHFA4/')  # 单个视频
     # a = Douyin('https://v.douyin.com/BnmDr51/', limit=5)  # 喜欢
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAABPp-cYQw6UzgBj-3sq-a9P2weMfqCLf6FVNmmT_kdkw', limit=5)  # 长链接+喜欢

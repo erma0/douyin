@@ -31,7 +31,8 @@ Usage: main.exe [OPTIONS]
 Options:
   -t, --targets TEXT   必填。用户/话题/音乐/视频的URL或文件路径（文件格式为一行一个URL），支持多次输入
   -l, --limit INTEGER  选填。最大采集数量，默认不限制
-  -c, --cookie TEXT    选填。网页cookie中s_v_web_id的值[verify_***]，默认不指定，从程序中重新获取     
+  -c, --cookie TEXT    选填。网页cookie中s_v_web_id的值[verify_***]，默认不指定，从程序中重新获取
+  -d, --download       选填。直接下载采集完成的配置文件，用于采集时下载失败后重试
   -like, --like        选填。只采集用户喜欢作品
   --help               Show this message and exit.
 ```
@@ -40,6 +41,9 @@ Options:
 ```
 # 采集目标地址的全部作品
 main.exe -t https://*/ 
+
+# 直接下载采集过的目标地址（用于采集时下载出现报错的情况）
+main.exe -d -t https://*/ 
 
 # 采集目标地址的5个新作品
 main.exe -l 5 -t https://*/ 
