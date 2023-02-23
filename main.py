@@ -277,62 +277,45 @@ class Douyin(object):
         数据入库
         """
         for item in aweme_list:
-            # =====采集数据=====
-            # info = item.get('statistics', {})
-            # if info:
-            #     info.pop('play_count', '')
-            # else:
-            #     info['aweme_id'] = item['aweme_id']
-            # info['desc'] = self.str2path(item['desc'])  # 需提前处理非法字符串
-            # info['uri'] = item['video']['play_addr']['uri']
-            # info['duration'] = item['video']['duration']
-            # download_addr = item['video'].get('download_addr')
-            # if download_addr:
-            #     download_addr = item['video']['download_addr']['url_list'][0].replace('ratio=540p', 'ratio=1080p').replace(
-            #         'ratio=720p', 'ratio=1080p').replace('watermark=1', 'watermark=0')  # 去水印+高清
-            # else:
-            #     download_addr = item['video']['play_addr']['url_list'][0].replace('/playwm/', '/play/')  # 高清
-            # info['origin_cover'] = item['video']['origin_cover']['url_list'][0]
-            # info['dynamic_cover'] = item['video']['dynamic_cover']['url_list'][0]
-            # self.videosL.append(info)# 保存数据
-
-            # =====下载视频=====
-            id = item['aweme_id']
-            images = item.get('images')
-            vid = item['video'].get('vid')
-            desc = self.str2path(item['desc'])
-            if vid:  # 视频
-                filename = f'{id}_{desc}.mp4'
-                down_path = self.down_path
-                download_addr = item['video'].get('download_addr')
-                if download_addr:
-                    download_addr = download_addr['url_list'][0].replace('ratio=540p', 'ratio=1080p').replace(
-                        'ratio=720p', 'ratio=1080p').replace('watermark=1', 'watermark=0')  # 去水印+高清
-                else:
-                    download_addr = item['video']['play_addr']['url_list'][0].replace('/playwm/', '/play/')  # 高清
-                self.videosL.append(f'{download_addr}\n\tdir={down_path}\n\tout={filename}\n')  # 用于下载
-            elif images:  # 图集作品
-                self.over_num += len(images) - 1
-                for index, image in enumerate(images):
-                    down_path = os.path.join(self.down_path, f'{id}_{desc}')
-                    download_addr = image['url_list'][-1]  # 最后一个是jpeg格式，其他的是heic格式
-                    filename = urlparse(download_addr).path  # 以防格式变化，直接从网址提取后缀
-                    suffix = filename[filename.rindex('.'):]
-                    filename = f'{id}_{index + 1}{suffix}'
+            if self.has_more:  # 判断是否达到限制数量
+                # =====下载视频=====
+                id = item['aweme_id']
+                images = item.get('images')
+                vid = item['video'].get('vid')
+                desc = self.str2path(item['desc'])
+                if vid:  # 视频
+                    filename = f'{id}_{desc}.mp4'
+                    down_path = self.down_path
+                    download_addr = item['video'].get('download_addr')
+                    if download_addr:
+                        download_addr = download_addr['url_list'][0].replace('ratio=540p', 'ratio=1080p').replace(
+                            'ratio=720p', 'ratio=1080p').replace('watermark=1', 'watermark=0')  # 去水印+高清
+                    else:
+                        download_addr = item['video']['play_addr']['url_list'][0].replace('/playwm/', '/play/')  # 高清
                     self.videosL.append(f'{download_addr}\n\tdir={down_path}\n\tout={filename}\n')  # 用于下载
-            else:  # 作品列表中有图集
-                i_list = self.parse(id)
-                if i_list and i_list[0].get('images'):
-                    self.__append_videos(i_list)
-                else:
-                    logger.error('图集作品解析出错')
+                elif images:  # 图集作品
+                    for index, image in enumerate(images):
+                        down_path = os.path.join(self.down_path, f'{id}_{desc}')
+                        download_addr = image['url_list'][-1]  # 最后一个是jpeg格式，其他的是heic格式
+                        filename = urlparse(download_addr).path  # 以防格式变化，直接从网址提取后缀
+                        suffix = filename[filename.rindex('.'):]
+                        filename = f'{id}_{index + 1}{suffix}'
+                        self.videosL.append(f'{download_addr}\n\tdir={down_path}\n\tout={filename}\n')  # 用于下载
+                    self.over_num += len(images) - 1
+                else:  # 作品列表中有图集
+                    i_list = self.parse(id)
+                    if i_list and i_list[0].get('images'):
+                        self.__append_videos(i_list)
+                    else:
+                        logger.error('图集作品解析出错')
 
         if self.limit:
             more = len(self.videosL) - self.over_num - self.limit
             if more >= 0:
                 # 如果给出了限制采集数目，超出的删除后直接返回
-                self.videosL = self.videosL[:self.limit]
+                self.videosL = self.videosL[:self.limit + self.over_num]
                 self.has_more = False
+                # logger.info(f'已达到限制数量：{len(self.videosL)-self.over_num}')
         logger.info(f'采集中，已采集到{len(self.videosL)-self.over_num}条结果')
 
 
@@ -377,12 +360,12 @@ if __name__ == "__main__":
     # a = Douyin('https://v.douyin.com/BGfGunr/', limit=5)  # 作品
     # a = Douyin('https://v.douyin.com/BGPS8D7/', limit=5)  # 话题
     # a = Douyin('https://v.douyin.com/BGPBena/', limit=5)  # 音乐
-    # a = Douyin('https://v.douyin.com/BK2VMkG/')  # 图集
+    a = Douyin('https://v.douyin.com/BK2VMkG/', limit=5)  # 图集
     # a = Douyin('https://v.douyin.com/BnKHFA4/')  # 单个视频
     # a = Douyin('https://v.douyin.com/BnmDr51/', limit=5)  # 喜欢
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAABPp-cYQw6UzgBj-3sq-a9P2weMfqCLf6FVNmmT_kdkw', limit=5)  # 长链接+喜欢
     # a.type = 'like'  # 喜欢
-    # a.crawl()
-    # a.download()
+    a.crawl()
+    a.download()
     #  python main.py -t https://v.douyin.com/BnmDr51/ -t https://v.douyin.com/BGf3Wp6/ --like
-    main()
+    # main()
