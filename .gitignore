@@ -116,3 +116,7 @@ dmypy.json
 .pyre/
 .vscode/launch.json
 verify
+test.py
+.gitignore
+t.py
+test_verify.py

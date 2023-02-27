@@ -161,7 +161,7 @@ class Douyin(object):
         else:
             url = self.url
         self.window = webview.create_window(
-            # hidden=True,# 有bug，隐藏窗口不能恢复，使用最小化代替
+            # hidden=True,# 4.0.2 bug已修复，但是使用会闪黑框，效果还不如现在，没必要改了
             minimized=True,  # 最小化
             frameless=True,  # 无边框
             width=side,
@@ -190,21 +190,37 @@ class Douyin(object):
         else:
             dic = {'user': ('sec_uid', 'nickname'), 'challenge': ('ch_id', 'cha_name'), 'music': ('music_id', 'title')}
             url = f'https://www.iesdouyin.com/web/api/v2/{self.type}/info/?{dic[self.type][0]}={self.id}'
-        res = self.http.get(url).json()
-        for key, value in res.items():
-            if key.endswith('_info'):
-                self.info = value
-                # 下载路径
-                self.down_path = os.path.join(self.down_path, self.str2path(f'{self.type}_{value[dic[self.type][1]]}_{self.id}'))
+        res = self.http.get(url)
+        if res.content:
+            res = res.json()
+        else:
+            self.quit('目标解析失败，程序退出。')
+        try:
+            res = self.http.get(url).json()
+            for key, value in res.items():
+                if key.endswith('_info'):
+                    self.info = value
+                    # 下载路径
+                    self.down_path = os.path.join(self.down_path,
+                                                  self.str2path(f'{self.type}_{value[dic[self.type][1]]}_{self.id}'))
+                    break
+        except:
+            self.quit('目标解析失败，程序退出。')
 
     def parse(self, id):
         """
-        单个作品解析
+        单个作品解析，重试10次
         """
+        max_retry = 10
         url = 'https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/'
         params = {'item_ids': id}
-        res = self.http.get(url, params=params).json()
-        return res.get('item_list')
+        for i in range(max_retry):
+            try:
+                res = self.http.get(url, params=params).json()
+                return res.get('item_list')
+            except:
+                logger.error(f'单个作品解析请求出错... 进行第{i+1}次重试')
+        self.quit('单个作品解析请求出错...程序退出。')
 
     def crawl(self):
         """
@@ -247,8 +263,8 @@ class Douyin(object):
 
         while self.has_more:
             params = {dic[self.type][1]: self.id, "count": "20", dic[self.type][0]: cursor}
-            res = self.http.get(url, params=params).json()
-            if res:
+            try:
+                res = self.http.get(url, params=params).json()
                 cursor = res.get(dic[self.type][0])
                 self.has_more = res.get('has_more')
                 aweme_list = res.get('aweme_list')
@@ -258,7 +274,7 @@ class Douyin(object):
                 elif self.has_more:
                     retry += 1
                     logger.error(f'采集未完成，但请求结果为空... 进行第{retry}次重试')
-            else:
+            except:
                 retry += 1
                 logger.error(f'采集请求出错... 进行第{retry}次重试')
 
