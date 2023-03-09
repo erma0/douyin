@@ -376,12 +376,12 @@ if __name__ == "__main__":
     # a = Douyin('https://v.douyin.com/BGfGunr/', limit=5)  # 作品
     # a = Douyin('https://v.douyin.com/BGPS8D7/', limit=5)  # 话题
     # a = Douyin('https://v.douyin.com/BGPBena/', limit=5)  # 音乐
-    a = Douyin('https://v.douyin.com/BK2VMkG/', limit=5)  # 图集
+    # a = Douyin('https://v.douyin.com/BK2VMkG/', limit=5)  # 图集
     # a = Douyin('https://v.douyin.com/BnKHFA4/')  # 单个视频
     # a = Douyin('https://v.douyin.com/BnmDr51/', limit=5)  # 喜欢
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAABPp-cYQw6UzgBj-3sq-a9P2weMfqCLf6FVNmmT_kdkw', limit=5)  # 长链接+喜欢
     # a.type = 'like'  # 喜欢
-    a.crawl()
-    a.download()
+    # a.crawl()
+    # a.download()
     #  python main.py -t https://v.douyin.com/BnmDr51/ -t https://v.douyin.com/BGf3Wp6/ --like
-    # main()
+    main()
