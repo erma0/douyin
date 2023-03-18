@@ -69,7 +69,7 @@ class Douyin(object):
         把字符串转为Windows合法文件名
         """
         # 非法字符
-        lst = ['\r', '\n', '\\', '/', ':', '*', '?', '"', '<', '>', '|']
+        lst = ['\r', '\n', '\\', '/', ':', '*', '?', '"', '<', '>', '|', ' ']
         # 非法字符处理方式1
         for key in lst:
             str = str.replace(key, '_')
@@ -79,6 +79,16 @@ class Douyin(object):
         if len(str) > 80:
             str = str[:80]
         return str.strip()
+
+    @staticmethod
+    def filter_emoji(desstr, restr=''):
+        # 过滤表情，copy来的，没用到，在处理文件名的时候如果想去除emoji可以调用
+        import re
+        try:
+            res = re.compile(u'[\U00010000-\U0010ffff]')
+        except re.error:
+            res = re.compile(u'[\uD800-\uDBFF][\uDC00-\uDFFF]')
+        return res.sub(restr, desstr)
 
     def download(self):
         """
@@ -373,7 +383,7 @@ def start(target, limit, like, download, cookie):
 
 
 if __name__ == "__main__":
-    # a = Douyin('https://v.douyin.com/BGfGunr/', limit=5)  # 作品
+    # a = Douyin('https://m.douyin.com/share/user/MS4wLjABAAAAUe1jo5bYxPJybmnDDMxh2e9A95NAvoNfJiL7JVX5nhQ', limit=5)  # 作品
     # a = Douyin('https://v.douyin.com/BGPS8D7/', limit=5)  # 话题
     # a = Douyin('https://v.douyin.com/BGPBena/', limit=5)  # 音乐
     # a = Douyin('https://v.douyin.com/BK2VMkG/', limit=5)  # 图集
