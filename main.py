@@ -145,8 +145,8 @@ class Douyin(object):
         if self.test_cookie():
             self.window.destroy()  # 销毁验证码窗口
             return
-
         self.window.show()  # 显示验证码窗口
+        time.sleep(0.5)
         self.window.restore()  # 显示验证码窗口，从最小化恢复
         for i in range(60 * 2):
             if self.test_cookie():
@@ -166,10 +166,12 @@ class Douyin(object):
         user32 = ctypes.windll.user32
         w, h = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
         side = 1080 * 255 // h  # 窗口大小自适应系统缩放
-        if self.type == 'video':  # 单作品网页不显示验证码，但此cookie接口没数据，所以要用主页链接取验证码
-            url = 'https://www.douyin.com/share/user/MS4wLjABAAAA-Hb-4F9Y2cX_D0VZapSrRQ71BarAcaE1AUDI5gkZBEY'  # 指定一处验证码可以通用
-        else:
-            url = self.url
+        # if self.type == 'video':  # 单作品网页不显示验证码，但此cookie接口没数据，所以要用主页链接取验证码
+        #     url = 'https://www.douyin.com/share/user/MS4wLjABAAAA-Hb-4F9Y2cX_D0VZapSrRQ71BarAcaE1AUDI5gkZBEY'  # 指定一处验证码可以通用
+        # else:
+        #     url = self.url
+        # 单作品及私密账号页面不显示验证码，所以要指定主页链接取验证码
+        url = 'https://www.douyin.com/share/user/MS4wLjABAAAA-Hb-4F9Y2cX_D0VZapSrRQ71BarAcaE1AUDI5gkZBEY'  # 指定一处验证码可以通用
         self.window = webview.create_window(
             # hidden=True,# 4.0.2 bug已修复，但是使用会闪黑框，效果还不如现在，没必要改了
             minimized=True,  # 最小化
@@ -195,11 +197,11 @@ class Douyin(object):
         """
         if self.type == 'video':
             self.down_path = os.path.join(self.down_path, '未分类作品')
-            # url = f'https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={self.id}'
+            # url = f'https://www.douyin.com/web/api/v2/aweme/iteminfo/?item_ids={self.id}'
             return
         else:
             dic = {'user': ('sec_uid', 'nickname'), 'challenge': ('ch_id', 'cha_name'), 'music': ('music_id', 'title')}
-            url = f'https://www.iesdouyin.com/web/api/v2/{self.type}/info/?{dic[self.type][0]}={self.id}'
+            url = f'https://www.douyin.com/web/api/v2/{self.type}/info/?{dic[self.type][0]}={self.id}'
         res = self.http.get(url)
         if res.content:
             res = res.json()
@@ -222,7 +224,7 @@ class Douyin(object):
         单个作品解析，重试10次
         """
         max_retry = 10
-        url = 'https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/'
+        url = 'https://www.douyin.com/web/api/v2/aweme/iteminfo/'
         params = {'item_ids': id}
         for i in range(max_retry):
             try:
@@ -265,11 +267,11 @@ class Douyin(object):
             'challenge': ('cursor', 'ch_id', 'challenge/aweme'),
             'music': ('cursor', 'music_id', 'music/list/aweme')
         }
-        # https://www.iesdouyin.com/web/api/v2/aweme/post/  max_cursor
-        # https://www.iesdouyin.com/web/api/v2/aweme/like/  max_cursor
-        # https://www.iesdouyin.com/web/api/v2/challenge/aweme/  cursor
-        # https://www.iesdouyin.com/web/api/v2/music/list/aweme/  cursor
-        url = f'https://www.iesdouyin.com/web/api/v2/{dic[self.type][2]}/'
+        # https://www.douyin.com/web/api/v2/aweme/post/  max_cursor
+        # https://www.douyin.com/web/api/v2/aweme/like/  max_cursor
+        # https://www.douyin.com/web/api/v2/challenge/aweme/  cursor
+        # https://www.douyin.com/web/api/v2/music/list/aweme/  cursor
+        url = f'https://www.douyin.com/web/api/v2/{dic[self.type][2]}/'
 
         while self.has_more:
             params = {dic[self.type][1]: self.id, "count": "20", dic[self.type][0]: cursor}
@@ -284,6 +286,8 @@ class Douyin(object):
                 elif self.has_more:
                     retry += 1
                     logger.error(f'采集未完成，但请求结果为空... 进行第{retry}次重试')
+                else:
+                    logger.info('未采集到结果')
             except:
                 retry += 1
                 logger.error(f'采集请求出错... 进行第{retry}次重试')
@@ -389,7 +393,7 @@ if __name__ == "__main__":
     # a = Douyin('https://v.douyin.com/BK2VMkG/', limit=5)  # 图集
     # a = Douyin('https://v.douyin.com/BnKHFA4/')  # 单个视频
     # a = Douyin('https://v.douyin.com/BnmDr51/', limit=5)  # 喜欢
-    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAABPp-cYQw6UzgBj-3sq-a9P2weMfqCLf6FVNmmT_kdkw', limit=5)  # 长链接+喜欢
+    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAAUe1jo5bYxPJybmnDDMxh2e9A95NAvoNfJiL7JVX5nhQ')  # 长链接+喜欢
     # a.type = 'like'  # 喜欢
     # a.crawl()
     # a.download()
