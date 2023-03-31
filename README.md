@@ -72,6 +72,16 @@ main.exe -c verify_*** -t https://*/
 
 ---
 
+## 编译
+先安装pyinstaller
+```
+pip install pyinstaller
+```
+然后直接打包EXE，图标可自行更换
+```
+pyinstaller -F .\main.py -i .\ico.ico 
+```
+
 ## 请作者喝奶茶
 
 ![支付宝微信收款][1]
