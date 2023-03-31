@@ -283,6 +283,8 @@ class Douyin(object):
                 if aweme_list:
                     self.__append_videos(aweme_list)
                     if retry: retry = 0  # 请求成功后重置重试次数
+                    if self.type == 'challenge':  # 话题会直接返回提交的cursor
+                        cursor = len(self.videosL) - self.over_num
                 elif self.has_more:
                     retry += 1
                     logger.error(f'采集未完成，但请求结果为空... 进行第{retry}次重试')
@@ -388,7 +390,7 @@ def start(target, limit, like, download, cookie):
 
 if __name__ == "__main__":
     # a = Douyin('https://m.douyin.com/share/user/MS4wLjABAAAAUe1jo5bYxPJybmnDDMxh2e9A95NAvoNfJiL7JVX5nhQ', limit=5)  # 作品
-    # a = Douyin('https://v.douyin.com/BGPS8D7/', limit=5)  # 话题
+    # a = Douyin('https://v.douyin.com/BGPS8D7/', limit=50)  # 话题
     # a = Douyin('https://v.douyin.com/BGPBena/', limit=5)  # 音乐
     # a = Douyin('https://v.douyin.com/BK2VMkG/', limit=5)  # 图集
     # a = Douyin('https://v.douyin.com/BnKHFA4/')  # 单个视频
