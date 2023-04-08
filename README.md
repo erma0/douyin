@@ -40,6 +40,7 @@ Options:
   -t, --targets TEXT   必填。用户/话题/音乐/视频的URL或文件路径（文件格式为一行一个URL），支持多次输入
   -l, --limit INTEGER  选填。最大采集数量，默认不限制
   -c, --cookie TEXT    选填。网页cookie中s_v_web_id的值[verify_***]，默认不指定，从程序中重新获取
+  -g, --grab           选填。只采集信息，不下载作品
   -d, --download       选填。直接下载采集完成的配置文件，用于采集时下载失败后重试
   -like, --like        选填。只采集用户喜欢作品
   --help               Show this message and exit.
@@ -50,20 +51,23 @@ Options:
 # 采集目标地址的全部作品
 main.exe -t https://*/ 
 
+# 只采集目标作品信息，不下载作品
+main.exe -g -t https://*/ 
+
 # 直接下载采集过的目标地址（用于采集时下载出现报错的情况）
 main.exe -d -t https://*/ 
 
-# 采集目标地址的5个新作品
+# 限制数量采集，只采集目标地址的5个作品
 main.exe -l 5 -t https://*/ 
 
-# 采集目标用户的5个新喜欢作品
-main.exe -like -l 5 -t https://*/ 
+# 采集目标用户的全部喜欢作品
+main.exe -like -t https://*/ 
 
-# 采集多个目标地址各自的5个新作品
-main.exe -l 5 -t https://*1/ -t https://*2/ 
+# 采集多个目标地址作品
+main.exe -t https://*1/ -t https://*2/ 
 
-# 采集文件[user.txt]中的多个目标地址各自的5个新作品
-main.exe -l 5 -t ./user.txt
+# 采集文件[user.txt]中的多个目标地址的作品
+main.exe -t ./user.txt
 
 # 指定cookie采集目标地址的全部作品
 main.exe -c verify_*** -t https://*/ 
