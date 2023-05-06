@@ -3,9 +3,9 @@
 @File    :   main.py
 @Time    :   2023年02月19日 17:12:04 星期天
 @Author  :   erma0
-@Version :   1.0
+@Version :   3.0
 @Link    :   https://erma0.cn
-@Desc    :   抖音爬虫2023.02.19更新
+@Desc    :   抖音爬虫2023.05.06更新
 '''
 import json
 import os
@@ -72,7 +72,7 @@ class Douyin(object):
             res = re.compile(u'[\uD800-\uDBFF][\uDC00-\uDFFF]')
         return res.sub(restr, desstr)
 
-    def _append_videos(self, aweme_list: List[dict]):
+    def _append_results(self, aweme_list: List[dict]):
         """
         数据入库
         """
@@ -172,12 +172,12 @@ class Douyin(object):
             if self.pageDown > 0:
                 self.pageDown = 0
             response = route.fetch()
-            logger.success(f"<< status  {response.status}")
+            # logger.success(f"<< status  {response.status}")
             try:
                 resj = response.json()
                 info = resj.get('aweme_list') if resj.get('aweme_list') else [item['aweme_info'] for item in resj.get('data')]
                 self.has_more = resj.get('has_more', True)
-                self._append_videos(info)
+                self._append_results(info)
             except Exception as err:
                 logger.error(f'err  {err}')
                 logger.info(f'response  {response.text()}')
@@ -231,42 +231,44 @@ class Douyin(object):
             else:
                 self.context = browser.new_context(**edge, permissions=['notifications'])
             # self.anti_js()
-            page = self.context.new_page()
-            page.set_default_timeout(0)
-            page.route("**/*", lambda route: route.abort() if route.request.resource_type == "image" else route.continue_())
-            page.route(self.hookURL, self.handle)
-            page.goto(self.url)
+            self.page = self.context.new_page()
+            self.page.set_default_timeout(0)
+            self.page.route("**/*", lambda route: route.abort() if route.request.resource_type == "image" else route.continue_())
+            self.page.route(self.hookURL, self.handle)
+            self.page.goto(self.url)
 
-            if self.type == 'like' and not page.url.endswith('showTab=like'):
-                self.url = page.url + '?showTab=like'
-                page.goto(self.url)
+            if self.type == 'like' and not self.page.url.endswith('showTab=like'):
+                self.url = self.page.url + '?showTab=like'
+                self.page.goto(self.url)
             else:
-                self.url = page.url
-            self.title = page.title()
+                self.url = self.page.url
+            self.title = self.page.title()
             self.get_down_path()
-            page.locator('[data-e2e="scroll-list"]').last.click()  # 聚焦滚动列表
+            self.page.locator('[data-e2e="scroll-list"]').last.click()  # 聚焦滚动列表
             if self.post:  # 提取初始页面数据
-                render_data = json.loads(unquote(page.locator('id=RENDER_DATA').inner_text()))
-                self._append_videos(render_data['41']['post']['data'])
+                render_data = json.loads(unquote(self.page.locator('id=RENDER_DATA').inner_text()))
+                self._append_results(render_data['41']['post']['data'])
+
             while self.has_more and self.pageDown <= self.pageDownMax:
                 try:
-                    with page.expect_request('https://mcs.zijieapi.com/list', timeout=2000):
-                        page.keyboard.press('End')
-                        logger.info("press('End')")
+                    # with self.page.expect_request('https://mcs.zijieapi.com/list', timeout=2000):
+                    with self.page.expect_request_finished(lambda request: self.hookURL.search(request.url), timeout=2000):
+                        self.page.keyboard.press('End')
+                        # logger.info("press('End')")
                 except TimeoutError:
-                    page.keyboard.press('PageUp')
+                    self.page.keyboard.press('PageUp')
                     self.pageDown += 1
                     logger.error("超时 + 1")
             self.save()
-            page.wait_for_timeout(1000)
-            # page.screenshot(path="end.png")
+            self.page.wait_for_timeout(1000)
+            # self.page.screenshot(path="end.png")
             self.context.close()
             browser.close()
 
 
 @click.command()
 @click.option('-t', '--targets', type=click.STRING, multiple=True, help='必填。账号/话题/音乐的URL或文件路径（文件格式为一行一个URL），支持多次输入')
-@click.option('-l', '--limit', default=0, help='选填。最大采集数量，默认不限制')
+@click.option('-l', '--limit', default=-1, help='选填。最大采集数量，默认不限制')
 @click.option('-g', '--grab', is_flag=True, help='选填。只采集信息，不下载作品')
 @click.option('-d', '--download', is_flag=True, help='选填。直接下载采集完成的配置文件，用于采集时下载失败后重试')
 @click.option('-np', '--notpost', is_flag=True, help='选填。采集除了账号主页作品之外的链接（喜欢/音乐/搜索）不需要登录')
@@ -276,6 +278,7 @@ def main(targets, limit, notpost, grab, download, like, login):
     """
     命令行
     """
+    # print(targets, limit, notpost, grab, download, like, login)
     if not targets:
         targets = (input('目标URL或文件路径：'), )
     for _target in targets:
@@ -311,6 +314,6 @@ if __name__ == "__main__":
     # a = Douyin('https://v.douyin.com/BGf3Wp6/', need_login=True, like=True, post=False)  # 短链接+喜欢+自己的私密账号需登录
     # a.run()
     # a.download()
-    # python douyin.py -t https://v.douyin.com/BGf3Wp6/ -login -like -np
+    # python ./spider.py -t https://v.douyin.com/BGf3Wp6/ -login -like -np
     main()
     # https://v.douyin.com/AvTAgEn/
