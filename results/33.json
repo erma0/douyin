@@ -1,0 +1,485 @@
+{
+    "anchors": null,
+    "authentication_token": "MS4wLjAAAAAA6Kq8IWYJF6etrLOb2AQA8TwcISdo9W5d4lNDh8JvE4DlVON4ElIMUQJoSLxCNNqmz7iqRT4onpRkGJRsSBvUdVrvsGnhGsFDNWhuYNMUtfcPrEMH1ZLvYo5Kz02u2G91jQdUwq2mKas7hhmzHnBrMTF6Y35vOGvtMIhIaDYDKIqjy6iC5pLhFik_CR8RGqANU7WK5CA5aOUZPVE5mRbOoLLvujJT5SmEsy1Fr-8LGWY",
+    "author": {
+        "avatar_thumb": {
+            "height": 720,
+            "uri": "100x100/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb",
+            "url_list": [
+                "https://p3-pc.douyinpic.com/aweme/100x100/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb.jpeg?from=116350172"
+            ],
+            "width": 720
+        },
+        "aweme_count": 0,
+        "cf_list": null,
+        "cha_list": null,
+        "close_friend_type": 0,
+        "contacts_status": 2,
+        "contrail_list": null,
+        "create_time": 0,
+        "custom_verify": "",
+        "data_label_list": null,
+        "endorsement_info_list": null,
+        "enterprise_verify_reason": "安徽省蚌埠市消防救援支队官方抖音号",
+        "familiar_visitor_user": null,
+        "favoriting_count": 0,
+        "follow_status": 0,
+        "follower_count": 0,
+        "follower_list_secondary_information_struct": null,
+        "follower_status": 0,
+        "following_count": 0,
+        "im_role_ids": null,
+        "is_ad_fake": false,
+        "is_blocked_v2": false,
+        "is_blocking_v2": false,
+        "is_cf": 0,
+        "max_follower_count": 0,
+        "nickname": "蚌埠消防",
+        "not_seen_item_id_list": null,
+        "not_seen_item_id_list_v2": null,
+        "offline_info_list": null,
+        "personal_tag_list": null,
+        "prevent_download": false,
+        "risk_notice_text": "",
+        "sec_uid": "MS4wLjABAAAALTkCTazOuDQ1DxSc4vVH1gdYwKWqVKUgvPWIxcxdo8g",
+        "secret": 0,
+        "share_info": {
+            "share_desc": "",
+            "share_desc_info": "",
+            "share_qrcode_url": {
+                "height": 720,
+                "uri": "836f0026b7154788e02a",
+                "url_list": [
+                    "https://p9-pc-sign.douyinpic.com/obj/836f0026b7154788e02a?x-expires=1682863200&x-signature=g1HZ4vWIZp0urNLAYG0rBlhY3Po%3D&from=116350172",
+                    "https://p6-pc-sign.douyinpic.com/obj/836f0026b7154788e02a?x-expires=1682863200&x-signature=5oVrAKSPwVMekDVmSVkq%2Fla%2Br8o%3D&from=116350172",
+                    "https://p3-pc-sign.douyinpic.com/obj/836f0026b7154788e02a?x-expires=1682863200&x-signature=Cv7hiCs4pDw6%2B1pXNjQqxFxoQJ4%3D&from=116350172"
+                ],
+                "width": 720
+            },
+            "share_title": "",
+            "share_title_myself": "",
+            "share_title_other": "",
+            "share_url": "",
+            "share_weibo_desc": ""
+        },
+        "short_id": "945072062",
+        "signature": "关注消防，平安你我",
+        "signature_extra": null,
+        "special_follow_status": 0,
+        "special_people_labels": null,
+        "status": 1,
+        "text_extra": null,
+        "total_favorited": 0,
+        "uid": "62620057014",
+        "unique_id": "bbxf119",
+        "user_age": -1,
+        "user_canceled": false,
+        "user_permissions": null,
+        "verification_type": 1
+    },
+    "author_mask_tag": 0,
+    "author_user_id": 62620057014,
+    "aweme_control": {
+        "can_comment": true,
+        "can_forward": true,
+        "can_share": true,
+        "can_show_comment": true
+    },
+    "aweme_id": "6667865582676806919",
+    "aweme_type": 33,
+    "book_bar": {},
+    "challenge_position": null,
+    "chapter_list": null,
+    "collect_stat": 0,
+    "collection_corner_mark": 0,
+    "comment_gid": 6667865582676806919,
+    "comment_list": null,
+    "comment_permission_info": {
+        "can_comment": true,
+        "comment_permission_status": 0,
+        "item_detail_entry": false,
+        "press_entry": false,
+        "toast_guide": false
+    },
+    "commerce_config_data": null,
+    "common_bar_info": "[]",
+    "component_info_v2": "{\"desc_lines_limit\":0,\"hide_marquee\":false}",
+    "cover_labels": null,
+    "create_time": 1552635084,
+    "desc": "对不起，我们来晚了！请关注我们。",
+    "digg_lottie": {
+        "can_bomb": 0,
+        "lottie_id": ""
+    },
+    "disable_relation_bar": 0,
+    "dislike_dimension_list": null,
+    "dislike_dimension_list_v2": null,
+    "duet_aggregate_in_music_tab": false,
+    "duration": 22967,
+    "feed_comment_config": {
+        "author_audit_status": 0,
+        "input_config_text": ""
+    },
+    "geofencing": [],
+    "geofencing_regions": null,
+    "group_id": "6667858389655178510",
+    "guide_scene_info": {
+        "diamond_expose_info_str": "",
+        "feed_origin_gid_info_str": "",
+        "guide_scene_type": 0
+    },
+    "hybrid_label": null,
+    "image_album_music_info": {
+        "begin_time": -1,
+        "end_time": -1,
+        "volume": -1
+    },
+    "image_comment": {},
+    "image_infos": null,
+    "image_list": null,
+    "images": null,
+    "img_bitrate": null,
+    "impression_data": {
+        "group_id_list_a": [],
+        "group_id_list_b": [],
+        "group_id_list_c": [],
+        "similar_id_list_a": null,
+        "similar_id_list_b": null
+    },
+    "interaction_stickers": null,
+    "is_collects_selected": 0,
+    "is_duet_sing": false,
+    "is_image_beat": false,
+    "is_life_item": false,
+    "is_share_post": false,
+    "is_story": 0,
+    "is_top": 0,
+    "item_warn_notification": {
+        "content": "",
+        "show": false,
+        "type": 0
+    },
+    "label_top_text": null,
+    "long_video": null,
+    "music": {
+        "album": "蚌埠消防",
+        "artist_user_infos": null,
+        "artists": [],
+        "audition_duration": 23,
+        "author": "蚌埠消防",
+        "author_deleted": false,
+        "author_position": null,
+        "author_status": 1,
+        "avatar_large": {
+            "height": 720,
+            "uri": "1080x1080/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb",
+            "url_list": [
+                "https://p3-pc.douyinpic.com/aweme/1080x1080/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb.jpeg?from=116350172"
+            ],
+            "width": 720
+        },
+        "avatar_medium": {
+            "height": 720,
+            "uri": "720x720/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb",
+            "url_list": [
+                "https://p3-pc.douyinpic.com/aweme/720x720/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb.jpeg?from=116350172"
+            ],
+            "width": 720
+        },
+        "avatar_thumb": {
+            "height": 720,
+            "uri": "100x100/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb",
+            "url_list": [
+                "https://p3-pc.douyinpic.com/aweme/100x100/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb.jpeg?from=116350172"
+            ],
+            "width": 720
+        },
+        "binded_challenge_id": 0,
+        "can_background_play": true,
+        "collect_stat": 0,
+        "cover_hd": {
+            "height": 720,
+            "uri": "1080x1080/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb",
+            "url_list": [
+                "https://p3-pc.douyinpic.com/aweme/1080x1080/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb.jpeg?from=116350172"
+            ],
+            "width": 720
+        },
+        "cover_large": {
+            "height": 720,
+            "uri": "1080x1080/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb",
+            "url_list": [
+                "https://p3-pc.douyinpic.com/aweme/1080x1080/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb.jpeg?from=116350172"
+            ],
+            "width": 720
+        },
+        "cover_medium": {
+            "height": 720,
+            "uri": "720x720/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb",
+            "url_list": [
+                "https://p3-pc.douyinpic.com/aweme/720x720/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb.jpeg?from=116350172"
+            ],
+            "width": 720
+        },
+        "cover_thumb": {
+            "height": 720,
+            "uri": "100x100/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb",
+            "url_list": [
+                "https://p3-pc.douyinpic.com/aweme/100x100/aweme-avatar/tos-cn-avt-0015_8804a5ad53b8c5838fa46a85bdbe5ffb.jpeg?from=116350172"
+            ],
+            "width": 720
+        },
+        "dmv_auto_show": false,
+        "dsp_status": 10,
+        "duration": 23,
+        "end_time": 0,
+        "external_song_info": [],
+        "extra": "{\"hotsoon_review_time\":-1,\"is_red\":0,\"is_subsidy_exp\":false,\"extract_item_id\":6667865582676806919,\"with_aed_model\":1,\"douyin_beats_info\":{},\"dsp_switch\":0,\"has_edited\":0,\"review_unshelve_reason\":0,\"beats\":{\"audio_effect_onset\":\"https://sf3-cdn-tos.douyinstatic.com/obj/ies-music/strong_beat/v3/1640950662702220\",\"beats_tracker\":\"https://sf6-cdn-tos.douyinstatic.com/obj/ies-music/strong_beat/v3/1640950677282828\",\"energy_trace\":\"https://sf6-cdn-tos.douyinstatic.com/obj/ies-music/strong_beat/v3/1640950662683659\",\"merged_beats\":\"https://sf6-cdn-tos.douyinstatic.com/obj/ies-music/strong_beat/v3/1640950677304323\"},\"cover_colors\":null,\"music_label_id\":null,\"aggregate_exempt_conf\":[],\"is_aed_music\":1,\"reviewed\":1,\"schedule_search_time\":0,\"music_tagging\":{\"Languages\":null,\"Moods\":null,\"Genres\":null,\"Themes\":null,\"AEDs\":null,\"SingingVersions\":null,\"Instruments\":null}}",
+        "id": 6668505069819923204,
+        "id_str": "6668505069819923204",
+        "is_audio_url_with_cookie": false,
+        "is_commerce_music": false,
+        "is_del_video": false,
+        "is_matched_metadata": false,
+        "is_original": false,
+        "is_original_sound": true,
+        "is_pgc": false,
+        "is_restricted": false,
+        "is_video_self_see": false,
+        "luna_info": {
+            "is_luna_user": false
+        },
+        "lyric_short_position": null,
+        "mid": "6668505069819923204",
+        "music_chart_ranks": null,
+        "music_collect_count": 0,
+        "music_cover_atmosphere_color_value": "",
+        "music_status": 1,
+        "musician_user_infos": null,
+        "mute_share": false,
+        "offline_desc": "",
+        "owner_handle": "bbxf119",
+        "owner_id": "62620057014",
+        "owner_nickname": "蚌埠消防",
+        "pgc_music_type": 2,
+        "play_url": {
+            "height": 720,
+            "uri": "https://sf6-cdn-tos.douyinstatic.com/obj/ies-music/1628054866134071.mp3",
+            "url_key": "6668505069819923204",
+            "url_list": [
+                "https://sf6-cdn-tos.douyinstatic.com/obj/ies-music/1628054866134071.mp3",
+                "https://sf3-cdn-tos.douyinstatic.com/obj/ies-music/1628054866134071.mp3"
+            ],
+            "width": 720
+        },
+        "position": null,
+        "prevent_download": false,
+        "prevent_item_download_status": 0,
+        "preview_end_time": 0,
+        "preview_start_time": 0,
+        "reason_type": 0,
+        "redirect": false,
+        "schema_url": "",
+        "search_impr": {
+            "entity_id": "6668505069819923204"
+        },
+        "sec_uid": "MS4wLjABAAAALTkCTazOuDQ1DxSc4vVH1gdYwKWqVKUgvPWIxcxdo8g",
+        "shoot_duration": 23,
+        "source_platform": 23,
+        "start_time": 0,
+        "status": 1,
+        "strong_beat_url": {
+            "height": 720,
+            "uri": "https://sf6-cdn-tos.douyinstatic.com/obj/ies-music/pattern/42bfcac2387da1a178658d361d62018c.json",
+            "url_list": [
+                "https://sf6-cdn-tos.douyinstatic.com/obj/ies-music/pattern/42bfcac2387da1a178658d361d62018c.json",
+                "https://sf86-cdn-tos.douyinstatic.com/obj/ies-music/pattern/42bfcac2387da1a178658d361d62018c.json"
+            ],
+            "width": 720
+        },
+        "tag_list": null,
+        "title": "@蚌埠消防创作的原声",
+        "unshelve_countries": null,
+        "user_count": 0,
+        "video_duration": 23
+    },
+    "nickname_position": null,
+    "origin_comment_ids": null,
+    "origin_text_extra": [],
+    "original_images": null,
+    "packed_clips": null,
+    "photo_search_entrance": {
+        "ecom_type": 0
+    },
+    "position": null,
+    "prevent_download": false,
+    "preview_title": "对不起，我们来晚了！请关注我们。",
+    "preview_video_status": 0,
+    "promotions": [],
+    "ref_tts_id_list": null,
+    "ref_voice_modify_id_list": null,
+    "region": "CN",
+    "relation_labels": null,
+    "search_impr": {
+        "entity_id": "6667865582676806919",
+        "entity_type": "AWEME_MATERIAL_AD"
+    },
+    "seo_info": {},
+    "series_paid_info": {
+        "item_price": 0,
+        "series_paid_status": 0
+    },
+    "share_info": {
+        "share_link_desc": "5.10 aAg:/ 对不起，我们来晚了！请关注我们。  %s 复制此链接，打开Dou音搜索，直接观看视频！",
+        "share_url": "https://www.iesdouyin.com/share/video/6667865582676806919/?region=CN&mid=6668505069819923204&u_code=15mkm10m4&did=MS4wLjABAAAAid6pk9h8pyXIsVoCJeTatoTrArUJl6RxRnzxJWaNTdX0ba-xVfxtULKIhUCkFfnb&iid=MS4wLjABAAAANwkJuWIRFOzg5uCpDRpMj4OX-QryoDgn-yYlXQnRwQQ&with_sec_did=1&titleType=title&from_ssr=1"
+    },
+    "share_url": "https://www.iesdouyin.com/share/video/6667865582676806919/?region=CN&mid=6668505069819923204&u_code=15mkm10m4&did=MS4wLjABAAAAid6pk9h8pyXIsVoCJeTatoTrArUJl6RxRnzxJWaNTdX0ba-xVfxtULKIhUCkFfnb&iid=MS4wLjABAAAANwkJuWIRFOzg5uCpDRpMj4OX-QryoDgn-yYlXQnRwQQ&with_sec_did=1&titleType=title&from_ssr=1",
+    "should_open_ad_report": false,
+    "show_follow_button": {},
+    "social_tag_list": null,
+    "standard_bar_info_list": null,
+    "statistics": {
+        "aweme_id": "6667865582676806919",
+        "collect_count": 777,
+        "comment_count": 6996,
+        "digg_count": 969318,
+        "play_count": 0,
+        "share_count": 500,
+        "desc": "对不起，我们来晚了！请关注我们。",
+        "music_title": "@蚌埠消防创作的原声",
+        "music_url": "https://sf6-cdn-tos.douyinstatic.com/obj/ies-music/1628054866134071.mp3",
+        "download_addr": "其他类型作品"
+    },
+    "status": {
+        "allow_share": true,
+        "aweme_id": "6667865582676806919",
+        "in_reviewing": false,
+        "is_delete": false,
+        "is_prohibited": false,
+        "listen_video_status": 0,
+        "part_see": 0,
+        "private_status": 0,
+        "review_result": {
+            "review_status": 0
+        }
+    },
+    "text_extra": [],
+    "tts_id_list": null,
+    "uniqid_position": null,
+    "user_digged": 0,
+    "user_recommend_status": 0,
+    "video": {
+        "big_thumbs": null,
+        "bit_rate": [
+            {
+                "FPS": 30,
+                "HDR_bit": "",
+                "HDR_type": "",
+                "bit_rate": 328365,
+                "gear_name": "normal_480_0",
+                "is_bytevc1": 0,
+                "is_h265": 0,
+                "play_addr": {
+                    "data_size": 1336535,
+                    "file_hash": "1fe407442442432dc225ee137c3bfe56",
+                    "height": 640,
+                    "uri": "v0200f2f0000bi5l9gbd82dj2807vlj0",
+                    "url_key": "v0200f2f0000bi5l9gbd82dj2807vlj0_h264_480p_328365",
+                    "url_list": [
+                        "http://v3-web.douyinvod.com/4d316e94fdd197e94ca555bdd948b6f4/644e363e/video/tos/cn/tos-cn-ve-0015c800/220373842989625421b99138e844260117111619ba5d0000348a30e2572d/?a=6383&ch=4&cr=3&dr=0&lr=all&cd=0%7C0%7C0%7C3&cv=1&br=320&bt=320&cs=0&ds=2&ft=7yV4ZBo7UUmf.7daD0PD1YswHAX1tGJya1q9eF4XjPyV12nz&mime_type=video_mp4&qs=0&rc=NmY2Zzw0ZTVnPDk8Omk2N0BpM286O201Z2pvbDMzaWkzM0AtYDIyYWMvNjUxLjEwYGMtYSNncy0vYTVfNjJfLS0vLS9zcw%3D%3D&l=202304301634326B3E0F01C97D237EDD4F&btag=e00010000",
+                        "http://v26-web.douyinvod.com/65c1274dc7bc5638bb666d3c7dcbe6b1/644e363e/video/tos/cn/tos-cn-ve-0015c800/220373842989625421b99138e844260117111619ba5d0000348a30e2572d/?a=6383&ch=4&cr=3&dr=0&lr=all&cd=0%7C0%7C0%7C3&cv=1&br=320&bt=320&cs=0&ds=2&ft=7yV4ZBo7UUmf.7daD0PD1YswHAX1tGJya1q9eF4XjPyV12nz&mime_type=video_mp4&qs=0&rc=NmY2Zzw0ZTVnPDk8Omk2N0BpM286O201Z2pvbDMzaWkzM0AtYDIyYWMvNjUxLjEwYGMtYSNncy0vYTVfNjJfLS0vLS9zcw%3D%3D&l=202304301634326B3E0F01C97D237EDD4F&btag=e00010000",
+                        "https://www.douyin.com/aweme/v1/play/?video_id=v0200f2f0000bi5l9gbd82dj2807vlj0&line=0&file_id=04f3cf374916498d922bf1d95d53cc03&sign=1fe407442442432dc225ee137c3bfe56&is_play_url=1&source=PackSourceEnum_FAVORITE"
+                    ],
+                    "width": 368
+                },
+                "quality_type": 30,
+                "video_extra": "{\"PktOffsetMap\":\"\"}"
+            }
+        ],
+        "bit_rate_audio": null,
+        "cover": {
+            "height": 720,
+            "uri": "1788b00076223060d76b5",
+            "url_list": [
+                "https://p9-pc-sign.douyinpic.com/1788b00076223060d76b5~tplv-dy-cropcenter:323:430.jpeg?x-expires=1998201600&x-signature=4G%2BgSBR2YMCO449kFCya7p5egOg%3D&from=3213915784&s=PackSourceEnum_FAVORITE&se=true&sh=323_430&sc=cover&biz_tag=pcweb_cover&l=202304301634326B3E0F01C97D237EDD4F",
+                "https://p6-pc-sign.douyinpic.com/obj/1788b00076223060d76b5?x-expires=1998201600&x-signature=wU%2B96%2BH6dM7jbDN99DwN6kTlvuU%3D&from=3213915784&s=PackSourceEnum_FAVORITE&se=false&sc=cover&biz_tag=pcweb_cover&l=202304301634326B3E0F01C97D237EDD4F",
+                "https://p3-pc-sign.douyinpic.com/obj/1788b00076223060d76b5?x-expires=1998201600&x-signature=a%2BaLoI1z84O0ErjieJ1G81HXEjg%3D&from=3213915784&s=PackSourceEnum_FAVORITE&se=false&sc=cover&biz_tag=pcweb_cover&l=202304301634326B3E0F01C97D237EDD4F",
+                "https://p9-pc-sign.douyinpic.com/obj/1788b00076223060d76b5?x-expires=1998201600&x-signature=zHn%2BRWdR1UgXvMBFhQRC05p1uWc%3D&from=3213915784&s=PackSourceEnum_FAVORITE&se=false&sc=cover&biz_tag=pcweb_cover&l=202304301634326B3E0F01C97D237EDD4F"
+            ],
+            "width": 720
+        },
+        "download_addr": {
+            "data_size": 1358823,
+            "height": 720,
+            "uri": "v0200f2f0000bi5l9gbd82dj2807vlj0",
+            "url_list": [
+                "http://v3-web.douyinvod.com/394bb063b743f71f56384c0e8f98503a/644e363e/video/tos/cn/tos-cn-ve-0015c800/2207464ba816db44cc1ab6d2574e2382dab11619d74c000090fdc1f03fb6/?a=6383&ch=4&cr=3&dr=0&lr=all&cd=0%7C0%7C0%7C3&cv=1&br=328&bt=328&cs=0&ds=2&ft=7yV4ZBo7UUmf.7daD0PD1YswHAX1tGJya1q9eF4XjPyV12nz&mime_type=video_mp4&qs=0&rc=NjM3OzhpNDk7Z2c4ZjM8Z0BpM286O201Z2pvbDMzaWkzM0A0M2EvYzRiNS0xYzY2MTBgYSNncy0vYTVfNjJfLS0vLS9zcw%3D%3D&l=202304301634326B3E0F01C97D237EDD4F&btag=e00010000",
+                "http://v26-web.douyinvod.com/e90882ebb9e04bf0bcc9a4d939293d8f/644e363e/video/tos/cn/tos-cn-ve-0015c800/2207464ba816db44cc1ab6d2574e2382dab11619d74c000090fdc1f03fb6/?a=6383&ch=4&cr=3&dr=0&lr=all&cd=0%7C0%7C0%7C3&cv=1&br=328&bt=328&cs=0&ds=2&ft=7yV4ZBo7UUmf.7daD0PD1YswHAX1tGJya1q9eF4XjPyV12nz&mime_type=video_mp4&qs=0&rc=NjM3OzhpNDk7Z2c4ZjM8Z0BpM286O201Z2pvbDMzaWkzM0A0M2EvYzRiNS0xYzY2MTBgYSNncy0vYTVfNjJfLS0vLS9zcw%3D%3D&l=202304301634326B3E0F01C97D237EDD4F&btag=e00010000",
+                "https://www.douyin.com/aweme/v1/play/?video_id=v0200f2f0000bi5l9gbd82dj2807vlj0&line=0&ratio=480p&watermark=1&media_type=4&vr_type=0&improve_bitrate=0&biz_sign=NRPI1lC4AlkgB1YZ_o3Jx_AfEXEdvePEcuDK89Jtc3-7EsI4A8sJwJ0B_r6E9VaaOzLa7CA0Ou-V1V2BgFcQddIQ60jHDGbNHaUZIZuaRMUGyO7s5wbVW7et0I2xsyVeH7OYijs=&logo_name=aweme&source=PackSourceEnum_FAVORITE"
+            ],
+            "width": 720
+        },
+        "duration": 22967,
+        "dynamic_cover": {
+            "height": 720,
+            "uri": "1c6380008daac557ba262",
+            "url_list": [
+                "https://p9-pc-sign.douyinpic.com/obj/1c6380008daac557ba262?x-expires=1684051200&x-signature=e%2FZD9t00VE1bnZxoOwlGe8LNtw0%3D&from=3213915784_large",
+                "https://p3-pc-sign.douyinpic.com/obj/1c6380008daac557ba262?x-expires=1684051200&x-signature=Uiq42u76v6Ebr4xCVseKMYbKpNI%3D&from=3213915784_large",
+                "https://p6-pc-sign.douyinpic.com/obj/1c6380008daac557ba262?x-expires=1684051200&x-signature=H9xd5xo4yWP0Z3GsNqDWprOd0DI%3D&from=3213915784_large"
+            ],
+            "width": 720
+        },
+        "height": 640,
+        "is_h265": 0,
+        "is_source_HDR": 1,
+        "meta": "{\"qprf\":\"1.000\",\"sr_score\":\"1.000\"}",
+        "origin_cover": {
+            "height": 720,
+            "uri": "1c7240001ea7d9b996fca",
+            "url_list": [
+                "https://p3-pc-sign.douyinpic.com/1c7240001ea7d9b996fca~tplv-dy-360p.jpeg?x-expires=1684051200&x-signature=hSWHMx5PHJo3%2BUPXuoGvekzrTsc%3D&from=3213915784&se=false&biz_tag=pcweb_cover&l=202304301634326B3E0F01C97D237EDD4F",
+                "https://p9-pc-sign.douyinpic.com/1c7240001ea7d9b996fca~tplv-dy-360p.jpeg?x-expires=1684051200&x-signature=27lM2uwreHLJr4aCVLNp%2BLRtEps%3D&from=3213915784&se=false&biz_tag=pcweb_cover&l=202304301634326B3E0F01C97D237EDD4F",
+                "https://p6-pc-sign.douyinpic.com/1c7240001ea7d9b996fca~tplv-dy-360p.jpeg?x-expires=1684051200&x-signature=S01BSTIfJEdfYK0QB1wtBTlbGks%3D&from=3213915784&se=false&biz_tag=pcweb_cover&l=202304301634326B3E0F01C97D237EDD4F"
+            ],
+            "width": 720
+        },
+        "play_addr": {
+            "data_size": 1336535,
+            "file_hash": "1fe407442442432dc225ee137c3bfe56",
+            "height": 640,
+            "uri": "v0200f2f0000bi5l9gbd82dj2807vlj0",
+            "url_key": "v0200f2f0000bi5l9gbd82dj2807vlj0_h264_480p_328365",
+            "url_list": [
+                "http://v3-web.douyinvod.com/4d316e94fdd197e94ca555bdd948b6f4/644e363e/video/tos/cn/tos-cn-ve-0015c800/220373842989625421b99138e844260117111619ba5d0000348a30e2572d/?a=6383&ch=4&cr=3&dr=0&lr=all&cd=0%7C0%7C0%7C3&cv=1&br=320&bt=320&cs=0&ds=2&ft=7yV4ZBo7UUmf.7daD0PD1YswHAX1tGJya1q9eF4XjPyV12nz&mime_type=video_mp4&qs=0&rc=NmY2Zzw0ZTVnPDk8Omk2N0BpM286O201Z2pvbDMzaWkzM0AtYDIyYWMvNjUxLjEwYGMtYSNncy0vYTVfNjJfLS0vLS9zcw%3D%3D&l=202304301634326B3E0F01C97D237EDD4F&btag=e00010000",
+                "http://v26-web.douyinvod.com/65c1274dc7bc5638bb666d3c7dcbe6b1/644e363e/video/tos/cn/tos-cn-ve-0015c800/220373842989625421b99138e844260117111619ba5d0000348a30e2572d/?a=6383&ch=4&cr=3&dr=0&lr=all&cd=0%7C0%7C0%7C3&cv=1&br=320&bt=320&cs=0&ds=2&ft=7yV4ZBo7UUmf.7daD0PD1YswHAX1tGJya1q9eF4XjPyV12nz&mime_type=video_mp4&qs=0&rc=NmY2Zzw0ZTVnPDk8Omk2N0BpM286O201Z2pvbDMzaWkzM0AtYDIyYWMvNjUxLjEwYGMtYSNncy0vYTVfNjJfLS0vLS9zcw%3D%3D&l=202304301634326B3E0F01C97D237EDD4F&btag=e00010000",
+                "https://www.douyin.com/aweme/v1/play/?video_id=v0200f2f0000bi5l9gbd82dj2807vlj0&line=0&file_id=04f3cf374916498d922bf1d95d53cc03&sign=1fe407442442432dc225ee137c3bfe56&is_play_url=1&source=PackSourceEnum_FAVORITE"
+            ],
+            "width": 368
+        },
+        "ratio": "480p",
+        "video_model": "",
+        "width": 368
+    },
+    "video_game_data_channel_config": {},
+    "video_labels": null,
+    "video_tag": [
+        {
+            "level": 0,
+            "tag_id": 0,
+            "tag_name": ""
+        },
+        {
+            "level": 0,
+            "tag_id": 0,
+            "tag_name": ""
+        },
+        {
+            "level": 0,
+            "tag_id": 0,
+            "tag_name": ""
+        }
+    ],
+    "video_text": [],
+    "voice_modify_id_list": null
+}

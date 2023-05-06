@@ -1,4 +1,3 @@
-下载
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -11,7 +10,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -47,8 +45,10 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
+*.py,cover
 .hypothesis/
 .pytest_cache/
+cover/
 
 # Translations
 *.mo
@@ -58,6 +58,7 @@ coverage.xml
 *.log
 local_settings.py
 db.sqlite3
+db.sqlite3-journal
 
 # Flask stuff:
 instance/
@@ -70,6 +71,7 @@ instance/
 docs/_build/
 
 # PyBuilder
+.pybuilder/
 target/
 
 # Jupyter Notebook
@@ -80,10 +82,23 @@ profile_default/
 ipython_config.py
 
 # pyenv
-.python-version
+#   For a library or package, you might want to ignore these files since the code is
+#   intended to run in multiple environments; otherwise, check them in:
+# .python-version
 
-# celery beat schedule file
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Celery stuff
 celerybeat-schedule
+celerybeat.pid
 
 # SageMath parsed files
 *.sage.py
@@ -114,9 +129,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-.vscode/launch.json
-verify
-test.py
-.gitignore
-t.py
-test_verify.py
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+下载/
+.vscode/
