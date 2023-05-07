@@ -26,7 +26,11 @@ class Douyin(object):
         """
         self.limit = limit
         self.url = target.strip()
-        if like: self.type = 'like'
+        if like:
+            self.type = 'like'
+            self.post = False
+        else:
+            self.type = ''
         self.down_path = os.path.join('.', '下载')
         if not os.path.exists(self.down_path): os.makedirs(self.down_path)
         self.has_more = True
