@@ -30,12 +30,12 @@ class Douyin(object):
             self.type = 'like'
             self.post = False
         else:
+            self.post = post
             self.type = ''
         self.down_path = os.path.join('.', '下载')
         if not os.path.exists(self.down_path): os.makedirs(self.down_path)
         self.has_more = True
-        self.post = post
-        self.need_login = post if post else need_login
+        self.need_login = self.post if self.post else need_login
         hookURL = '/aweme/v[123]/web/(aweme|music|search)'
         self.hookURL = re.compile(hookURL, re.S)
         self.pageDown = 0
@@ -315,7 +315,8 @@ if __name__ == "__main__":
     # a = Douyin('https://v.douyin.com/BGPBena/', post=False)  # 音乐
     # a = Douyin('https://v.douyin.com/BK2VMkG/', post=False)  # 图集
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4?showTab=like', post=False)  # 长链接+喜欢
-    # a = Douyin('https://v.douyin.com/BGf3Wp6/', need_login=True, like=True, post=False)  # 短链接+喜欢+自己的私密账号需登录
+    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', like=True)  # 长链接+喜欢
+    # a = Douyin('https://v.douyin.com/BGf3Wp6/', need_login=True, like=True)  # 短链接+喜欢+自己的私密账号需登录
     # a.run()
     # a.download()
     # python ./spider.py -t https://v.douyin.com/BGf3Wp6/ -login -like -np
