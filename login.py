@@ -4,7 +4,8 @@ from playwright.sync_api import Playwright, sync_playwright, BrowserContext
 
 def save_cookies(context: BrowserContext):
     cookies = context.cookies()
-    s = {"cookies": cookies.append({"name": "LOGIN_STATUS", "value": "1", "domain": ".douyin.com", "path": "/"})}
+    cookies.append({"name": "LOGIN_STATUS", "value": "1", "domain": ".douyin.com", "path": "/"})
+    s = {"cookies": cookies}
     with open("./auth.json", 'w', encoding='utf-8') as f:
         json.dump(s, f, ensure_ascii=False)
     # context.storage_state(path="./auth.json")
