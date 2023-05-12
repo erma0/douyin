@@ -2,14 +2,15 @@
 
 > [开源不易，若能帮助到您，可以请作者喝奶茶](#请作者喝奶茶)
 
-`playwright`爬虫 + `Aria2`下载
-（基于EDGE浏览器）
+`playwright`爬虫（基于EDGE浏览器） + `Aria2`下载
 
 根据抖音各种链接采集作品并下载（支持图集作品）。
 
-支持输入账号主页、音乐原声、作品的链接或文件路径。
+支持采集账号主页作品、音乐原声作品、搜索作品、关注列表、粉丝列表
 
 支持下载账号的喜欢列表（需账号打开权限或登录本人账号）
+
+支持输入文件路径批量操作（同一类型，一行一个目标地址）
 
 ## 声明
 
@@ -22,7 +23,7 @@
 
 ## 使用
 
-1. 下载`dist`目录下两个文件
+1. 只需下载`dist`目录下两个文件
 ```
 douyin.exe
 aria2c.exe
@@ -38,48 +39,55 @@ Usage: douyin.exe [OPTIONS]
   命令行
 
 Options:
-  -t, --targets TEXT   必填。账号/话题/音乐的URL或文件路径（文件格式为一行一个URL），支持多次输入
-  -l, --limit INTEGER  选填。最大采集数量，默认不限制
-  -g, --grab           选填。只采集信息，不下载作品
-  -d, --download       选填。直接下载采集完成的配置文件，用于采集时下载失败后重试
-  -np, --notpost       选填。采集除了账号主页作品之外的链接（喜欢/音乐/搜索）,不需要登录
-  -like, --like        选填。采集账号喜欢作品，输入短链接时需指定，长链接时可指定或使用[-np]并在长链接最后加[?showTab=like]
-  -login, --login      选填。指定 是否需要登录，默认不登录，可以指定需用登录用于采集自己私密账号的信息
-  --help               Show this message and exit.
+  -u, --urls TEXT                 必填。账号/话题/音乐的URL或文件路径（文件格式为一行一个URL），支持多次输入
+  -n, --num INTEGER               选填。最大采集数量，默认不限制
+  -g, --grab                      选填。只采集信息，不下载作品
+  -d, --download                  选填。直接下载采集完成的配置文件，用于采集时下载失败后重试
+  -l, --login                     选填。指定是否需要登录，默认要登录，用于采集主页作品、关注粉丝列表以及本人私密账号的信息
+                                  ，也可避免一些莫名其妙的风控
+  -t, --type [post|like|music|search|follow|fans]
+                                  选填。采集类型，支持[作品/喜欢/音乐/搜索/关注/粉丝]，默认采集post作品。采集账
+                                  号主页作品或私密账号喜欢作品必须登录。
+  --help                          Show this message and exit.
 ```
 
 - 使用例子（在程序所在目录打开命令行）
 ```
 # 采集目标地址（主页）的全部作品（私密账号需登录本账号）
-douyin.exe -t https://*/ 
+douyin.exe -u https://*/ 
 
-# 采集目标地址（音乐/搜索）的全部作品
-douyin.exe -np -t https://*/ 
+# 采集目标地址（喜欢）的全部作品（私密账号需登录本账号）
+douyin.exe -t like -u https://*/ 
 
-# 采集目标用户的全部喜欢作品
-douyin.exe -np -t https://*/ 长链接后带有[?showTab=like]
-douyin.exe -like -t https://*/ 短链接
+# 采集目标地址（音乐）的全部作品
+douyin.exe -t music -u https://*/ 
 
-# 采集私密账号的喜欢（需登录本账号）
-douyin.exe -t https://*/ -login -like
+# 采集目标地址（搜索）的全部作品
+douyin.exe -t search -u https://*/ 
 
-# 只采集目标作品信息，不下载作品
-douyin.exe -g -t https://*/ 
+# 采集目标地址（关注）的全部信息
+douyin.exe -t follow -u https://*/ 
+
+# 采集目标地址（粉丝）的全部信息
+douyin.exe -t fans -u https://*/ 
+
+# 只采集目标信息，不下载
+douyin.exe -g -u https://*/ 
 
 # 直接下载采集过的目标地址（用于采集时下载出现报错的情况）
-douyin.exe -d -t https://*/ 
+douyin.exe -d -u https://*/ 
 
-# 限制数量采集，只采集目标地址的5个作品
-douyin.exe -l 5 -t https://*/ 
+# 限制数量采集，只采集目标地址的5条结果
+douyin.exe -n 5 -u https://*/ 
 
-# 采集多个目标地址作品
-douyin.exe -t https://*1/ -t https://*2/ 
+# 采集多个目标地址
+douyin.exe -u https://*1/ -u https://*2/ 
 
-# 采集文件[user.txt]中的多个目标地址的作品
-douyin.exe -t ./user.txt
+# 采集文件[user.txt]中的多个目标地址
+douyin.exe -u ./user.txt
 
-# 指定需登录采集目标地址的全部作品
-douyin.exe -login -t https://*/ 
+# 指定不登录采集目标地址
+douyin.exe -l -u https://*/ 
 ```
 
 
