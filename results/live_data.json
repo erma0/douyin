@@ -1,0 +1,158 @@
+{
+    "status": 2,
+    "user_count": 28,
+    "stream_url": {
+        "default_resolution": "FULL_HD1",
+        "extra": {
+            "height": 720,
+            "width": 1280
+        },
+        "flv_pull_url": {
+            "FULL_HD1": "http://pull-flv-f26.douyincdn.com/media/stream-112967753130836652.flv",
+            "SD1": "http://pull-flv-f26.douyincdn.com/media/stream-112967753130836652_ld.flv"
+        },
+        "candidate_resolution": [
+            "SD1"
+        ],
+        "flv_pull_url_params": {
+            "SD1": {
+                "VCodec": "h264"
+            }
+        },
+        "live_core_sdk_data": {
+            "pull_data": {
+                "stream_data": {
+                    "common": {
+                        "session_id": "037-2023051012433056D2E44447CB12049B55",
+                        "rule_ids": {
+                            "ab_version_trace": null,
+                            "sched": {
+                                "result": {
+                                    "hit": "default",
+                                    "cdn": 955
+                                }
+                            }
+                        },
+                        "app_id": "100106"
+                    },
+                    "data": {
+                        "origin": {
+                            "main": {
+                                "flv": "http://pull-flv-f26.douyincdn.com/media/stream-112967753130836652.flv",
+                                "hls": "http://pull-hls-f26.douyincdn.com/media/stream-112967753130836652.m3u8",
+                                "cmaf": "",
+                                "dash": "",
+                                "lls": "",
+                                "tsl": "",
+                                "tile": "",
+                                "sdk_params": {
+                                    "VCodec": "h264",
+                                    "vbitrate": 1852416,
+                                    "resolution": "1280x720",
+                                    "gop": 4,
+                                    "drType": "sdr"
+                                }
+                            }
+                        },
+                        "ld": {
+                            "main": {
+                                "flv": "http://pull-flv-f26.douyincdn.com/media/stream-112967753130836652_ld.flv",
+                                "hls": "http://pull-hls-f26.douyincdn.com/media/stream-112967753130836652_ld.m3u8",
+                                "cmaf": "",
+                                "dash": "",
+                                "lls": "",
+                                "tsl": "",
+                                "tile": "",
+                                "sdk_params": {
+                                    "VCodec": "h264",
+                                    "vbitrate": 1000000,
+                                    "resolution": "960x540",
+                                    "gop": 4,
+                                    "drType": "sdr"
+                                }
+                            }
+                        },
+                        "md": {
+                            "main": {
+                                "flv": "https://pull-flv-f1-admin.douyincdn.com/media/stream-112967753130836652_md.flv",
+                                "hls": "http://pull-hls-f26.douyincdn.com/media/stream-112967753130836652_md.m3u8",
+                                "cmaf": "",
+                                "dash": "",
+                                "lls": "",
+                                "tsl": "",
+                                "tile": "",
+                                "sdk_params": {
+                                    "VCodec": "h264",
+                                    "vbitrate": 800000,
+                                    "resolution": "640x360",
+                                    "gop": 4,
+                                    "drType": "sdr"
+                                }
+                            }
+                        },
+                        "ao": {
+                            "main": {
+                                "flv": "http://pull-flv-f26.douyincdn.com/media/stream-112967753130836652.flv",
+                                "hls": "http://pull-hls-f26.douyincdn.com/media/stream-112967753130836652.m3u8",
+                                "cmaf": "",
+                                "dash": "",
+                                "lls": "",
+                                "tsl": "",
+                                "tile": "",
+                                "sdk_params": {
+                                    "VCodec": "h264",
+                                    "vbitrate": 1852416,
+                                    "resolution": "1280x720",
+                                    "gop": 4,
+                                    "drType": "sdr"
+                                }
+                            }
+                        }
+                    }
+                },
+                "options": {
+                    "default_quality": {
+                        "name": "高清",
+                        "sdk_key": "origin"
+                    },
+                    "qualities": [
+                        {
+                            "name": "标清",
+                            "sdk_key": "ld",
+                            "v_codec": "264",
+                            "resolution": "960x540",
+                            "level": 1,
+                            "v_bit_rate": 1000000,
+                            "fps": 25
+                        },
+                        {
+                            "name": "高清",
+                            "sdk_key": "origin",
+                            "v_codec": "264",
+                            "resolution": "1280x720",
+                            "level": 2,
+                            "v_bit_rate": 1852416
+                        }
+                    ]
+                }
+            }
+        },
+        "stream_orientation": 2,
+        "play": {
+            "horizontal": "main",
+            "vertical": "main"
+        }
+    },
+    "owner": {
+        "web_rid": "966063870969"
+    },
+    "live_type_third_party": true,
+    "room_layout": 1,
+    "live_room_mode": 2,
+    "pack_meta": {
+        "scene": "pc_profile_struct(prod_all_dc/rpc)",
+        "env": "prod",
+        "dc": "lf",
+        "cluster": "feed"
+    }
+},
