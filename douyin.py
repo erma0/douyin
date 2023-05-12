@@ -20,23 +20,31 @@ from playwright.sync_api import Route, TimeoutError, sync_playwright
 
 class Douyin(object):
 
-    def __init__(self, target: str, limit: int = -1, post: bool = True, like: bool = False, need_login: bool = False):
+    def __init__(self, url: str, num: int = -1, need_login: bool = True, type: str = 'post'):
         """
         初始化
+        type=['post', 'like', 'music', 'search', 'follow', 'fans']
         """
-        self.limit = limit
-        self.url = target.strip()
-        if like:
-            self.type = 'like'
-            self.post = False
-        else:
-            self.post = post
-            self.type = ''
+        self.num = num
+        self.url = url.strip()
+        self.type = 'like' if self.url.endswith('?showTab=like') else type
+        self.need_login = need_login
+        self.has_more = True
         self.down_path = os.path.join('.', '下载')
         if not os.path.exists(self.down_path): os.makedirs(self.down_path)
-        self.has_more = True
-        self.need_login = self.post if self.post else need_login
-        hookURL = '/aweme/v[123]/web/(aweme|music|search)'
+        hookURL = '/aweme/v[123]/web/'
+        if self.type == 'like':
+            hookURL += 'aweme/favorit'
+        elif self.type == 'search':
+            hookURL += 'general/search'
+        elif self.type == 'follow':
+            hookURL += 'user/following'
+        elif self.type == 'fans':
+            hookURL += 'user/follower'
+        elif self.type in ['post', 'music']:
+            hookURL += '(aweme|music)'
+        else:  # 备用
+            pass
         self.hookURL = re.compile(hookURL, re.S)
         self.pageDown = 0
         self.pageDownMax = 5  # 重试次数
@@ -76,13 +84,48 @@ class Douyin(object):
             res = re.compile(u'[\uD800-\uDBFF][\uDC00-\uDFFF]')
         return res.sub(restr, desstr)
 
-    def _append_results(self, aweme_list: List[dict]):
+    def _append_users(self, user_list: List[dict]):
+        if self.num < 0 or len(self.results) < self.num:
+            for item in user_list:
+                if self.num > 0 and len(self.results) >= self.num:
+                    self.has_more = False
+                    # 如果给出了限制采集数目，直接退出循环
+                    # self.videosL = self.videosL[:self.limit + self.over_num]  # 超出的删除
+                    logger.info(f'已达到限制采集数量：{len(self.results)}')
+                    return
+                info = {}
+                info['nickname'] = self.str2path(item['nickname'])
+                info['signature'] = self.str2path(item['signature'])
+                info['avatar'] = item['avatar_larger']['url_list'][0]
+                for i in [
+                        'sec_uid', 'uid', 'short_id', 'unique_id', 'unique_id_modify_time', 'aweme_count', 'favoriting_count',
+                        'follower_count', 'following_count', 'constellation', 'create_time', 'enterprise_verify_reason',
+                        'is_gov_media_vip', 'live_status', 'total_favorited', 'share_qrcode_uri'
+                ]:
+                    if item.get(i):
+                        info[i] = item[i]
+                room_id = item.get('room_id')
+                if room_id:  # 直播间
+                    info['live_room_id'] = room_id
+                    info['live_room_url'] = [
+                        f'http://pull-flv-f26.douyincdn.com/media/stream-{room_id}.flv',
+                        f'http://pull-hls-f26.douyincdn.com/media/stream-{room_id}.m3u8'
+                    ]
+                music_count = item['original_musician']['music_count']
+                if music_count:  # 原创音乐人
+                    info['original_musician'] = item['original_musician']
+
+                self.results.append(info)  # 用于保存信息
+
+            logger.info(f'采集中，已采集到{len(self.results)}条结果')
+
+    def _append_awemes(self, aweme_list: List[dict]):
         """
         数据入库
         """
-        if self.limit < 0 or len(self.results) < self.limit:
+        if self.num < 0 or len(self.results) < self.num:
             for item in aweme_list:
-                if self.limit > 0 and len(self.results) >= self.limit:
+                if self.num > 0 and len(self.results) >= self.num:
                     self.has_more = False
                     # 如果给出了限制采集数目，直接退出循环
                     # self.videosL = self.videosL[:self.limit + self.over_num]  # 超出的删除
@@ -90,15 +133,33 @@ class Douyin(object):
                     return
                 # =====下载视频=====
                 _type = item.get('aweme_type', item.get('awemeType'))
-                desc = self.str2path(item['desc'])
                 info = item.get('statistics', item.get('stats', {}))
                 for i in [
                         'playCount', 'downloadCount', 'forwardCount', 'collectCount', "digest", "exposure_count",
-                        "live_watch_count", "play_count"
+                        "live_watch_count", "play_count", "download_count", "forward_count", "lose_count", "lose_comment_count"
                 ]:
                     if not info.get(i):
                         info.pop(i, '')
+                info.pop('aweme_id', '')
+                if _type <= 66 or _type == 107:  # 视频 77西瓜视频
+                    play_addr = item['video'].get('play_addr')
+                    if play_addr:
+                        download_addr = item['video']['play_addr']['url_list'][-1]
+                    else:
+                        download_addr = f"https:{ item['video']['playApi']}"
+                    info['download_addr'] = download_addr
+                elif _type == 68:  # 图文
+                    info['download_addr'] = [images.get('url_list', images.get('urlList'))[-1] for images in item['images']]
+                elif _type == 101:  # 直播
+                    continue
+                else:  # 其他类型作品
+                    info['download_addr'] = '其他类型作品'
+                    logger.info('type', _type)
+                    with open(f'{_type}.json', 'w', encoding='utf-8') as f:  # 保存未区分的类型
+                        json.dump(item, f, ensure_ascii=False)  # 中文不用Unicode编码
+                    continue
                 info['id'] = item.get('aweme_id', item.get('awemeId'))
+                desc = self.str2path(item.get('desc'))
                 info['desc'] = desc
                 music = item.get('music')
                 if music:
@@ -115,21 +176,6 @@ class Douyin(object):
                         'tag_id': hashtag.get('hashtag_id', hashtag.get('hashtagId')),
                         'tag_name': hashtag.get('hashtag_name', hashtag.get('hashtagName'))
                     } for hashtag in tags]
-                # if _type in [0, 33, 51, 53, 55, 61, 66]:  # 视频
-                if _type <= 66:  # 视频
-                    play_addr = item['video'].get('play_addr')
-                    if play_addr:
-                        download_addr = item['video']['play_addr']['url_list'][-1]
-                    else:
-                        download_addr = f"https:{ item['video']['playApi']}"
-                    info['download_addr'] = download_addr
-                elif _type == 68:  # 图文
-                    info['download_addr'] = [images.get('url_list', images.get('urlList'))[-1] for images in item['images']]
-                else:  # 其他类型作品
-                    info['download_addr'] = '其他类型作品'
-                    logger.info('type', _type)
-                    with open(f'{_type}.json', 'w', encoding='utf-8') as f:  # 保存未区分的类型
-                        json.dump(item, f, ensure_ascii=False)  # 中文不用Unicode编码
                 self.results.append(info)  # 用于保存信息
 
             logger.info(f'采集中，已采集到{len(self.results)}条结果')
@@ -151,23 +197,25 @@ class Douyin(object):
         if self.results:
             logger.success(f'采集完成，共采集到{len(self.results)}条结果')
             with open(f'{self.down_path}.json', 'w', encoding='utf-8') as f:  # 保存数据到文件
+                if self.num > 0 and self.type == 'post':  # 限制数量采集作品时，从新到旧排序（此需求一般用来采集最新作品）
+                    self.results.sort(key=lambda i: i['id'], reverse=True)
                 json.dump(self.results, f, ensure_ascii=False)  # 中文不用Unicode编码
-            with open(self.aria2_conf, 'w', encoding='utf-8') as f:  # 保存为Aria下载文件
-                _ = []
-                for line in self.results:
-                    filename = f'{line["id"]}_{line["desc"]}'
-                    if isinstance(line["download_addr"], list):
-                        down_path = os.path.join(self.down_path, filename)
-                        [
-                            _.append(f'{addr}\n\tdir={down_path}\n\tout={line["id"]}_{index + 1}.jpeg\n')
-                            for index, addr in enumerate(line["download_addr"])
-                        ]
-                    elif isinstance(line["download_addr"], str):
-                        _.append(f'{line["download_addr"]}\n\tdir={self.down_path}\n\tout={filename}.mp4\n')
-                    else:
-                        logger.error("下载地址错误")
-                f.writelines(_)
-                # f.writelines([f'{line["download_addr"]}\n\tdir={self.down_path}\n\tout={filename}.mp4\n' for line in self.results])
+            if self.type in ['post', 'like', 'music', 'search']:  # 视频列表保存为Aria下载文件
+                with open(self.aria2_conf, 'w', encoding='utf-8') as f:
+                    _ = []
+                    for line in self.results:
+                        filename = f'{line["id"]}_{line["desc"]}'
+                        if isinstance(line["download_addr"], list):
+                            down_path = os.path.join(self.down_path, filename)
+                            [
+                                _.append(f'{addr}\n\tdir={down_path}\n\tout={line["id"]}_{index + 1}.jpeg\n')
+                                for index, addr in enumerate(line["download_addr"])
+                            ]
+                        elif isinstance(line["download_addr"], str):
+                            _.append(f'{line["download_addr"]}\n\tdir={self.down_path}\n\tout={filename}.mp4\n')
+                        else:
+                            logger.error("下载地址错误")
+                    f.writelines(_)
         else:
             logger.error("采集结果为空")
 
@@ -179,12 +227,35 @@ class Douyin(object):
             # logger.success(f"<< status  {response.status}")
             try:
                 resj = response.json()
-                info = resj.get('aweme_list') if resj.get('aweme_list') else [item['aweme_info'] for item in resj.get('data')]
+                if self.type == 'follow':
+                    info = resj.get('followings')
+                    self._append_users(info)
+                elif self.type == 'fans':
+                    info = resj.get('followers')
+                    self._append_users(info)
+                elif self.type == 'search':
+                    info = []
+                    for item in resj.get('data'):
+                        if item['type'] == 1:  # 1作品 16合集 76百科 77头条文章 996热榜 997微头条
+                            _info = item['aweme_info']
+                            info.append(_info)
+                        elif item['type'] == 16:
+                            _info = item['aweme_mix_info']['mix_items']
+                            info.extend(_info)
+                        elif item['type'] == 996:
+                            _info = item['sub_card_list'][0]['hotspot_info']['hotspot_items']
+                            info.extend(_info)
+                        else:
+                            pass
+                    self._append_awemes(info)
+                else:
+                    info = resj.get('aweme_list')
+                    self._append_awemes(info)
                 self.has_more = resj.get('has_more', True)
-                self._append_results(info)
             except Exception as err:
-                logger.error(f'err  {err}')
-                logger.info(f'response  {response.text()}')
+                logger.error(f'err：  {err}')
+                with open('error.json', 'w', encoding='utf-8') as f:  # 保存未区分的类型
+                    json.dump(response.json(), f, ensure_ascii=False)  # 中文不用Unicode编码
         route.fulfill(response=response)
 
     def anti_js(self):
@@ -205,10 +276,8 @@ class Douyin(object):
         return _login
 
     def get_down_path(self):
-        # 判断链接类型（user/like/music/search） 取目标ID
-        *_, self.type, self.id = unquote(urlparse(self.url).path.strip('/')).split('/')
-        if self.url.endswith('showTab=like'): self.type = 'like'
-        if self.type == 'search':
+        *_, _type, self.id = unquote(urlparse(self.url).path.strip('/')).split('/')
+        if _type == 'search':
             self.title = self.id
         else:
             self.title = self.title.split('-')[0].strip()
@@ -221,9 +290,10 @@ class Douyin(object):
         """
         with sync_playwright() as playwright:
             edge = playwright.devices['Desktop Edge']
-            browser = playwright.chromium.launch(channel="msedge",
-                                                 headless=True,
-                                                 args=['--disable-blink-features=AutomationControlled'])
+            browser = playwright.chromium.launch(
+                channel="msedge",
+                #  headless=False,
+                args=['--disable-blink-features=AutomationControlled'])
             if self.need_login:
                 # 重用登录状态
                 storage_state = "./auth.json" if os.path.exists("./auth.json") else None
@@ -240,19 +310,29 @@ class Douyin(object):
             self.page.route("**/*", lambda route: route.abort() if route.request.resource_type == "image" else route.continue_())
             self.page.route(self.hookURL, self.handle)
             self.page.goto(self.url)
-
-            if self.type == 'like' and not self.page.url.endswith('showTab=like'):
-                self.url = self.page.url + '?showTab=like'
-                self.page.goto(self.url)
-            else:
-                self.url = self.page.url
+            self.url = self.page.url
             self.title = self.page.title()
             self.get_down_path()
-            self.page.locator('[data-e2e="scroll-list"]').last.click()  # 聚焦滚动列表
-            if self.post:  # 提取初始页面数据
+            if self.type == 'post':  # post页面需提取初始页面数据
                 render_data = json.loads(unquote(self.page.locator('id=RENDER_DATA').inner_text()))
-                self._append_results(render_data['41']['post']['data'])
-
+                self._append_awemes(render_data['41']['post']['data'])
+            elif self.type == 'like':
+                if not self.page.url.endswith('showTab=like'):  # 跳转到喜欢页面
+                    self.url = self.page.url.split('?')[0] + '?showTab=like'
+                    self.page.goto(self.url)
+            elif self.type == 'music':
+                self.page.locator('[data-e2e="scroll-list"]').last.click()  # 聚焦滚动列表
+            elif self.type == 'search':  # 无需操作
+                pass
+            elif self.type == 'follow':  # 点击关注列表
+                self.page.locator('[data-e2e="user-info-follow"]').click()
+                self.page.locator('[data-e2e="user-fans-container"]').click()
+            elif self.type == 'fans':  # 点击粉丝列表
+                self.page.locator('[data-e2e="user-info-fans"]').click()
+                self.page.locator('[data-e2e="user-fans-container"]').click()
+                # document.querySelector('[data-e2e="user-fans-container"]').scrollBy(0,10000)
+            else:  # 备用
+                pass
             while self.has_more and self.pageDown <= self.pageDownMax:
                 try:
                     # with self.page.expect_request('https://mcs.zijieapi.com/list', timeout=2000):
@@ -271,54 +351,61 @@ class Douyin(object):
 
 
 @click.command()
-@click.option('-t', '--targets', type=click.STRING, multiple=True, help='必填。账号/话题/音乐的URL或文件路径（文件格式为一行一个URL），支持多次输入')
-@click.option('-l', '--limit', default=-1, help='选填。最大采集数量，默认不限制')
+@click.option('-u', '--urls', type=click.STRING, multiple=True, help='必填。账号/话题/音乐的URL或文件路径（文件格式为一行一个URL），支持多次输入')
+@click.option('-n', '--num', default=-1, help='选填。最大采集数量，默认不限制')
 @click.option('-g', '--grab', is_flag=True, help='选填。只采集信息，不下载作品')
 @click.option('-d', '--download', is_flag=True, help='选填。直接下载采集完成的配置文件，用于采集时下载失败后重试')
-@click.option('-np', '--notpost', is_flag=True, help='选填。采集除了账号主页作品之外的链接（喜欢/音乐/搜索）不需要登录')
-@click.option('-like', '--like', is_flag=True, help='选填。采集账号喜欢作品，输入短链接时需指定，长链接时可指定或在长链接最后加[?showTab=like]')
-@click.option('-login', '--login', is_flag=True, help='选填。指定 是否需要登录，默认不登录，可以指定需用登录用于采集自己私密账号的信息')
-def main(targets, limit, notpost, grab, download, like, login):
+@click.option('-l', '--login', default=True, is_flag=True, help='选填。指定是否需要登录，默认要登录，用于采集主页作品、关注粉丝列表以及本人私密账号的信息，也可避免一些莫名其妙的风控')
+@click.option('-t',
+              '--type',
+              type=click.Choice(['post', 'like', 'music', 'search', 'follow', 'fans'], case_sensitive=False),
+              default='post',
+              help='选填。采集类型，支持[作品/喜欢/音乐/搜索/关注/粉丝]，默认采集post作品。采集账号主页作品或私密账号喜欢作品必须登录。')
+def main(urls, num, grab, download, login, type):
     """
     命令行
     """
-    # print(targets, limit, notpost, grab, download, like, login)
-    if not targets:
-        targets = (input('目标URL或文件路径：'), )
-    for _target in targets:
-        if os.path.exists(_target):  # 文件路径
-            with open(_target, 'r', encoding='utf-8') as f:
+    # print()
+    if not urls:
+        urls = (input('目标URL或文件路径：'), )
+    for url in urls:
+        if os.path.exists(url):  # 文件路径
+            with open(url, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
             if lines:
                 for line in lines:
-                    start(line, limit, notpost, grab, download, like, login)
+                    start(line, num, grab, download, login, type)
             else:
-                logger.error(f'[{_target}]中没有发现目标URL')
+                logger.error(f'[{url}]中没有发现目标URL')
         else:
-            start(_target, limit, notpost, grab, download, like, login)
+            start(url, num, grab, download, login, type)
 
 
-def start(target, limit, notpost, grab, download, like, login):
-    if urlparse(target).netloc.endswith('douyin.com'):  # 单个URL
-        a = Douyin(target, limit, not notpost, like, login)  # 作品
+def start(url, num, grab, download, login, type):
+    if urlparse(url).netloc.endswith('douyin.com'):  # 单个URL
+        a = Douyin(url, num, login, type)
         if not download:  # 需要新采集
             a.run()
         if not grab:  # 需要下载
             a.download()
     else:
-        logger.error(f'[{target}]不是目标URL格式')
+        logger.error(f'[{url}]不是目标URL格式')
 
 
 if __name__ == "__main__":
-    # a = Douyin('https://m.douyin.com/share/user/MS4wLjABAAAAUe1jo5bYxPJybmnDDMxh2e9A95NAvoNfJiL7JVX5nhQ', limit=5)  # 作品
+    # a = Douyin('https://m.douyin.com/share/user/MS4wLjABAAAAUe1jo5bYxPJybmnDDMxh2e9A95NAvoNfJiL7JVX5nhQ', num=5)  # 作品
     # a = Douyin('https://m.douyin.com/share/user/MS4wLjABAAAAUe1jo5bYxPJybmnDDMxh2e9A95NAvoNfJiL7JVX5nhQ')  # 作品
-    # a = Douyin('https://v.douyin.com/BGPBena/', post=False)  # 音乐
-    # a = Douyin('https://v.douyin.com/BK2VMkG/', post=False)  # 图集
-    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4?showTab=like', post=False)  # 长链接+喜欢
-    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', like=True)  # 长链接+喜欢
-    # a = Douyin('https://v.douyin.com/BGf3Wp6/', need_login=True, like=True)  # 短链接+喜欢+自己的私密账号需登录
+    # a = Douyin('https://v.douyin.com/BK2VMkG/')  # 图集作品
+    # a = Douyin('https://v.douyin.com/BGPBena/', type='music')  # 音乐
+    # a = Douyin('https://www.douyin.com/search/%E4%B8%8D%E8%89%AF%E4%BA%BA', type='search')  # 搜索
+    # a = Douyin('不良人', type='search')  # 只提供关键字搜索  晚上再补充
+    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4?showTab=like')  # 长链接+喜欢
+    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='like')  # 长链接+喜欢
+    # a = Douyin('https://v.douyin.com/BGf3Wp6/', type='like')  # 短链接+喜欢+自己的私密账号需登录
+    # a = Douyin('https://v.douyin.com/BGf3Wp6/', type='fans')  # 粉丝
+    # a = Douyin('https://v.douyin.com/BGf3Wp6/', type='follow')  # 关注
     # a.run()
     # a.download()
-    # python ./spider.py -t https://v.douyin.com/BGf3Wp6/ -login -like -np
+    # python ./douyin.py -u https://v.douyin.com/BGf3Wp6/ -t like
     main()
     # https://v.douyin.com/AvTAgEn/
