@@ -11,7 +11,7 @@ import json
 import os
 import re
 from typing import List
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urlparse, quote
 
 import click
 from loguru import logger
@@ -23,29 +23,15 @@ class Douyin(object):
     def __init__(self, url: str, num: int = -1, need_login: bool = True, type: str = 'post'):
         """
         初始化
-        type=['post', 'like', 'music', 'search', 'follow', 'fans']
+        type=['post', 'like', 'music', 'search', 'follow', 'fans', 'collection']
         """
         self.num = num
         self.url = url.strip()
-        self.type = 'like' if self.url.endswith('?showTab=like') else type
+        self.type = type
         self.need_login = need_login
         self.has_more = True
         self.down_path = os.path.join('.', '下载')
         if not os.path.exists(self.down_path): os.makedirs(self.down_path)
-        hookURL = '/aweme/v[123]/web/'
-        if self.type == 'like':
-            hookURL += 'aweme/favorit'
-        elif self.type == 'search':
-            hookURL += 'general/search'
-        elif self.type == 'follow':
-            hookURL += 'user/following'
-        elif self.type == 'fans':
-            hookURL += 'user/follower'
-        elif self.type in ['post', 'music']:
-            hookURL += '(aweme|music)'
-        else:  # 备用
-            pass
-        self.hookURL = re.compile(hookURL, re.S)
         self.pageDown = 0
         self.pageDownMax = 5  # 重试次数
         self.results = []  # 保存结果
@@ -70,10 +56,17 @@ class Douyin(object):
     @staticmethod
     def quit(str):
         """
-        程序出错，直接退出
+        直接退出程序
         """
         logger.error(str)
         exit()
+
+    def url2redirect(self, url):
+        """
+        取302跳转地址
+        """
+        r = self.context.request.head(url)
+        return r.url
 
     @staticmethod
     def filter_emoji(desstr, restr=''):
@@ -224,9 +217,9 @@ class Douyin(object):
             if self.pageDown > 0:
                 self.pageDown = 0
             response = route.fetch()
-            # logger.success(f"<< status  {response.status}")
             try:
                 resj = response.json()
+                self.has_more = resj.get('has_more', True)
                 if self.type == 'follow':
                     info = resj.get('followings')
                     self._append_users(info)
@@ -251,7 +244,6 @@ class Douyin(object):
                 else:
                     info = resj.get('aweme_list')
                     self._append_awemes(info)
-                self.has_more = resj.get('has_more', True)
             except Exception as err:
                 logger.error(f'err：  {err}')
                 with open('error.json', 'w', encoding='utf-8') as f:  # 保存未区分的类型
@@ -275,14 +267,71 @@ class Douyin(object):
         logger.info(f'已登录：{_login}')
         return _login
 
-    def get_down_path(self):
+    def page_init(self):
+        if urlparse(self.url).netloc.endswith('douyin.com'):  # 链接
+            if self.url.endswith('?showTab=like'): self.type = 'like'
+            self.url = self.url2redirect(self.url)
+        else:  # 关键字
+            self.url = f'https://www.douyin.com/search/{quote(self.url)}'
         *_, _type, self.id = unquote(urlparse(self.url).path.strip('/')).split('/')
-        if _type == 'search':
+        hookURL = '/aweme/v[123]/web/'
+        if _type == 'search':  # 自动识别 搜索 音乐 合集
+            self.type = 'search'
+            hookURL += 'general/search'
+        elif _type == 'music':
+            self.type = 'music'
+            hookURL += 'music'
+        elif _type == 'collection':
+            self.type = 'collection'
+            hookURL += 'mix/aweme'
+        elif self.type == 'post':
+            hookURL += 'aweme/post'
+        elif self.type == 'like':
+            hookURL += 'aweme/favorit'
+            if not self.url.endswith('showTab=like'):
+                self.url = self.url.split('?')[0] + '?showTab=like'
+        elif self.type == 'follow':
+            hookURL += 'user/following'
+        elif self.type == 'fans':
+            hookURL += 'user/follower'
+        else:  # 备用
+            pass
+        self.hookURL = re.compile(hookURL, re.S)
+
+    def page_options(self):
+        self.get_down_path()
+        if self.type == 'post':  # post页面需提取初始页面数据
+            render_data = json.loads(unquote(self.page.locator('id=RENDER_DATA').inner_text()))
+            self._append_awemes(render_data['41']['post']['data'])
+        elif self.type in ['like', 'search', 'collection']:  # 无需操作
+            pass
+        elif self.type == 'music':  # 聚焦滚动列表
+            self.page.locator('[data-e2e="scroll-list"]').last.click()
+        elif self.type == 'follow':  # 点击关注列表
+            self.page.locator('[data-e2e="user-info-follow"]').click()
+            self.page.locator('[data-e2e="user-fans-container"]').click()
+        elif self.type == 'fans':  # 点击粉丝列表
+            self.page.locator('[data-e2e="user-info-fans"]').click()
+            self.page.locator('[data-e2e="user-fans-container"]').click()
+        else:  # 备用
+            pass
+
+    def get_down_path(self):
+        if self.type == 'collection':  # 合集标题
+            self.title = self.page.locator('[data-e2e="cover-age-title-container"]>h2').first.inner_text()
+        elif self.type == 'search':  # 搜索标题
             self.title = self.id
-        else:
-            self.title = self.title.split('-')[0].strip()
+        else:  # 其他标题
+            self.title = self.page.title().split('-')[0].strip()
         self.down_path = os.path.join(self.down_path, self.str2path(f'{self.type}_{self.title}'))
         self.aria2_conf = f'{self.down_path}.txt'
+
+    def page_next(self):
+        if self.type != 'collection':
+            self.page.keyboard.press('End')  # 加载数据
+        else:
+            self.page.get_by_role("button", name="点击加载更多").click()
+        # logger.info("加载中")
 
     def run(self):
         """
@@ -305,45 +354,22 @@ class Douyin(object):
             else:
                 self.context = browser.new_context(**edge, permissions=['notifications'])
             # self.anti_js()
+            self.page_init()  # 初始化参数
             self.page = self.context.new_page()
             self.page.set_default_timeout(0)
             self.page.route("**/*", lambda route: route.abort() if route.request.resource_type == "image" else route.continue_())
             self.page.route(self.hookURL, self.handle)
             self.page.goto(self.url)
-            self.url = self.page.url
-            self.title = self.page.title()
-            self.get_down_path()
-            if self.type == 'post':  # post页面需提取初始页面数据
-                render_data = json.loads(unquote(self.page.locator('id=RENDER_DATA').inner_text()))
-                self._append_awemes(render_data['41']['post']['data'])
-            elif self.type == 'like':
-                if not self.page.url.endswith('showTab=like'):  # 跳转到喜欢页面
-                    self.url = self.page.url.split('?')[0] + '?showTab=like'
-                    self.page.goto(self.url)
-            elif self.type == 'music':
-                self.page.locator('[data-e2e="scroll-list"]').last.click()  # 聚焦滚动列表
-            elif self.type == 'search':  # 无需操作
-                pass
-            elif self.type == 'follow':  # 点击关注列表
-                self.page.locator('[data-e2e="user-info-follow"]').click()
-                self.page.locator('[data-e2e="user-fans-container"]').click()
-            elif self.type == 'fans':  # 点击粉丝列表
-                self.page.locator('[data-e2e="user-info-fans"]').click()
-                self.page.locator('[data-e2e="user-fans-container"]').click()
-                # document.querySelector('[data-e2e="user-fans-container"]').scrollBy(0,10000)
-            else:  # 备用
-                pass
+            self.page_options()  # 打开页面后的操作
             while self.has_more and self.pageDown <= self.pageDownMax:
                 try:
-                    # with self.page.expect_request('https://mcs.zijieapi.com/list', timeout=2000):
                     with self.page.expect_request_finished(lambda request: self.hookURL.search(request.url), timeout=2000):
-                        self.page.keyboard.press('End')
-                        # logger.info("press('End')")
-                except TimeoutError:
-                    self.page.keyboard.press('PageUp')
+                        self.page_next()  # 加载下一批数据
+                except TimeoutError:  # 重试
                     self.pageDown += 1
-                    logger.error("超时 + 1")
-            self.save()
+                    logger.error("重试 + 1")
+            self.save()  # 保存结果
+            self.page.unroute(self.hookURL, self.handle)
             self.page.wait_for_timeout(1000)
             # self.page.screenshot(path="end.png")
             self.context.close()
@@ -358,9 +384,9 @@ class Douyin(object):
 @click.option('-l', '--login', default=True, is_flag=True, help='选填。指定是否需要登录，默认要登录，用于采集主页作品、关注粉丝列表以及本人私密账号的信息，也可避免一些莫名其妙的风控')
 @click.option('-t',
               '--type',
-              type=click.Choice(['post', 'like', 'music', 'search', 'follow', 'fans'], case_sensitive=False),
+              type=click.Choice(['post', 'like', 'music', 'search', 'follow', 'fans', 'collection'], case_sensitive=False),
               default='post',
-              help='选填。采集类型，支持[作品/喜欢/音乐/搜索/关注/粉丝]，默认采集post作品。采集账号主页作品或私密账号喜欢作品必须登录。')
+              help='选填。采集类型，支持[作品/喜欢/音乐/搜索/关注/粉丝/合集]，默认采集post作品，能够自动识别搜索/音乐/合集。采集账号主页作品或私密账号喜欢作品必须登录。')
 def main(urls, num, grab, download, login, type):
     """
     命令行
@@ -382,28 +408,40 @@ def main(urls, num, grab, download, login, type):
 
 
 def start(url, num, grab, download, login, type):
-    if urlparse(url).netloc.endswith('douyin.com'):  # 单个URL
-        a = Douyin(url, num, login, type)
-        if not download:  # 需要新采集
-            a.run()
-        if not grab:  # 需要下载
-            a.download()
-    else:
-        logger.error(f'[{url}]不是目标URL格式')
+    a = Douyin(url, num, login, type)
+    if not download:  # 需要新采集
+        a.run()
+    if not grab:  # 需要下载
+        a.download()
 
 
 if __name__ == "__main__":
-    # a = Douyin('https://m.douyin.com/share/user/MS4wLjABAAAAUe1jo5bYxPJybmnDDMxh2e9A95NAvoNfJiL7JVX5nhQ', num=5)  # 作品
+    banner = '''
+  ____                    _         ____        _     _           
+ |  _ \  ___  _   _ _   _(_)_ __   / ___| _ __ (_) __| | ___ _ __ 
+ | | | |/ _ \| | | | | | | | '_ \  \___ \| '_ \| |/ _` |/ _ \ '__|
+ | |_| | (_) | |_| | |_| | | | | |  ___) | |_) | | (_| |  __/ |   
+ |____/ \___/ \__,_|\__, |_|_| |_| |____/| .__/|_|\__,_|\___|_|   
+                    |___/                |_|                      
+
+            Github: https://github.com/erma0/douyin
+'''
+    print(banner)
+    # a = Douyin('https://m.douyin.com/share/user/MS4wLjABAAAAUe1jo5bYxPJybmnDDMxh2e9A95NAvoNfJiL7JVX5nhQ', num=11)  # 作品
     # a = Douyin('https://m.douyin.com/share/user/MS4wLjABAAAAUe1jo5bYxPJybmnDDMxh2e9A95NAvoNfJiL7JVX5nhQ')  # 作品
     # a = Douyin('https://v.douyin.com/BK2VMkG/')  # 图集作品
     # a = Douyin('https://v.douyin.com/BGPBena/', type='music')  # 音乐
+    # a = Douyin('https://v.douyin.com/BGPBena/', num=11)  # 音乐
+    # a = Douyin('https://www.douyin.com/search/%E4%B8%8D%E8%89%AF%E4%BA%BA')  # 搜索
     # a = Douyin('https://www.douyin.com/search/%E4%B8%8D%E8%89%AF%E4%BA%BA', type='search')  # 搜索
-    # a = Douyin('不良人', type='search')  # 只提供关键字搜索  晚上再补充
+    # a = Douyin('不良人', num=11)  # 关键字搜索
+    # a = Douyin('不良人', type='search', num=11)  # 关键字搜索
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4?showTab=like')  # 长链接+喜欢
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='like')  # 长链接+喜欢
     # a = Douyin('https://v.douyin.com/BGf3Wp6/', type='like')  # 短链接+喜欢+自己的私密账号需登录
     # a = Douyin('https://v.douyin.com/BGf3Wp6/', type='fans')  # 粉丝
     # a = Douyin('https://v.douyin.com/BGf3Wp6/', type='follow')  # 关注
+    # a = Douyin('https://www.douyin.com/collection/7018087406876231711', type='collect')  # 合集
     # a.run()
     # a.download()
     # python ./douyin.py -u https://v.douyin.com/BGf3Wp6/ -t like
