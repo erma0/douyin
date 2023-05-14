@@ -20,15 +20,16 @@ from playwright.sync_api import Route, TimeoutError, sync_playwright
 
 class Douyin(object):
 
-    def __init__(self, url: str, num: int = -1, need_login: bool = True, type: str = 'post'):
+    def __init__(self, url: str, num: int = -1, need_login: bool = True, type: str = 'post', channel: str = 'msedge'):
         """
         初始化
         type=['post', 'like', 'music', 'search', 'follow', 'fans', 'collection']
         """
-        self.num = num
         self.url = url.strip()
-        self.type = type
+        self.num = num
         self.need_login = need_login
+        self.type = type
+        self.channel = channel
         self.has_more = True
         self.down_path = os.path.join('.', '下载')
         if not os.path.exists(self.down_path): os.makedirs(self.down_path)
@@ -340,7 +341,7 @@ class Douyin(object):
         with sync_playwright() as playwright:
             edge = playwright.devices['Desktop Edge']
             browser = playwright.chromium.launch(
-                channel="msedge",
+                channel=self.channel,
                 #  headless=False,
                 args=['--disable-blink-features=AutomationControlled'])
             if self.need_login:
@@ -387,7 +388,12 @@ class Douyin(object):
               type=click.Choice(['post', 'like', 'music', 'search', 'follow', 'fans', 'collection'], case_sensitive=False),
               default='post',
               help='选填。采集类型，支持[作品/喜欢/音乐/搜索/关注/粉丝/合集]，默认采集post作品，能够自动识别搜索/音乐/合集。采集账号主页作品或私密账号喜欢作品必须登录。')
-def main(urls, num, grab, download, login, type):
+@click.option('-b',
+              '--browser',
+              type=click.Choice(["chrome", "msedge", "chrome-beta", "msedge-beta", "msedge-dev"], case_sensitive=False),
+              default='msedge',
+              help='选填。浏览器类型，默认使用稳定版EDGE，可选[chrome/msedge]，如需使用Firefox或WebKit请自行修改run函数。')
+def main(urls, num, grab, download, login, type, browser):
     """
     命令行
     """
@@ -400,15 +406,15 @@ def main(urls, num, grab, download, login, type):
                 lines = f.readlines()
             if lines:
                 for line in lines:
-                    start(line, num, grab, download, login, type)
+                    start(line, num, grab, download, login, type, browser)
             else:
                 logger.error(f'[{url}]中没有发现目标URL')
         else:
-            start(url, num, grab, download, login, type)
+            start(url, num, grab, download, login, type, browser)
 
 
-def start(url, num, grab, download, login, type):
-    a = Douyin(url, num, login, type)
+def start(url, num, grab, download, login, type, browser):
+    a = Douyin(url, num, login, type, browser)
     if not download:  # 需要新采集
         a.run()
     if not grab:  # 需要下载

@@ -2,7 +2,7 @@
 
 > [开源不易，若能帮助到您，可以请作者喝杯咖啡](#请作者喝杯咖啡)
 
-`playwright`爬虫（基于EDGE浏览器） + `Aria2`下载
+`playwright`爬虫（基于EDGE/Chrome浏览器） + `Aria2`下载
 
 根据抖音各种链接采集信息并下载。
 
@@ -52,6 +52,9 @@ Options:
   -t, --type [post|like|music|search|follow|fans|collection]
                                   选填。采集类型，支持[作品/喜欢/音乐/搜索/关注/粉丝/合集]，默认采集post作品，
                                   能够自动识别搜索/音乐/合集。采集账号主页作品或私密账号喜欢作品必须登录。
+  -b, --browser [chrome|msedge|chrome-beta|msedge-beta|msedge-dev]
+                                  选填。浏览器类型，默认使用稳定版EDGE，可选[chrome/msedge]，如需使用F
+                                  irefox或WebKit请自行修改run函数。
   --help                          Show this message and exit.
 ```
 
@@ -99,6 +102,9 @@ douyin.exe -u ./user.txt
 
 # 指定不登录采集目标地址
 douyin.exe -l -u https://*/ 
+
+# 指定使用chrome采集
+douyin.exe -b chrome -u https://*/ 
 ```
 
 
