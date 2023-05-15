@@ -194,7 +194,7 @@ class Douyin(object):
                 if self.num > 0 and self.type == 'post':  # 限制数量采集作品时，从新到旧排序（此需求一般用来采集最新作品）
                     self.results.sort(key=lambda i: i['id'], reverse=True)
                 json.dump(self.results, f, ensure_ascii=False)  # 中文不用Unicode编码
-            if self.type in ['post', 'like', 'music', 'search']:  # 视频列表保存为Aria下载文件
+            if self.type in ['post', 'like', 'music', 'search', 'collection']:  # 视频列表保存为Aria下载文件
                 with open(self.aria2_conf, 'w', encoding='utf-8') as f:
                     _ = []
                     for line in self.results:
@@ -300,22 +300,36 @@ class Douyin(object):
         self.hookURL = re.compile(hookURL, re.S)
 
     def page_options(self):
-        self.get_down_path()
-        if self.type == 'post':  # post页面需提取初始页面数据
-            render_data = json.loads(unquote(self.page.locator('id=RENDER_DATA').inner_text()))
-            self._append_awemes(render_data['41']['post']['data'])
-        elif self.type in ['like', 'search', 'collection']:  # 无需操作
-            pass
+        # self.get_down_path()
+        render_data = json.loads(unquote(self.page.locator('id=RENDER_DATA').inner_text()))
+        if self.type in ['post', 'like', 'follow', 'fans']:  # post页面需提取初始页面数据
+            self.title = render_data['41']['user']['user']['nickname']
+            self.info = render_data['41']['user']  # 备用
+            if self.type == 'post':  # post页面需提取初始页面数据
+                self._append_awemes(render_data['41']['post']['data'])
+            elif self.type == 'like':
+                pass
+            elif self.type == 'follow':  # 点击关注列表
+                self.page.locator('[data-e2e="user-info-follow"]').click()
+                self.page.locator('[data-e2e="user-fans-container"]').click()
+            elif self.type == 'fans':  # 点击粉丝列表
+                self.page.locator('[data-e2e="user-info-fans"]').click()
+                self.page.locator('[data-e2e="user-fans-container"]').click()
+        elif self.type == 'search':
+            self.title = self.id
+            self.info = render_data['3']['defaultSearchParams']
+            # self.title = render_data['3']['defaultSearchParams']['keyword']
+        elif self.type == 'collection':
+            self.info = render_data['6']['aweme']['detail']['mixInfo']
+            self.title = render_data['6']['aweme']['detail']['mixInfo']['mixName']
         elif self.type == 'music':  # 聚焦滚动列表
+            self.info = render_data['26']['musicDetail']
+            self.title = render_data['26']['musicDetail']['title']
             self.page.locator('[data-e2e="scroll-list"]').last.click()
-        elif self.type == 'follow':  # 点击关注列表
-            self.page.locator('[data-e2e="user-info-follow"]').click()
-            self.page.locator('[data-e2e="user-fans-container"]').click()
-        elif self.type == 'fans':  # 点击粉丝列表
-            self.page.locator('[data-e2e="user-info-fans"]').click()
-            self.page.locator('[data-e2e="user-fans-container"]').click()
         else:  # 备用
             pass
+        self.down_path = os.path.join(self.down_path, self.str2path(f'{self.type}_{self.title}'))
+        self.aria2_conf = f'{self.down_path}.txt'
 
     def get_down_path(self):
         if self.type == 'collection':  # 合集标题
@@ -421,6 +435,30 @@ def start(url, num, grab, download, login, type, browser):
         a.download()
 
 
+def test():
+    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', num=11)  # 作品
+    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4')  # 作品
+    a = Douyin('https://v.douyin.com/ULdJdxS/')  # 作品
+    # a = Douyin('https://v.douyin.com/BK2VMkG/')  # 图集作品
+    # a = Douyin('https://v.douyin.com/BGPBena/', type='music')  # 音乐
+    # a = Douyin('https://v.douyin.com/BGPBena/', num=11)  # 音乐
+    # a = Douyin('https://www.douyin.com/search/%E4%B8%8D%E8%89%AF%E4%BA%BA', 30)  # 搜索
+    # a = Douyin('https://www.douyin.com/search/%E4%B8%8D%E8%89%AF%E4%BA%BA', type='search')  # 搜索
+    # a = Douyin('不良人', num=11)  # 关键字搜索
+    # a = Douyin('不良人', type='search', num=11)  # 关键字搜索
+    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4?showTab=like')  # 长链接+喜欢
+    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='like')  # 长链接+喜欢
+    # a = Douyin('https://v.douyin.com/BGf3Wp6/', type='like')  # 短链接+喜欢+自己的私密账号需登录
+    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='fans')  # 粉丝
+    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='follow')  # 关注
+    # a = Douyin('https://www.douyin.com/collection/7018087406876231711')  # 合集
+    # a = Douyin('https://www.douyin.com/collection/7018087406876231711', type='collect')  # 合集
+    a.run()
+    a.download()
+    # python ./douyin.py -u https://v.douyin.com/BGf3Wp6/ -t like
+    # https://v.douyin.com/AvTAgEn/
+
+
 if __name__ == "__main__":
     banner = '''
   ____                    _         ____        _     _           
@@ -433,23 +471,5 @@ if __name__ == "__main__":
             Github: https://github.com/erma0/douyin
 '''
     print(banner)
-    # a = Douyin('https://m.douyin.com/share/user/MS4wLjABAAAAUe1jo5bYxPJybmnDDMxh2e9A95NAvoNfJiL7JVX5nhQ', num=11)  # 作品
-    # a = Douyin('https://m.douyin.com/share/user/MS4wLjABAAAAUe1jo5bYxPJybmnDDMxh2e9A95NAvoNfJiL7JVX5nhQ')  # 作品
-    # a = Douyin('https://v.douyin.com/BK2VMkG/')  # 图集作品
-    # a = Douyin('https://v.douyin.com/BGPBena/', type='music')  # 音乐
-    # a = Douyin('https://v.douyin.com/BGPBena/', num=11)  # 音乐
-    # a = Douyin('https://www.douyin.com/search/%E4%B8%8D%E8%89%AF%E4%BA%BA')  # 搜索
-    # a = Douyin('https://www.douyin.com/search/%E4%B8%8D%E8%89%AF%E4%BA%BA', type='search')  # 搜索
-    # a = Douyin('不良人', num=11)  # 关键字搜索
-    # a = Douyin('不良人', type='search', num=11)  # 关键字搜索
-    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4?showTab=like')  # 长链接+喜欢
-    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='like')  # 长链接+喜欢
-    # a = Douyin('https://v.douyin.com/BGf3Wp6/', type='like')  # 短链接+喜欢+自己的私密账号需登录
-    # a = Douyin('https://v.douyin.com/BGf3Wp6/', type='fans')  # 粉丝
-    # a = Douyin('https://v.douyin.com/BGf3Wp6/', type='follow')  # 关注
-    # a = Douyin('https://www.douyin.com/collection/7018087406876231711', type='collect')  # 合集
-    # a.run()
-    # a.download()
-    # python ./douyin.py -u https://v.douyin.com/BGf3Wp6/ -t like
     main()
-    # https://v.douyin.com/AvTAgEn/
+    # test()

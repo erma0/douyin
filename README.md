@@ -111,18 +111,30 @@ douyin.exe -b chrome -u https://*/
 ---
 
 ## 编译
-先安装pyinstaller
+先安装依赖
+```
+pip install -r .\requirements.txt
+```
+安装pyinstaller
 ```
 pip install pyinstaller
 ```
+然后重新设置浏览器环境
+```
+$env:PLAYWRIGHT_BROWSERS_PATH="0"
+playwright install msedge
+```
+或者选用Chrome
+```
+$env:PLAYWRIGHT_BROWSERS_PATH="0"
+playwright install chromium
+```
+
 然后直接打包EXE，图标可自行更换
 ```
 pyinstaller -F .\douyin.py -i .\ico.ico 
 ```
-需要upx压缩大小时，在后面加上upx所在路径
-```
-pyinstaller -F .\douyin.py -i .\ico.ico --upx-dir "./"
-```
+不能upx压缩，否则playwright无法启动
 
 ## 请作者喝杯咖啡
 

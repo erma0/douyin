@@ -138,3 +138,4 @@ cython_debug/
 
 下载/
 .vscode/
+auth.json
