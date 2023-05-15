@@ -1,0 +1,175 @@
+{
+    "1": {
+        "theme": "dark",
+        "pathname": "/search/%E4%B8%8D%E8%89%AF%E4%BA%BA",
+        "isSpider": false,
+        "isClient": false,
+        "client_version": "",
+        "osInfo": {
+            "os": "Windows",
+            "version": "Win10",
+            "isMas": false
+        },
+        "tccConfig": {
+            "pageGrayscale": {
+                "mode": "",
+                "blockList": {
+                    "all": [],
+                    "part": []
+                }
+            },
+            "searchActivity": {
+                "isActive": false,
+                "activityName": "fifaSearch",
+                "activityTab": "general",
+                "backgroundImageLight": "https://lf3-static.bytednsdoc.com/obj/eden-cn/5230eh7nuvsbfplt/light_page_bg3.png",
+                "backgroundImageDark": "https://lf3-static.bytednsdoc.com/obj/eden-cn/5230eh7nuvsbfplt/dark_page_bg3.png"
+            },
+            "searchPanelGrayscale": {
+                "grayscale": false
+            }
+        },
+        "webIdRegisterTime": 1683026681,
+        "odin": {
+            "user_id": "3925690556091088",
+            "user_type": 12,
+            "user_is_auth": 0,
+            "user_unique_id": "7228544435205883444"
+        },
+        "user": {
+            "isSpider": false,
+            "isLogin": false,
+            "statusCode": 8
+        },
+        "defaultSearchParams": {
+            "keyword": "不良人",
+            "inited": true,
+            "tabIndex": 0,
+            "tab": "general",
+            "tabs": [
+                {
+                    "filterIndex": [
+                        0,
+                        0
+                    ],
+                    "showFilter": false,
+                    "correctType": "1",
+                    "listType": "single",
+                    "guideSearchIndex": 0
+                },
+                {
+                    "filterIndex": [
+                        0,
+                        0
+                    ],
+                    "showFilter": false,
+                    "correctType": "1",
+                    "listType": "multi",
+                    "guideSearchIndex": 0
+                },
+                {
+                    "filterIndex": [],
+                    "showFilter": false,
+                    "correctType": "1",
+                    "listType": "multi",
+                    "guideSearchIndex": 0
+                },
+                {
+                    "filterIndex": [],
+                    "showFilter": false,
+                    "correctType": "1",
+                    "listType": "single",
+                    "guideSearchIndex": 0
+                }
+            ],
+            "anti_id": "",
+            "from_group_id": "",
+            "source": "normal_search",
+            "changeReason": "init",
+            "urlTransParams": {}
+        },
+        "envService": "prod",
+        "queryInfo": {},
+        "abTestData": {
+            "searchPageSSR": 0,
+            "searchLayout": 0,
+            "mixEntrance": 0,
+            "clarityGuide": 0,
+            "errorBoundaryOpt": 1,
+            "newSilent": 2,
+            "updateNodeSdk": -1,
+            "loginPanelStyle": 0,
+            "bottomWordOpt": 0,
+            "roomEnterUserLogin": 0,
+            "noDisturbV2": 0,
+            "vsLivePush": 1,
+            "fullMiniWindow": 0,
+            "pcClusterGrayscale": 0,
+            "liveHomePlayerPrecreate": 0,
+            "liveCategoryNavigate": 1,
+            "zhuantiSidebar": 0,
+            "chapterList": 1,
+            "suspendCondition": {
+                "open": false
+            },
+            "slowerCPULazy": {},
+            "fasterCPULazy": {},
+            "liveLike": 0,
+            "showCommentSearchHighlight": 1
+        },
+        "pageRenderMode": "csr",
+        "linkList": [],
+        "tceCluster": "default"
+    },
+    "3": {
+        "defaultSearchParams": {
+            "keyword": "不良人",
+            "inited": true,
+            "tabIndex": 0,
+            "tab": "general",
+            "tabs": [
+                {
+                    "filterIndex": [
+                        0,
+                        0
+                    ],
+                    "showFilter": false,
+                    "correctType": "1",
+                    "listType": "multi",
+                    "guideSearchIndex": 0
+                },
+                {
+                    "filterIndex": [
+                        0,
+                        0
+                    ],
+                    "showFilter": false,
+                    "correctType": "1",
+                    "listType": "multi",
+                    "guideSearchIndex": 0
+                },
+                {
+                    "filterIndex": [],
+                    "showFilter": false,
+                    "correctType": "1",
+                    "listType": "multi",
+                    "guideSearchIndex": 0
+                },
+                {
+                    "filterIndex": [],
+                    "showFilter": false,
+                    "correctType": "1",
+                    "listType": "single",
+                    "guideSearchIndex": 0
+                }
+            ],
+            "anti_id": "",
+            "from_group_id": "",
+            "source": "normal_search",
+            "changeReason": "init",
+            "urlTransParams": {}
+        }
+    },
+    "_location": "/search/%E4%B8%8D%E8%89%AF%E4%BA%BA",
+    "app": []
+}
