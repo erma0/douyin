@@ -36,6 +36,7 @@ class Douyin(object):
         self.pageDown = 0
         self.pageDownMax = 5  # 重试次数
         self.results = []  # 保存结果
+        self.results_old = []  # 前一次保存结果
 
     @staticmethod
     def str2path(str: str):
@@ -66,8 +67,14 @@ class Douyin(object):
         """
         取302跳转地址
         """
-        r = self.context.request.head(url)
-        return r.url
+
+        # a = self.context.request.head(url)
+        r = self.context.new_page()
+        r.route("**/*", lambda route: route.abort() if route.request.resource_type != "document" else route.continue_())
+        r.goto(url, wait_until='domcontentloaded')
+        url = r.url
+        r.close()
+        return url
 
     @staticmethod
     def filter_emoji(desstr, restr=''):
@@ -126,6 +133,16 @@ class Douyin(object):
                     logger.info(f'已达到限制采集数量：{len(self.results)}')
                     return
                 # =====下载视频=====
+                _time = item.get('create_time', item.get('createTime'))
+                _is_top = item.get('is_top', item.get('tag', {}).get('isTop'))
+                if self.results_old:
+                    old = self.results_old[0]['time']
+                    if _time <= old:  # 如果当前作品时间早于上次采集的最新作品时间，且不是置顶作品，直接退出
+                        if _is_top:
+                            continue
+                        self.has_more = False
+                        logger.info(f'已采集到上次结果：{old}')
+                        return
                 _type = item.get('aweme_type', item.get('awemeType'))
                 info = item.get('statistics', item.get('stats', {}))
                 for i in [
@@ -153,6 +170,7 @@ class Douyin(object):
                         json.dump(item, f, ensure_ascii=False)  # 中文不用Unicode编码
                     continue
                 info['id'] = item.get('aweme_id', item.get('awemeId'))
+                info['time'] = _time
                 desc = self.str2path(item.get('desc'))
                 info['desc'] = desc
                 music = item.get('music')
@@ -189,15 +207,11 @@ class Douyin(object):
 
     def save(self):
         if self.results:
-            logger.success(f'采集完成，共采集到{len(self.results)}条结果')
-            with open(f'{self.down_path}.json', 'w', encoding='utf-8') as f:  # 保存数据到文件
-                if self.num > 0 and self.type == 'post':  # 限制数量采集作品时，从新到旧排序（此需求一般用来采集最新作品）
-                    self.results.sort(key=lambda i: i['id'], reverse=True)
-                json.dump(self.results, f, ensure_ascii=False)  # 中文不用Unicode编码
+            logger.success(f'采集完成，本次共采集到{len(self.results)}条结果')
             if self.type in ['post', 'like', 'music', 'search', 'collection']:  # 视频列表保存为Aria下载文件
                 with open(self.aria2_conf, 'w', encoding='utf-8') as f:
                     _ = []
-                    for line in self.results:
+                    for line in self.results:  # 只保存本次采集结果的下载配置
                         filename = f'{line["id"]}_{line["desc"]}'
                         if isinstance(line["download_addr"], list):
                             down_path = os.path.join(self.down_path, filename)
@@ -210,8 +224,12 @@ class Douyin(object):
                         else:
                             logger.error("下载地址错误")
                     f.writelines(_)
+            with open(f'{self.down_path}.json', 'w', encoding='utf-8') as f:  # 保存所有数据到文件，包括旧数据
+                self.results.sort(key=lambda item: item['id'], reverse=True)
+                self.results.extend(self.results_old)
+                json.dump(self.results, f, ensure_ascii=False)
         else:
-            logger.error("采集结果为空")
+            logger.error("本次采集结果为空")
 
     def handle(self, route: Route):
         if self.has_more:
@@ -244,11 +262,11 @@ class Douyin(object):
                     self._append_awemes(info)
                 else:
                     info = resj.get('aweme_list')
-                    self._append_awemes(info)
             except Exception as err:
                 logger.error(f'err：  {err}')
                 with open('error.json', 'w', encoding='utf-8') as f:  # 保存未区分的类型
                     json.dump(response.json(), f, ensure_ascii=False)  # 中文不用Unicode编码
+            self._append_awemes(info)
         route.fulfill(response=response)
 
     def anti_js(self):
@@ -276,13 +294,13 @@ class Douyin(object):
             self.url = f'https://www.douyin.com/search/{quote(self.url)}'
         *_, _type, self.id = unquote(urlparse(self.url).path.strip('/')).split('/')
         hookURL = '/aweme/v[123]/web/'
-        if _type == 'search':  # 自动识别 搜索 音乐 合集
+        if _type == 'search':  # 自动识别 搜索
             self.type = 'search'
             hookURL += 'general/search'
-        elif _type == 'music':
+        elif _type == 'music':  # 自动识别 音乐
             self.type = 'music'
             hookURL += 'music'
-        elif _type == 'collection':
+        elif _type == 'collection':  # 自动识别 合集
             self.type = 'collection'
             hookURL += 'mix/aweme'
         elif self.type == 'post':
@@ -300,16 +318,12 @@ class Douyin(object):
         self.hookURL = re.compile(hookURL, re.S)
 
     def page_options(self):
-        # self.get_down_path()
         render_data = json.loads(unquote(self.page.locator('id=RENDER_DATA').inner_text()))
-        if self.type in ['post', 'like', 'follow', 'fans']:  # post页面需提取初始页面数据
-            self.title = render_data['41']['user']['user']['nickname']
-            self.info = render_data['41']['user']  # 备用
-            if self.type == 'post':  # post页面需提取初始页面数据
-                self._append_awemes(render_data['41']['post']['data'])
-            elif self.type == 'like':
-                pass
-            elif self.type == 'follow':  # 点击关注列表
+        info = render_data[sorted(render_data.keys())[1]]
+        if self.type in ['post', 'like', 'follow', 'fans']:
+            self.info = info['user']  # 备用
+            self.title = self.info['user']['nickname']
+            if self.type == 'follow':  # 点击关注列表
                 self.page.locator('[data-e2e="user-info-follow"]').click()
                 self.page.locator('[data-e2e="user-fans-container"]').click()
             elif self.type == 'fans':  # 点击粉丝列表
@@ -317,29 +331,29 @@ class Douyin(object):
                 self.page.locator('[data-e2e="user-fans-container"]').click()
         elif self.type == 'search':
             self.title = self.id
-            self.info = render_data['3']['defaultSearchParams']
-            # self.title = render_data['3']['defaultSearchParams']['keyword']
+            self.info = info['defaultSearchParams']
+            # self.title = self.info['keyword']
         elif self.type == 'collection':
-            self.info = render_data['6']['aweme']['detail']['mixInfo']
-            self.title = render_data['6']['aweme']['detail']['mixInfo']['mixName']
+            self.info = info['aweme']['detail']['mixInfo']
+            self.title = self.info['mixName']
         elif self.type == 'music':  # 聚焦滚动列表
-            self.info = render_data['26']['musicDetail']
-            self.title = render_data['26']['musicDetail']['title']
+            self.info = info['musicDetail']
+            self.title = self.info['title']
             self.page.locator('[data-e2e="scroll-list"]').last.click()
         else:  # 备用
             pass
-        self.down_path = os.path.join(self.down_path, self.str2path(f'{self.type}_{self.title}'))
-        self.aria2_conf = f'{self.down_path}.txt'
 
-    def get_down_path(self):
-        if self.type == 'collection':  # 合集标题
-            self.title = self.page.locator('[data-e2e="cover-age-title-container"]>h2').first.inner_text()
-        elif self.type == 'search':  # 搜索标题
-            self.title = self.id
-        else:  # 其他标题
-            self.title = self.page.title().split('-')[0].strip()
         self.down_path = os.path.join(self.down_path, self.str2path(f'{self.type}_{self.title}'))
         self.aria2_conf = f'{self.down_path}.txt'
+        if os.path.exists(f'{self.down_path}.json'):
+            with open(f'{self.down_path}.json', 'r', encoding='utf-8') as f:
+                self.results_old = json.load(f)
+
+        if self.type == 'post':  # post页面需提取初始页面数据，先得到下载目录后再提取
+            render_data_ls = info['post']['data']
+            # 从新到旧排序,无视置顶作品（此需求一般用来采集最新作品）
+            render_data_ls.sort(key=lambda item: item.get('aweme_id', item.get('awemeId')), reverse=True)
+            self._append_awemes(render_data_ls)
 
     def page_next(self):
         if self.type != 'collection':
@@ -454,7 +468,7 @@ def test():
     # a = Douyin('https://www.douyin.com/collection/7018087406876231711')  # 合集
     # a = Douyin('https://www.douyin.com/collection/7018087406876231711', type='collect')  # 合集
     a.run()
-    a.download()
+    # a.download()
     # python ./douyin.py -u https://v.douyin.com/BGf3Wp6/ -t like
     # https://v.douyin.com/AvTAgEn/
 

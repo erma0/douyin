@@ -16,17 +16,23 @@
 
 支持输入文件路径批量操作（同一类型，一行一个目标地址）
 
+支持增量采集
+
+## 项目地址
+---
+[https://github.com/erma0/douyin](https://github.com/erma0/douyin)
+
 ## 声明
 ---
 > 此程序为学习playwright爬虫及Python中调用Aria2的案例，仅供参考，请勿用于非法用途。
 
-测试环境：`Win10/11 x64` + `Python3.9/11`
+测试环境：`Win10/11 x64` + `Python3.8/11`
 
 **功能未全部测试，有问题请提交issue，也可加Q群`738029092`反馈**
 
 
 ## 使用
-
+---
 1. 只需下载 [releases](https://github.com/erma0/douyin/releases) 或 `dist`目录中的两个文件
 ```
 douyin.exe
@@ -108,9 +114,9 @@ douyin.exe -b chrome -u https://*/
 ```
 
 
----
 
 ## 编译
+---
 先安装依赖
 ```
 pip install -r .\requirements.txt
@@ -136,7 +142,9 @@ pyinstaller -F .\douyin.py -i .\ico.ico
 ```
 不能upx压缩，否则playwright无法启动
 
+
 ## 请作者喝杯咖啡
+---
 
 ![支付宝微信收款][1]
 
