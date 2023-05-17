@@ -19,11 +19,9 @@
 支持增量采集
 
 ## 项目地址
----
 [https://github.com/erma0/douyin](https://github.com/erma0/douyin)
 
 ## 声明
----
 > 此程序为学习playwright爬虫及Python中调用Aria2的案例，仅供参考，请勿用于非法用途。
 
 测试环境：`Win10/11 x64` + `Python3.8/11`
@@ -32,7 +30,6 @@
 
 
 ## 使用
----
 1. 只需下载 [releases](https://github.com/erma0/douyin/releases) 或 `dist`目录中的两个文件
 ```
 douyin.exe
@@ -113,34 +110,31 @@ douyin.exe -l -u https://*/
 douyin.exe -b chrome -u https://*/ 
 ```
 
-
-
 ## 编译
----
-先安装依赖
+
+1. 安装依赖
 ```
 pip install -r .\requirements.txt
 ```
-安装pyinstaller
+2. 安装pyinstaller
 ```
 pip install pyinstaller
 ```
-然后重新设置浏览器环境
+3. 设置环境变量（powershell）
 ```
 $env:PLAYWRIGHT_BROWSERS_PATH="0"
+```
+4. 选用msedge或者Chrome
+```
 playwright install msedge
-```
-或者选用Chrome
-```
-$env:PLAYWRIGHT_BROWSERS_PATH="0"
 playwright install chromium
 ```
-
-然后直接打包EXE，图标可自行更换
+5. 打包EXE，图标可自行更换
 ```
 pyinstaller -F .\douyin.py -i .\ico.ico 
 ```
-不能upx压缩，否则playwright无法启动
+
+**不能upx压缩，否则playwright无法启动**
 
 
 ## 请作者喝杯咖啡
