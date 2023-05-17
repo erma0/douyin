@@ -141,7 +141,7 @@ class Douyin(object):
                         if _is_top:
                             continue
                         self.has_more = False
-                        logger.info(f'已采集到上次结果：{old}')
+                        logger.success(f'增量采集完成，上次运行结果：{old}')
                         return
                 _type = item.get('aweme_type', item.get('awemeType'))
                 info = item.get('statistics', item.get('stats', {}))
@@ -199,7 +199,7 @@ class Douyin(object):
 
         if os.path.exists(self.aria2_conf):
             logger.info('开始下载')
-            command = f"aria2c.exe -c --console-log-level warn -d {self.down_path} -i {self.aria2_conf}"
+            command = f"aria2c -c --console-log-level warn -d {self.down_path} -i {self.aria2_conf}"
             os.system(command)  # system有输出，阻塞
             # os.popen(command)  # popen无输出，不阻塞
         else:

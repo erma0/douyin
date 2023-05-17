@@ -30,18 +30,20 @@
 
 
 ## 使用
-1. 只需下载 [releases](https://github.com/erma0/douyin/releases) 或 `dist`目录中的两个文件
+1. Windows只需下载 [releases](https://github.com/erma0/douyin/releases) 或 `dist`目录中的两个文件
 ```
 douyin.exe
 aria2c.exe
 ```
-2. 在程序所在目录打开命令行输入命令，或者直接双击打开douyin.exe后根据提示输入目标地址
+Linux或macOS请从[官方地址下载对应的Aria2](https://github.com/aria2/aria2/releases)，然后运行源码或自行编译
+
+2. 在程序所在目录打开命令行输入命令，或者Windows系统可以直接双击打开douyin.exe后根据提示输入目标地址
 
 - 使用帮助
 
 ```
-PS > .\douyin.exe --help
-Usage: douyin.exe [OPTIONS]
+PS > ./douyin --help
+Usage: douyin [OPTIONS]
 
   命令行
 
@@ -64,50 +66,50 @@ Options:
 - 使用例子（在程序所在目录打开命令行）
 ```
 # 采集目标地址（主页）的全部作品（私密账号需登录本账号）
-douyin.exe -u https://*/ 
-douyin.exe -t post -u https://*/ 
+./douyin -u https://*/ 
+./douyin -t post -u https://*/ 
 
 # 采集目标地址（喜欢）的全部作品（私密账号需登录本账号）
-douyin.exe -t like -u https://*/ 
+./douyin -t like -u https://*/ 
 
 # 采集目标地址（音乐）的全部作品
-douyin.exe -u https://*/ 
-douyin.exe -t music -u https://*/ 
+./douyin -u https://*/ 
+./douyin -t music -u https://*/ 
 
 # 采集目标地址（搜索）的全部作品
-douyin.exe -u https://*/ 
-douyin.exe -t search -u https://*/ 
+./douyin -u https://*/ 
+./douyin -t search -u https://*/ 
 
 # 采集目标地址（合集）的全部作品
-douyin.exe -u https://*/ 
-douyin.exe -t collect -u https://*/ 
+./douyin -u https://*/ 
+./douyin -t collect -u https://*/ 
 
 # 采集目标地址（关注）的全部信息
-douyin.exe -t follow -u https://*/ 
+./douyin -t follow -u https://*/ 
 
 # 采集目标地址（粉丝）的全部信息
-douyin.exe -t fans -u https://*/ 
+./douyin -t fans -u https://*/ 
 
 # 只采集目标信息，不下载
-douyin.exe -g -u https://*/ 
+./douyin -g -u https://*/ 
 
 # 直接下载采集过的目标地址（用于采集时下载出现报错的情况）
-douyin.exe -d -u https://*/ 
+./douyin -d -u https://*/ 
 
 # 限制数量采集，只采集目标地址的5条结果
-douyin.exe -n 5 -u https://*/ 
+./douyin -n 5 -u https://*/ 
 
 # 采集多个目标地址
-douyin.exe -u https://*1/ -u https://*2/ 
+./douyin -u https://*1/ -u https://*2/ 
 
 # 采集文件[user.txt]中的多个目标地址
-douyin.exe -u ./user.txt
+./douyin -u ./user.txt
 
 # 指定不登录采集目标地址
-douyin.exe -l -u https://*/ 
+./douyin -l -u https://*/ 
 
 # 指定使用chrome采集
-douyin.exe -b chrome -u https://*/ 
+./douyin -b chrome -u https://*/ 
 ```
 
 ## 编译
@@ -124,14 +126,14 @@ pip install pyinstaller
 ```
 $env:PLAYWRIGHT_BROWSERS_PATH="0"
 ```
-4. 选用msedge或者Chrome
+4. 安装Edge或者Chrome
 ```
 playwright install msedge
 playwright install chromium
 ```
 5. 打包EXE，图标可自行更换
 ```
-pyinstaller -F .\douyin.py -i .\ico.ico 
+pyinstaller -F ./douyin.py -i ./ico.ico 
 ```
 
 **不能upx压缩，否则playwright无法启动**
