@@ -16,7 +16,7 @@
 
 支持输入文件路径批量操作（同一类型，一行一个目标地址）
 
-支持增量采集
+账号主页作品支持增量采集
 
 ## 项目地址
 [https://github.com/erma0/douyin](https://github.com/erma0/douyin)

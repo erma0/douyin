@@ -86,12 +86,13 @@ class Douyin(object):
         return res.sub(restr, desstr)
 
     def _append_users(self, user_list: List[dict]):
+        if not user_list:
+            logger.error("本次请求结果为空")
+            return
         if self.num < 0 or len(self.results) < self.num:
             for item in user_list:
                 if self.num > 0 and len(self.results) >= self.num:
                     self.has_more = False
-                    # 如果给出了限制采集数目，直接退出循环
-                    # self.videosL = self.videosL[:self.limit + self.over_num]  # 超出的删除
                     logger.info(f'已达到限制采集数量：{len(self.results)}')
                     return
                 info = {}
@@ -117,19 +118,22 @@ class Douyin(object):
                     info['original_musician'] = item['original_musician']
 
                 self.results.append(info)  # 用于保存信息
-
             logger.info(f'采集中，已采集到{len(self.results)}条结果')
+        else:
+            self.has_more = False
+            logger.info(f'已达到限制采集数量：{len(self.results)}')
 
     def _append_awemes(self, aweme_list: List[dict]):
         """
         数据入库
         """
+        if not aweme_list:
+            logger.error("本次请求结果为空")
+            return
         if self.num < 0 or len(self.results) < self.num:
             for item in aweme_list:
                 if self.num > 0 and len(self.results) >= self.num:
                     self.has_more = False
-                    # 如果给出了限制采集数目，直接退出循环
-                    # self.videosL = self.videosL[:self.limit + self.over_num]  # 超出的删除
                     logger.info(f'已达到限制采集数量：{len(self.results)}')
                     return
                 # =====下载视频=====
@@ -189,8 +193,10 @@ class Douyin(object):
                         'tag_name': hashtag.get('hashtag_name', hashtag.get('hashtagName'))
                     } for hashtag in tags]
                 self.results.append(info)  # 用于保存信息
-
             logger.info(f'采集中，已采集到{len(self.results)}条结果')
+        else:
+            self.has_more = False
+            logger.info(f'已达到限制采集数量：{len(self.results)}')
 
     def download(self):
         """
@@ -225,8 +231,9 @@ class Douyin(object):
                             logger.error("下载地址错误")
                     f.writelines(_)
             with open(f'{self.down_path}.json', 'w', encoding='utf-8') as f:  # 保存所有数据到文件，包括旧数据
-                self.results.sort(key=lambda item: item['id'], reverse=True)
-                self.results.extend(self.results_old)
+                if type == 'post':  # 除主页作品外都不需要按时间排序
+                    self.results.sort(key=lambda item: item['id'], reverse=True)
+                    self.results.extend(self.results_old)
                 json.dump(self.results, f, ensure_ascii=False)
         else:
             logger.error("本次采集结果为空")
@@ -262,11 +269,11 @@ class Douyin(object):
                     self._append_awemes(info)
                 else:
                     info = resj.get('aweme_list')
+                    self._append_awemes(info)
             except Exception as err:
                 logger.error(f'err：  {err}')
                 with open('error.json', 'w', encoding='utf-8') as f:  # 保存未区分的类型
                     json.dump(response.json(), f, ensure_ascii=False)  # 中文不用Unicode编码
-            self._append_awemes(info)
         route.fulfill(response=response)
 
     def anti_js(self):
@@ -345,21 +352,20 @@ class Douyin(object):
 
         self.down_path = os.path.join(self.down_path, self.str2path(f'{self.type}_{self.title}'))
         self.aria2_conf = f'{self.down_path}.txt'
-        if os.path.exists(f'{self.down_path}.json'):
+        if self.type == 'post' and os.path.exists(f'{self.down_path}.json'):  # 主页作品可以增量采集，其他类型难以实现
             with open(f'{self.down_path}.json', 'r', encoding='utf-8') as f:
                 self.results_old = json.load(f)
-
         if self.type == 'post':  # post页面需提取初始页面数据，先得到下载目录后再提取
             render_data_ls = info['post']['data']
             # 从新到旧排序,无视置顶作品（此需求一般用来采集最新作品）
             render_data_ls.sort(key=lambda item: item.get('aweme_id', item.get('awemeId')), reverse=True)
             self._append_awemes(render_data_ls)
 
-    def page_next(self):
-        if self.type != 'collection':
-            self.page.keyboard.press('End')  # 加载数据
-        else:
+    def page_next(self):  # 加载数据
+        if self.type == 'collection':
             self.page.get_by_role("button", name="点击加载更多").click()
+        else:
+            self.page.keyboard.press('End')
         # logger.info("加载中")
 
     def run(self):
@@ -445,14 +451,16 @@ def start(url, num, grab, download, login, type, browser):
     a = Douyin(url, num, login, type, browser)
     if not download:  # 需要新采集
         a.run()
-    if not grab:  # 需要下载
+    if grab or type in ['follow', 'fans']:  # 不需要下载
+        return
+    else:
         a.download()
 
 
 def test():
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', num=11)  # 作品
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4')  # 作品
-    a = Douyin('https://v.douyin.com/ULdJdxS/')  # 作品
+    # a = Douyin('https://v.douyin.com/ULdJdxS/')  # 作品
     # a = Douyin('https://v.douyin.com/BK2VMkG/')  # 图集作品
     # a = Douyin('https://v.douyin.com/BGPBena/', type='music')  # 音乐
     # a = Douyin('https://v.douyin.com/BGPBena/', num=11)  # 音乐
@@ -464,7 +472,7 @@ def test():
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='like')  # 长链接+喜欢
     # a = Douyin('https://v.douyin.com/BGf3Wp6/', type='like')  # 短链接+喜欢+自己的私密账号需登录
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='fans')  # 粉丝
-    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='follow')  # 关注
+    a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='follow')  # 关注
     # a = Douyin('https://www.douyin.com/collection/7018087406876231711')  # 合集
     # a = Douyin('https://www.douyin.com/collection/7018087406876231711', type='collect')  # 合集
     a.run()
@@ -475,14 +483,14 @@ def test():
 
 if __name__ == "__main__":
     banner = '''
-  ____                    _         ____        _     _           
- |  _ \  ___  _   _ _   _(_)_ __   / ___| _ __ (_) __| | ___ _ __ 
- | | | |/ _ \| | | | | | | | '_ \  \___ \| '_ \| |/ _` |/ _ \ '__|
- | |_| | (_) | |_| | |_| | | | | |  ___) | |_) | | (_| |  __/ |   
- |____/ \___/ \__,_|\__, |_|_| |_| |____/| .__/|_|\__,_|\___|_|   
-                    |___/                |_|                      
-
-            Github: https://github.com/erma0/douyin
+     ____                    _         ____        _     _           
+    |  _ \  ___  _   _ _   _(_)_ __   / ___| _ __ (_) __| | ___ _ __ 
+    | | | |/ _ \| | | | | | | | '_ \  \___ \| '_ \| |/ _` |/ _ \ '__|
+    | |_| | (_) | |_| | |_| | | | | |  ___) | |_) | | (_| |  __/ |   
+    |____/ \___/ \__,_|\__, |_|_| |_| |____/| .__/|_|\__,_|\___|_|   
+                        |___/                |_|                      
+                                  V3.1.3
+                  Github: https://github.com/erma0/douyin
 '''
     print(banner)
     main()
