@@ -23,7 +23,7 @@ class Douyin(object):
     def __init__(self, url: str, num: int = -1, need_login: bool = True, type: str = 'post', channel: str = 'msedge'):
         """
         初始化
-        type=['post', 'like', 'music', 'search', 'follow', 'fans', 'collection']
+        type=['post', 'like', 'music', 'search', 'follow', 'fans', 'collection', 'video']
         """
         self.url = url.strip()
         self.num = num
@@ -214,13 +214,14 @@ class Douyin(object):
     def save(self):
         if self.results:
             logger.success(f'采集完成，本次共采集到{len(self.results)}条结果')
-            if self.type in ['post', 'like', 'music', 'search', 'collection']:  # 视频列表保存为Aria下载文件
+            if self.type in ['post', 'like', 'music', 'search', 'collection', 'video']:  # 视频列表保存为Aria下载文件
                 with open(self.aria2_conf, 'w', encoding='utf-8') as f:
                     _ = []
                     for line in self.results:  # 只保存本次采集结果的下载配置
                         filename = f'{line["id"]}_{line["desc"]}'
                         if isinstance(line["download_addr"], list):
-                            down_path = os.path.join(self.down_path, filename)
+                            down_path = self.down_path.replace(line["id"], filename) if self.type == 'video' else os.path.join(
+                                self.down_path, filename)
                             [
                                 _.append(f'{addr}\n\tdir={down_path}\n\tout={line["id"]}_{index + 1}.jpeg\n')
                                 for index, addr in enumerate(line["download_addr"])
@@ -231,7 +232,7 @@ class Douyin(object):
                             logger.error("下载地址错误")
                     f.writelines(_)
             with open(f'{self.down_path}.json', 'w', encoding='utf-8') as f:  # 保存所有数据到文件，包括旧数据
-                if type == 'post':  # 除主页作品外都不需要按时间排序
+                if self.type == 'post':  # 除主页作品外都不需要按时间排序
                     self.results.sort(key=lambda item: item['id'], reverse=True)
                     self.results.extend(self.results_old)
                 json.dump(self.results, f, ensure_ascii=False)
@@ -297,10 +298,15 @@ class Douyin(object):
         if urlparse(self.url).netloc.endswith('douyin.com'):  # 链接
             if self.url.endswith('?showTab=like'): self.type = 'like'
             self.url = self.url2redirect(self.url)
-        else:  # 关键字
+        elif self.url.isdigit():  # 数字ID，作品
+            self.url = f'https://www.douyin.com/video/{self.url}'
+        else:  # 关键字，搜索
             self.url = f'https://www.douyin.com/search/{quote(self.url)}'
         *_, _type, self.id = unquote(urlparse(self.url).path.strip('/')).split('/')
         hookURL = '/aweme/v[123]/web/'
+        if _type in ['video', 'note']:  # 自动识别 单个作品 video
+            self.type = 'video'
+            hookURL = '单个作品无需hookURL'
         if _type == 'search':  # 自动识别 搜索
             self.type = 'search'
             hookURL += 'general/search'
@@ -347,19 +353,26 @@ class Douyin(object):
             self.info = info['musicDetail']
             self.title = self.info['title']
             self.page.locator('[data-e2e="scroll-list"]').last.click()
+        elif self.type == 'video':
+            self.title = self.id
+            # self.title = '单个作品'
         else:  # 备用
             pass
 
         self.down_path = os.path.join(self.down_path, self.str2path(f'{self.type}_{self.title}'))
         self.aria2_conf = f'{self.down_path}.txt'
-        if self.type == 'post' and os.path.exists(f'{self.down_path}.json'):  # 主页作品可以增量采集，其他类型难以实现
-            with open(f'{self.down_path}.json', 'r', encoding='utf-8') as f:
-                self.results_old = json.load(f)
         if self.type == 'post':  # post页面需提取初始页面数据，先得到下载目录后再提取
-            render_data_ls = info['post']['data']
+            if os.path.exists(f'{self.down_path}.json'):  # 主页作品可以增量采集，其他类型难以实现
+                with open(f'{self.down_path}.json', 'r', encoding='utf-8') as f:
+                    self.results_old = json.load(f)
             # 从新到旧排序,无视置顶作品（此需求一般用来采集最新作品）
+            render_data_ls = info['post']['data']
             render_data_ls.sort(key=lambda item: item.get('aweme_id', item.get('awemeId')), reverse=True)
             self._append_awemes(render_data_ls)
+        elif self.type == 'video':  # video页面需提取初始页面数据
+            render_data_ls = [info['aweme']['detail']]
+            self._append_awemes(render_data_ls)
+            self.has_more = False
 
     def page_next(self):  # 加载数据
         if self.type == 'collection':
@@ -419,9 +432,10 @@ class Douyin(object):
 @click.option('-l', '--login', default=True, is_flag=True, help='选填。指定是否需要登录，默认要登录，用于采集主页作品、关注粉丝列表以及本人私密账号的信息，也可避免一些莫名其妙的风控')
 @click.option('-t',
               '--type',
-              type=click.Choice(['post', 'like', 'music', 'search', 'follow', 'fans', 'collection'], case_sensitive=False),
+              type=click.Choice(['post', 'like', 'music', 'search', 'follow', 'fans', 'collection', 'video'],
+                                case_sensitive=False),
               default='post',
-              help='选填。采集类型，支持[作品/喜欢/音乐/搜索/关注/粉丝/合集]，默认采集post作品，能够自动识别搜索/音乐/合集。采集账号主页作品或私密账号喜欢作品必须登录。')
+              help='选填。采集类型，支持[主页作品/喜欢/音乐/搜索/关注/粉丝/合集/单作品]，默认采集post主页作品，能够自动识别搜索/音乐/合集/单作品。采集账号主页作品或私密账号喜欢作品必须登录。')
 @click.option('-b',
               '--browser',
               type=click.Choice(["chrome", "msedge", "chrome-beta", "msedge-beta", "msedge-dev"], case_sensitive=False),
@@ -472,11 +486,13 @@ def test():
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='like')  # 长链接+喜欢
     # a = Douyin('https://v.douyin.com/BGf3Wp6/', type='like')  # 短链接+喜欢+自己的私密账号需登录
     # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='fans')  # 粉丝
-    a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='follow')  # 关注
+    # a = Douyin('https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4', type='follow')  # 关注
     # a = Douyin('https://www.douyin.com/collection/7018087406876231711')  # 合集
     # a = Douyin('https://www.douyin.com/collection/7018087406876231711', type='collect')  # 合集
+    a = Douyin('https://v.douyin.com/UhYnoMS/')  # 单个作品
+    # a = Douyin('7233251303269453089')  # 单个作品 ID图文
     a.run()
-    # a.download()
+    a.download()
     # python ./douyin.py -u https://v.douyin.com/BGf3Wp6/ -t like
     # https://v.douyin.com/AvTAgEn/
 
@@ -489,7 +505,7 @@ if __name__ == "__main__":
     | |_| | (_) | |_| | |_| | | | | |  ___) | |_) | | (_| |  __/ |   
     |____/ \___/ \__,_|\__, |_|_| |_| |____/| .__/|_|\__,_|\___|_|   
                         |___/                |_|                      
-                                  V3.1.3
+                                  V3.1.4
                   Github: https://github.com/erma0/douyin
 '''
     print(banner)
