@@ -1,3 +1,4 @@
 playwright
 loguru
 click
+ujson

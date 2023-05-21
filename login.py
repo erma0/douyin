@@ -1,5 +1,6 @@
-import json
-from playwright.sync_api import Playwright, sync_playwright, BrowserContext
+import ujson as json
+
+from browser import Browser, BrowserContext
 
 
 def save_cookies(context: BrowserContext):
@@ -13,17 +14,16 @@ def save_cookies(context: BrowserContext):
     return cookies
 
 
-def login(playwright: Playwright) -> None:
-    browser = playwright.chromium.launch(channel="msedge", headless=False)
-    page = browser.new_page()
+def login() -> None:
+    edge = Browser(channel="msedge", need_login=False, headless=False)
+    page = edge.context.new_page()
     with page.expect_response("https://www.douyin.com/passport/sso/login/**", timeout=0):
         page.goto("https://sso.douyin.com/", wait_until='domcontentloaded')
     print('登录成功')
     cookies = save_cookies(page.context)
-    browser.close()
+    edge.stop()
     return cookies
 
 
 if __name__ == "__main__":
-    with sync_playwright() as playwright:
-        login(playwright)
+    login()
