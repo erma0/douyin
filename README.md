@@ -13,6 +13,10 @@
 > 如果相关方认为该项目的代码可能涉嫌侵犯其权利，请及时通知删除相关代码。
 ---
 
+## 🏠项目地址
+
+> [https://github.com/erma0/douyin](https://github.com/erma0/douyin)
+
 ## 🍬功能
 
 采集账号主页作品、喜欢作品、音乐原声作品、搜索作品、关注列表、粉丝列表、合集作品、单个作品
@@ -26,12 +30,6 @@ PS.
 - 支持增量采集账号主页作品
 - 支持监控主页最新作品
 
-## 🌳文件结构
-
-## 🏠项目地址
-
-[https://github.com/erma0/douyin](https://github.com/erma0/douyin)
-
 ## ‍🚩待办
 
 > 💡欢迎PR或建议
@@ -39,6 +37,29 @@ PS.
 - [ ] API - FastAPI
 - [ ] WEB UI - AMIS
 - [ ] GUI - Eel
+
+## 🌳文件结构
+
+```ps
+douyin                           
+├─ dist                          # 编译输出目录
+│  ├─ aria2c.exe                    # aria2下载器
+│  ├─ douyin.exe                    # 主程序
+│  └─ monitorStray.exe              # 监控新作品
+├─ results                       # 网页返回数据样板
+├─ browser.py                    # 浏览器启闭
+├─ exec.py                       # 命令行解析
+├─ ico.ico                       # 图标logo
+├─ login.py                      # 登录
+├─ monitor.py                    # 监控-命令行
+├─ monitorStray.py               # 监控-托盘图标
+├─ README.md                     # 项目说明
+├─ requirements.txt              # 依赖库
+├─ spider.py                     # 爬虫核心代码
+└─ test.py                       # 随手测试代码
+```
+
+---
 
 ## 🚀使用
 
@@ -144,9 +165,9 @@ PS.
 
 ### 🍕监控新作品🆕
 
-1. 只需要下载`monitorStray.exe`文件（）
-2. 在同目录下新建一个`url.txt`文件，其中一行一个主页链接
-3. 双击运行exe即可，托盘图标可以控制启停
+1. 只需要下载`monitorStray.exe`文件
+2. 在同目录下新建一个`url.txt`文件，一行一个主页链接
+3. 双击运行`monitorStray.exe`即可，托盘图标可以控制启停
 
 > ⚠️ Linux或macOS请直接运行`monitor.py`源码，或自行编译`monitorStray.py`
 
