@@ -48,16 +48,16 @@ def main(urls, num, grab, download, login, type, browser):
                 lines = f.readlines()
             if lines:
                 for line in lines:
-                    start(line, num, grab, download, type)
+                    start(edge.context, line, num, grab, download, type)
             else:
                 logger.error(f'[{url}]中没有发现目标URL')
         else:
-            start(url, num, grab, download, type)
+            start(edge.context, url, num, grab, download, type)
     edge.stop()
 
 
-def start(url, num, grab, download, type):
-    a = Douyin(url, num, type)
+def start(context, url, num, grab, download, type):
+    a = Douyin(context, url, num, type)
     if not download:  # 需要新采集
         a.run()
     if grab or type in ['follow', 'fans']:  # 不需要下载

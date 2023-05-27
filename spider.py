@@ -37,6 +37,7 @@ class Douyin(object):
         self.pageDownMax = 5  # 重试次数
         self.results = []  # 保存结果
         self.results_old = []  # 前一次保存结果
+        self.page_init_hookURL()  # 初始化参数
 
     @staticmethod
     def str2path(str: str):
@@ -335,6 +336,7 @@ class Douyin(object):
             self.title = self.info['title']
             self.page.locator('[data-e2e="scroll-list"]').last.click()
         elif self.type == 'video':
+            render_data_ls = [info['aweme']['detail']]
             self.title = self.id
             # self.title = '单个作品'
         else:  # 备用
@@ -368,7 +370,6 @@ class Douyin(object):
         """
         开始采集
         """
-        self.page_init_hookURL()  # 初始化参数
         self.page = self.context.new_page()
         self.page.set_default_timeout(0)
         self.page.route("**/*", lambda route: route.abort() if route.request.resource_type == "image" else route.continue_())
@@ -382,10 +383,11 @@ class Douyin(object):
             except TimeoutError:  # 重试
                 self.pageDown += 1
                 logger.error("重试 + 1")
-        self.save()  # 保存结果
         self.page.unroute(self.hookURL, self.handle)
+        self.save()  # 保存结果
         # self.page.wait_for_timeout(1000)
         # self.page.screenshot(path="end.png")
+        self.page.close()
 
 
 def test():

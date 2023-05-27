@@ -1,4 +1,9 @@
-playwright
-loguru
 click
+fastapi
+loguru
+playwright
 ujson
+uvicorn[standard]
+eel
+schedule
+pystray
