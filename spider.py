@@ -37,7 +37,8 @@ class Douyin(object):
         self.pageDownMax = 5  # 重试次数
         self.results = []  # 保存结果
         self.results_old = []  # 前一次保存结果
-        self.page_init_hookURL()  # 初始化参数
+        self.hookURL_init()  # 初始化参数
+        self.page_options()  # 打开页面后的操作
 
     @staticmethod
     def str2path(str: str):
@@ -276,7 +277,7 @@ class Douyin(object):
                     json.dump(response.json(), f, ensure_ascii=False)  # 中文不用Unicode编码
         route.fulfill(response=response)
 
-    def page_init_hookURL(self):
+    def hookURL_init(self):
         if urlparse(self.url).netloc.endswith('douyin.com'):  # 链接
             if self.url.endswith('?showTab=like'): self.type = 'like'
             self.url = self.url2redirect(self.url)
@@ -313,10 +314,16 @@ class Douyin(object):
         self.hookURL = re.compile(hookURL, re.S)
 
     def page_options(self):
+        self.page = self.context.new_page()
+        self.page.set_default_timeout(0)
+        self.page.route("**/*", lambda route: route.abort() if route.request.resource_type == "image" else route.continue_())
+        self.page.route(self.hookURL, self.handle)
+        self.page.goto(self.url)
+
         render_data = json.loads(unquote(self.page.locator('id=RENDER_DATA').inner_text()))
-        info = render_data[sorted(render_data.keys())[1]]
+        self.render_data = render_data[sorted(render_data.keys())[1]]
         if self.type in ['post', 'like', 'follow', 'fans']:
-            self.info = info['user']  # 备用
+            self.info = self.render_data['user']  # 备用
             self.title = self.info['user']['nickname']
             if self.type == 'follow':  # 点击关注列表
                 self.page.locator('[data-e2e="user-info-follow"]').click()
@@ -326,17 +333,16 @@ class Douyin(object):
                 self.page.locator('[data-e2e="user-fans-container"]').click()
         elif self.type == 'search':
             self.title = self.id
-            self.info = info['defaultSearchParams']
+            self.info = self.render_data['defaultSearchParams']
             # self.title = self.info['keyword']
         elif self.type == 'collection':
-            self.info = info['aweme']['detail']['mixInfo']
+            self.info = self.render_data['aweme']['detail']['mixInfo']
             self.title = self.info['mixName']
         elif self.type == 'music':  # 聚焦滚动列表
-            self.info = info['musicDetail']
+            self.info = self.render_data['musicDetail']
             self.title = self.info['title']
             self.page.locator('[data-e2e="scroll-list"]').last.click()
         elif self.type == 'video':
-            render_data_ls = [info['aweme']['detail']]
             self.title = self.id
             # self.title = '单个作品'
         else:  # 备用
@@ -344,20 +350,6 @@ class Douyin(object):
 
         self.down_path = os.path.join(self.down_path, self.str2path(f'{self.type}_{self.title}'))
         self.aria2_conf = f'{self.down_path}.txt'
-        if self.type == 'post':  # post页面需提取初始页面数据，先得到下载目录后再提取
-            if os.path.exists(f'{self.down_path}.json'):  # 主页作品可以增量采集，其他类型难以实现
-                with open(f'{self.down_path}.json', 'r', encoding='utf-8') as f:
-                    self.results_old = json.load(f)
-            # 从新到旧排序,无视置顶作品（此需求一般用来采集最新作品）
-            render_data_ls = info['post']['data']
-            render_data_ls.sort(key=lambda item: item.get('aweme_id', item.get('awemeId')), reverse=True)
-            self._append_awemes(render_data_ls)
-        elif self.type == 'video':  # video页面需提取初始页面数据
-            render_data_ls = [info['aweme']['detail']]
-            self._append_awemes(render_data_ls)
-            self.has_more = False
-        else:  # 备用
-            pass
 
     def page_next(self):  # 加载数据
         if self.type == 'collection':
@@ -370,12 +362,21 @@ class Douyin(object):
         """
         开始采集
         """
-        self.page = self.context.new_page()
-        self.page.set_default_timeout(0)
-        self.page.route("**/*", lambda route: route.abort() if route.request.resource_type == "image" else route.continue_())
-        self.page.route(self.hookURL, self.handle)
-        self.page.goto(self.url)
-        self.page_options()  # 打开页面后的操作
+        if self.type == 'post':  # post页面需提取初始页面数据，先得到下载目录后再提取
+            if os.path.exists(f'{self.down_path}.json'):  # 主页作品可以增量采集，其他类型难以实现
+                with open(f'{self.down_path}.json', 'r', encoding='utf-8') as f:
+                    self.results_old = json.load(f)
+            # 从新到旧排序,无视置顶作品（此需求一般用来采集最新作品）
+            render_data_ls = self.render_data['post']['data']
+            render_data_ls.sort(key=lambda item: item.get('aweme_id', item.get('awemeId')), reverse=True)
+            self._append_awemes(render_data_ls)
+        elif self.type == 'video':  # video页面需提取初始页面数据
+            render_data_ls = [self.render_data['aweme']['detail']]
+            self._append_awemes(render_data_ls)
+            self.has_more = False
+        else:  # 备用
+            pass
+
         while self.has_more and self.pageDown <= self.pageDownMax:
             try:
                 with self.page.expect_request_finished(lambda request: self.hookURL.search(request.url), timeout=2000):
