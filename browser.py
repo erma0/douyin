@@ -1,4 +1,5 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 from playwright.sync_api import BrowserContext, sync_playwright
 
@@ -14,12 +15,6 @@ class Browser(object):
         """
         self.start(channel, need_login, headless)
 
-    def check_login(self):
-        url = 'https://sso.douyin.com/passport/sso/check_login/'
-        res = self.context.request.get(url).json()
-        _login: bool = res.get("has_login", False)
-        return _login
-
     def start(self, channel, need_login, headless) -> BrowserContext:
         """
         启动浏览器
@@ -29,18 +24,27 @@ class Browser(object):
         self.browser = self.playwright.chromium.launch(channel=channel,
                                                        headless=headless,
                                                        args=['--disable-blink-features=AutomationControlled'])
-        if need_login:
-            # 重用登录状态
+        if need_login:  # 重用登录状态
+            from login import check_login, login
             storage_state = "./auth.json" if os.path.exists("./auth.json") else None
-            self.context = self.browser.new_context(storage_state=storage_state, permissions=['notifications'], **edge)
-            if not self.check_login():
-                from login import login
-                cookies = login()
+            self.context = self.browser.new_context(
+                **edge,
+                storage_state=storage_state,
+                permissions=['notifications'],
+                ignore_https_errors=True,
+            )
+            if not check_login(self.context):
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(login)
+                    cookies = future.result()
                 self.context.add_cookies(cookies)
         else:
-            self.context = self.browser.new_context(**edge, permissions=['notifications'])
+            self.context = self.browser.new_context(
+                **edge,
+                permissions=['notifications'],
+                ignore_https_errors=True,
+            )
         # self.anti_js()
-        return self.context
 
     def stop(self):
         """

@@ -94,3 +94,4 @@ while run:
     else:
         schedule.run_pending()
     time.sleep(1)
+edge.stop()

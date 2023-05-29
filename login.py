@@ -3,6 +3,13 @@ import ujson as json
 from browser import Browser, BrowserContext
 
 
+def check_login(context: BrowserContext):
+    url = 'https://sso.douyin.com/passport/sso/check_login/'
+    res = context.request.get(url).json()
+    _login: bool = res.get("has_login", False)
+    return _login
+
+
 def save_cookies(context: BrowserContext):
     cookies = context.cookies()
     cookies.append({"name": "LOGIN_STATUS", "value": "1", "domain": ".douyin.com", "path": "/"})
