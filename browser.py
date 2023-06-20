@@ -6,45 +6,63 @@ from playwright.sync_api import BrowserContext, sync_playwright
 
 class Browser(object):
 
-    def __init__(self, channel: str = 'msedge', need_login: bool = True, headless: bool = True):
+    def __init__(self, channel: str = 'msedge', need_login: bool = True, headless: bool = True, ua: str = 'pc'):
         """
-        根据给定参数启动浏览器，返回对象包括：
+        可用对象包括：
         self.context
         self.browser
         self.playwright
+        [注意]
+        playwright非线程安全
+        不能在同一线程内多次创建playwright实例，不能在不同线程调用同一个全局playwright对象
+        若需要在线程内调用，则需要在每个线程内创建playwright实例，可参考do_login写法
         """
-        self.start(channel, need_login, headless)
+        self.start(channel, need_login, headless, ua)
 
-    def start(self, channel, need_login, headless) -> BrowserContext:
+    def start(self, channel, need_login, headless, ua) -> BrowserContext:
         """
         启动浏览器
         """
         self.playwright = sync_playwright().start()
-        edge = self.playwright.devices['Desktop Edge']
         self.browser = self.playwright.chromium.launch(channel=channel,
                                                        headless=headless,
                                                        args=['--disable-blink-features=AutomationControlled'])
+        if ua == 'pc':
+            self._ua: dict = self.playwright.devices['Desktop Edge']
+            self._ua.pop('user_agent')
+        else:
+            self._ua = self.playwright.devices['iPhone 12']
         if need_login:  # 重用登录状态
-            from login import check_login, login
-            storage_state = "./auth.json" if os.path.exists("./auth.json") else None
-            self.context = self.browser.new_context(
-                **edge,
-                storage_state=storage_state,
-                permissions=['notifications'],
-                ignore_https_errors=True,
-            )
-            if not check_login(self.context):
-                with ThreadPoolExecutor(max_workers=1) as executor:
-                    future = executor.submit(login)
-                    cookies = future.result()
-                self.context.add_cookies(cookies)
+            self.do_login()
         else:
             self.context = self.browser.new_context(
-                **edge,
+                **self._ua,
                 permissions=['notifications'],
                 ignore_https_errors=True,
             )
         # self.anti_js()
+
+    def do_login(self):
+        """
+        登录
+        """
+        from login import Login
+
+        storage_state = "./auth.json" if os.path.exists("./auth.json") else None
+        self.context = self.browser.new_context(
+            **self._ua,
+            storage_state=storage_state,
+            permissions=['notifications'],
+            ignore_https_errors=True,
+        )
+
+        _login = Login(self.context)
+        if not _login.check_login():
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(_login.new_login)
+                cookies = future.result()
+            self.context.clear_cookies()
+            self.context.add_cookies(cookies)
 
     def stop(self):
         """
@@ -67,5 +85,7 @@ class Browser(object):
 
 if __name__ == "__main__":
     edge = Browser(headless=False)
-    edge.context.new_page().goto('http://baidu.com')
+    p = edge.context.new_page()
+    p.goto('http://baidu.com')
+    input()
     edge.stop()

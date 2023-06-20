@@ -1,0 +1,270 @@
+{
+    "logPb": "",
+    "awemeId": "7102994149233773864",
+    "awemeType": 69,
+    "groupId": "7102994149233773864",
+    "cooperationInfo": {},
+    "chapterInfo": {
+        "status": false,
+        "list": null
+    },
+    "authorInfo": {
+        "uid": "1618096439175768",
+        "secUid": "MS4wLjABAAAA1UojDGpM_JuQ91nbVjo6jLfJSpQ5hswNRBaAndW_5spMTAUJ4xjhOKtOW0f5IDa8",
+        "nickname": "Ya Ya",
+        "remarkName": "",
+        "avatarUri": "\/\/p3-pc.douyinpic.com\/aweme\/100x100\/aweme-avatar\/tos-cn-i-0813_6bcf09cf0d4b477b8afc580262d896f9.jpeg?from=116350172",
+        "followerCount": 84,
+        "totalFavorited": 854,
+        "followStatus": 0,
+        "followerStatus": 0,
+        "enterpriseVerifyReason": "",
+        "customVerify": "",
+        "roomData": {},
+        "avatarThumb": {
+            "height": 720,
+            "width": 720,
+            "uri": "100x100\/aweme-avatar\/tos-cn-i-0813_6bcf09cf0d4b477b8afc580262d896f9",
+            "urlList": [
+                "https:\/\/p3-pc.douyinpic.com\/aweme\/100x100\/aweme-avatar\/tos-cn-i-0813_6bcf09cf0d4b477b8afc580262d896f9.jpeg?from=116350172"
+            ]
+        },
+        "roleTitle": "作者",
+        "secret": 0
+    },
+    "awemeControl": {
+        "canComment": true,
+        "canForward": true,
+        "canShare": true,
+        "canShowComment": true
+    },
+    "danmakuControl": {},
+    "desc": "",
+    "authorUserId": 1618096439175768,
+    "createTime": 1653794702,
+    "textExtra": [],
+    "userDigged": false,
+    "userCollected": false,
+    "video": {
+        "width": 1080,
+        "height": 1920,
+        "ratio": "720p",
+        "duration": 15093,
+        "dataSize": 6304855,
+        "uri": "v0200fg10000ca9ef23c77u2n45qhv8g",
+        "playAddr": [
+            {
+                "src": "\/\/v3-web.douyinvod.com\/005c1d1be35d7eac30e11f3cfa8bc149\/648abac6\/video\/tos\/cn\/tos-cn-ve-15c001-alinc2\/bbebc043d32e4924b008d209709bd2b7\/?a=6383&ch=10010&cr=0&dr=0&lr=all&cd=0%7C0%7C0%7C0&br=3263&bt=3263&cs=0&ds=3&ft=GN7rKGVVywf-RFm8Zmo~xj7ScoApM2v_6vrKOTUG-mo0g3&mime_type=video_mp4&qs=0&rc=OmVpaDY3ZmQ7OzplaDg4OkBpanl0NzU6ZjVoZDMzNGkzM0AuLjUyXmEtNjQxMTA0MTZhYSM1ZTJrcjQwYzZgLS1kLS9zcw%3D%3D&l=202306151416071A542E7135A5A70FF6D3&btag=e00010000"
+            },
+            {
+                "src": "\/\/v26-web.douyinvod.com\/3c679f0933af70768455ee67fdc6fe80\/648abac6\/video\/tos\/cn\/tos-cn-ve-15c001-alinc2\/bbebc043d32e4924b008d209709bd2b7\/?a=6383&ch=10010&cr=0&dr=0&lr=all&cd=0%7C0%7C0%7C0&br=3263&bt=3263&cs=0&ds=3&ft=GN7rKGVVywf-RFm8Zmo~xj7ScoApM2v_6vrKOTUG-mo0g3&mime_type=video_mp4&qs=0&rc=OmVpaDY3ZmQ7OzplaDg4OkBpanl0NzU6ZjVoZDMzNGkzM0AuLjUyXmEtNjQxMTA0MTZhYSM1ZTJrcjQwYzZgLS1kLS9zcw%3D%3D&l=202306151416071A542E7135A5A70FF6D3&btag=e00010000"
+            }
+        ],
+        "playApi": "\/\/www.douyin.com\/aweme\/v1\/play\/?video_id=v0200fg10000ca9ef23c77u2n45qhv8g&line=0&file_id=d795457e3b4748789a0cd4a35e8f1b17&sign=586d64c2e87cd7fe3c4141c74f2c246d&is_play_url=1&source=PackSourceEnum_PUBLISH&aid=6383",
+        "playAddrH265": [],
+        "playApiH265": "",
+        "bitRateList": [
+            {
+                "uri": "v0200fg10000ca9ef23c77u2n45qhv8g",
+                "dataSize": 6304855,
+                "width": 720,
+                "height": 1280,
+                "playAddr": [
+                    {
+                        "src": "\/\/v3-web.douyinvod.com\/005c1d1be35d7eac30e11f3cfa8bc149\/648abac6\/video\/tos\/cn\/tos-cn-ve-15c001-alinc2\/bbebc043d32e4924b008d209709bd2b7\/?a=6383&ch=10010&cr=0&dr=0&lr=all&cd=0%7C0%7C0%7C0&br=3263&bt=3263&cs=0&ds=3&ft=GN7rKGVVywf-RFm8Zmo~xj7ScoApM2v_6vrKOTUG-mo0g3&mime_type=video_mp4&qs=0&rc=OmVpaDY3ZmQ7OzplaDg4OkBpanl0NzU6ZjVoZDMzNGkzM0AuLjUyXmEtNjQxMTA0MTZhYSM1ZTJrcjQwYzZgLS1kLS9zcw%3D%3D&l=202306151416071A542E7135A5A70FF6D3&btag=e00010000"
+                    },
+                    {
+                        "src": "\/\/v26-web.douyinvod.com\/3c679f0933af70768455ee67fdc6fe80\/648abac6\/video\/tos\/cn\/tos-cn-ve-15c001-alinc2\/bbebc043d32e4924b008d209709bd2b7\/?a=6383&ch=10010&cr=0&dr=0&lr=all&cd=0%7C0%7C0%7C0&br=3263&bt=3263&cs=0&ds=3&ft=GN7rKGVVywf-RFm8Zmo~xj7ScoApM2v_6vrKOTUG-mo0g3&mime_type=video_mp4&qs=0&rc=OmVpaDY3ZmQ7OzplaDg4OkBpanl0NzU6ZjVoZDMzNGkzM0AuLjUyXmEtNjQxMTA0MTZhYSM1ZTJrcjQwYzZgLS1kLS9zcw%3D%3D&l=202306151416071A542E7135A5A70FF6D3&btag=e00010000"
+                    }
+                ],
+                "playApi": "\/\/www.douyin.com\/aweme\/v1\/play\/?video_id=v0200fg10000ca9ef23c77u2n45qhv8g&line=0&file_id=d795457e3b4748789a0cd4a35e8f1b17&sign=586d64c2e87cd7fe3c4141c74f2c246d&is_play_url=1&source=PackSourceEnum_PUBLISH&aid=6383",
+                "isH265": 0,
+                "qualityType": 10,
+                "bitRate": 3341869,
+                "videoFormat": "mp4",
+                "gearName": "normal_720_0"
+            }
+        ],
+        "cover": "\/\/p6-pc-sign.douyinpic.com\/tos-cn-p-0015\/88bcaaa68f374703bb429d25e819be3a~tplv-dy-cropcenter:323:430.jpeg?biz_tag=pcweb_cover&from=3213915784&s=PackSourceEnum_PUBLISH&sc=cover&se=true&sh=323_430&x-expires=2002168800&x-signature=dh7yLXNtMFzwrvi49EkR%2BJb15U4%3D",
+        "coverUrlList": [
+            "https:\/\/p6-pc-sign.douyinpic.com\/tos-cn-p-0015\/88bcaaa68f374703bb429d25e819be3a~tplv-dy-cropcenter:323:430.jpeg?x-expires=2002168800&x-signature=dh7yLXNtMFzwrvi49EkR%2BJb15U4%3D&from=3213915784&s=PackSourceEnum_PUBLISH&se=true&sh=323_430&sc=cover&biz_tag=pcweb_cover&l=202306151416071A542E7135A5A70FF6D3",
+            "https:\/\/p9-pc-sign.douyinpic.com\/obj\/tos-cn-p-0015\/88bcaaa68f374703bb429d25e819be3a?x-expires=2002168800&x-signature=TW%2BcXvyyk8f6jh8jIqGBGuamyIc%3D&from=3213915784&s=PackSourceEnum_PUBLISH&se=false&sc=cover&biz_tag=pcweb_cover&l=202306151416071A542E7135A5A70FF6D3",
+            "https:\/\/p6-pc-sign.douyinpic.com\/obj\/tos-cn-p-0015\/88bcaaa68f374703bb429d25e819be3a?x-expires=2002168800&x-signature=3pnavD5P6SMvOimojrRmoFBX5xE%3D&from=3213915784&s=PackSourceEnum_PUBLISH&se=false&sc=cover&biz_tag=pcweb_cover&l=202306151416071A542E7135A5A70FF6D3",
+            "https:\/\/p3-pc-sign.douyinpic.com\/obj\/tos-cn-p-0015\/88bcaaa68f374703bb429d25e819be3a?x-expires=2002168800&x-signature=C5wxHHTQ2FVSI4CAm6Fsmh%2BAeWY%3D&from=3213915784&s=PackSourceEnum_PUBLISH&se=false&sc=cover&biz_tag=pcweb_cover&l=202306151416071A542E7135A5A70FF6D3"
+        ],
+        "coverUri": "tos-cn-p-0015\/88bcaaa68f374703bb429d25e819be3a",
+        "dynamicCover": "\/\/p6-pc-sign.douyinpic.com\/obj\/tos-cn-p-0015\/eac28073314e43d38bab183e97ad6a9d_1653794708?from=3213915784_large&x-expires=1688018400&x-signature=vTkqtvlfPZmVMFg9A7PfZ6rGjwE%3D",
+        "originCover": "\/\/p6-pc-sign.douyinpic.com\/tos-cn-p-0015\/450b5d6a17304ddba4e1bdb6b98071aa_1653794707~tplv-dy-360p.jpeg?biz_tag=pcweb_cover&from=3213915784&se=false&x-expires=1688018400&x-signature=qOE%2FMC39jum48GxsvM9%2BKgtFICI%3D",
+        "meta": {
+            "loudness": "-17",
+            "peak": "0.53703",
+            "qprf": "1.000",
+            "sr_score": "1.000"
+        },
+        "bigThumbs": null,
+        "videoModel": null
+    },
+    "mixInfo": {
+        "cover": "",
+        "status": -1,
+        "hasUpdatedEpisode": 0,
+        "isCollected": 0,
+        "author": {
+            "uid": "",
+            "secret": 0,
+            "isBlockedV2": false,
+            "userNotSee": 0
+        }
+    },
+    "isPrivate": false,
+    "isFriendLimit": false,
+    "download": {
+        "prevent": false
+    },
+    "anchorInfo": {
+        "type": 1002,
+        "id": "1007931",
+        "icon": "https:\/\/p6-pc-sign.douyinpic.com\/obj\/32e62000d62624d5dd198?x-expires=1686981600&x-signature=5d%2F0anQy1xkopEX8n2roUUpxLYE%3D&from=1336182360",
+        "title": "潮牛帽",
+        "titleTag": "道具",
+        "extra": {
+            "first_custom_sticker": null,
+            "sticker_detail": {
+                "children": null,
+                "icon_url": {
+                    "uri": "db55f83d5f1222f04dbb9eb4e0548502",
+                    "url_list": [
+                        "https:\/\/lf26-effectcdn-tos.byteeffecttos.com\/obj\/ies.fe.effect\/db55f83d5f1222f04dbb9eb4e0548502",
+                        "https:\/\/lf3-effectcdn-tos.byteeffecttos.com\/obj\/ies.fe.effect\/db55f83d5f1222f04dbb9eb4e0548502",
+                        "https:\/\/lf3-effectcdn-tos-a.byteeffecttos.com\/obj\/ies.fe.effect\/db55f83d5f1222f04dbb9eb4e0548502"
+                    ]
+                },
+                "id": "1007931",
+                "name": "潮牛帽",
+                "owner_id": "",
+                "similar_sticker": null,
+                "tags": null,
+                "user_count": 393662
+            },
+            "sticker_rank": {},
+            "stickers": "1007931"
+        }
+    },
+    "impressionData": "{\"group_id_list_a\":[],\"group_id_list_b\":[],\"group_id_list_c\":[7102994149233774000],\"similar_id_list_a\":null,\"similar_id_list_b\":null}",
+    "fakeHorizontalInfo": {},
+    "tag": {
+        "isTop": false,
+        "relationLabels": false,
+        "isStory": false,
+        "reviewStatus": 0,
+        "inReviewing": false,
+        "labelPartSee": 0
+    },
+    "stats": {
+        "commentCount": 10,
+        "diggCount": 21,
+        "shareCount": 0,
+        "liveWatchCount": 0,
+        "download_addr": "其他类型作品"
+    },
+    "shareInfo": {
+        "shareUrl": "https:\/\/www.iesdouyin.com\/share\/video\/7102994149233773864\/?region=CN&mid=7005370164103678728&u_code=15mkm10m4&did=MS4wLjABAAAAyy6mpykRACss44cahpMNB-X_9HnKxyhEDliLqU7PhcqlMYEjGBXwB4OJ3h7E2JwO&iid=MS4wLjABAAAANwkJuWIRFOzg5uCpDRpMj4OX-QryoDgn-yYlXQnRwQQ&with_sec_did=1&titleType=&from_ssr=1",
+        "shareLinkDesc": "5.35 SlP:\/   %s 复制此链接，打开Dou音搜索，直接观看视频！"
+    },
+    "status": {
+        "allowShare": true,
+        "isReviewing": false,
+        "isDelete": false,
+        "isProhibited": false,
+        "privateStatus": 0,
+        "reviewStatus": 0,
+        "partSee": 0
+    },
+    "webRawData": {
+        "oftenWatchInfo": {},
+        "videoImageInfo": {},
+        "recomPhrase": "",
+        "CTR": {
+            "recommendScore": {
+                "showMix": 0,
+                "showHot": 0,
+                "showRelateSearch": 0,
+                "showRelateVideo": 0
+            }
+        }
+    },
+    "wallpaperTagInfo": null,
+    "music": {
+        "id": 7005370164103679000,
+        "idStr": "7005370164103678728",
+        "mid": "7005370164103678728",
+        "author": "经典老歌【车载优盘】",
+        "title": "@经典老歌【车载优盘】创作的原声",
+        "coverThumb": {
+            "urlList": [
+                "https:\/\/p3-pc.douyinpic.com\/aweme\/100x100\/aweme-avatar\/mosaic-legacy_2e15c000079cfbf4ff492.jpeg?from=116350172"
+            ],
+            "uri": "100x100\/aweme-avatar\/mosaic-legacy_2e15c000079cfbf4ff492",
+            "width": 720,
+            "height": 720
+        },
+        "coverMedium": {
+            "urlList": [
+                "https:\/\/p3-pc.douyinpic.com\/aweme\/720x720\/aweme-avatar\/mosaic-legacy_2e15c000079cfbf4ff492.jpeg?from=116350172"
+            ],
+            "uri": "720x720\/aweme-avatar\/mosaic-legacy_2e15c000079cfbf4ff492",
+            "width": 720,
+            "height": 720
+        },
+        "playUrl": {
+            "urlList": [
+                "https:\/\/sf86-cdn-tos.douyinstatic.com\/obj\/ies-music\/7005370151394675469.mp3",
+                "https:\/\/sf6-cdn-tos.douyinstatic.com\/obj\/ies-music\/7005370151394675469.mp3"
+            ],
+            "uri": "https:\/\/sf86-cdn-tos.douyinstatic.com\/obj\/ies-music\/7005370151394675469.mp3",
+            "width": 720,
+            "height": 720,
+            "urlKey": "7005370164103678728"
+        },
+        "secUid": "MS4wLjABAAAAF0zlK2_5qCr5Lqy6zLNMH8W146aOetdfKSX95jYXwi8",
+        "shareInfo": {},
+        "extra": {
+            "hasEdited": 0
+        },
+        "album": "",
+        "avatarThumb": {
+            "urlList": [
+                "https:\/\/p3-pc.douyinpic.com\/aweme\/100x100\/aweme-avatar\/mosaic-legacy_2e15c000079cfbf4ff492.jpeg?from=116350172"
+            ],
+            "uri": "100x100\/aweme-avatar\/mosaic-legacy_2e15c000079cfbf4ff492",
+            "width": 720,
+            "height": 720
+        },
+        "ownerNickname": "经典老歌【车载优盘】",
+        "collectStat": 0,
+        "bindedChallengeId": 0,
+        "status": 1,
+        "canNotPlay": false,
+        "musicName": "经典老歌【车载优盘】创作的原声",
+        "isOriginal": false,
+        "duration": 36,
+        "userCount": 0
+    },
+    "images": [],
+    "imageInfos": "",
+    "imageAlbumMusicInfo": {
+        "beginTime": 0,
+        "endTime": 0,
+        "volume": 100
+    },
+    "imgBitrate": [],
+    "suggestWords": [],
+    "seoInfo": {},
+    "requestTime": 1686809767503,
+    "lvideoBrief": {},
+    "relatedVideo": {
+        "extra": {}
+    },
+    "varietyVideo": {},
+    "fetchExpired": 2
+}

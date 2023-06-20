@@ -7,3 +7,4 @@ uvicorn[standard]
 eel
 schedule
 pystray
+requests
