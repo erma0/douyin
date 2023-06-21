@@ -18,7 +18,7 @@ from spider import Douyin
 
 
 @click.command()
-@click.option('-u', '--urls', type=click.STRING, multiple=True, help='账号/话题/音乐等URL或文件路径（文件格式为一行一个URL），支持多次输入。采集本账号喜欢/收藏时无需输入')
+@click.option('-u', '--urls', type=click.STRING, multiple=True, help='账号/话题/音乐等URL或文件路径（文件格式为一行一个URL），支持多次输入。采集本账号喜欢/收藏/关注/粉丝时无需输入')
 @click.option('-n', '--num', default=-1, help='选填。最大采集数量，默认不限制')
 @click.option('-g', '--grab', is_flag=True, help='选填。只采集信息，不下载作品')
 @click.option('-d', '--download', is_flag=True, help='选填。不采集，直接下载之前采集过的配置文件，用于下载失败时重试')

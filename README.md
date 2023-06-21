@@ -83,16 +83,18 @@ douyin
 
     ```ps
     -u, --urls TEXT                 账号/话题/音乐等URL或文件路径（文件格式为一行一个URL），支持多次输入。采集本账号
-                                    喜欢/收藏时无需输入
+                                    喜欢/收藏/关注/粉丝时无需输入
     -n, --num INTEGER               选填。最大采集数量，默认不限制
     -g, --grab                      选填。只采集信息，不下载作品
     -d, --download                  选填。不采集，直接下载之前采集过的配置文件，用于下载失败时重试
     -l, --login                     选填。指定是否登录，默认要登录，可避免一些风控，采集关注粉丝等信息时必须登录
-    -h, --headless                  选填。指定是否使用headless模式（默认为True，不显示浏览器界面），出现问题时使
+    -m, --mstoken                   选填。指定是否在下载配置文件中设置UA及mstoken，默认不需要，出现下载0kb时尝试
+                                    使用此参数
+    -h, --headless                  选填。指定是否使用headless模式（不显示浏览器界面），默认为True，出现问题时使
                                     用此参数以便观察
     -t, --type [post|like|music|search|follow|fans|collection|video|favorite]
                                     选填。采集类型，支持[主页作品/喜欢/音乐/搜索/关注/粉丝/合集/单作品/收藏]，默认
-                                    采集post作品，能够自动识别搜索/音乐/合集/单作品以及本账号的作品/喜欢/收藏。
+                                    采集post作品，能够自动识别搜索/音乐/合集/单作品以及本账号的喜欢/收藏。
     -b, --browser [chrome|msedge|chrome-beta|msedge-beta|msedge-dev]
                                     选填。浏览器类型，默认使用稳定版EDGE，可选[chrome/msedge]以及beta
                                     或dev版本，如需使用Firefox或WebKit请自行修改browser文件
@@ -110,6 +112,12 @@ douyin
 
     # 采集本账号的收藏
     ./douyin -t favorite
+
+    # 采集本账号的关注
+    ./douyin -t follow
+
+    # 采集本账号的粉丝
+    ./douyin -t fans
 
     # 采集目标地址（主页）的全部作品
     ./douyin -u https://*/ 
@@ -155,6 +163,9 @@ douyin
 
     # 指定不登录采集目标地址
     ./douyin -l -u https://*/ 
+
+    # 在下载配置文件中使用msToken参数（解决下载0kb问题）
+    ./douyin -m -u https://*/ 
 
     # 指定使用chrome采集
     ./douyin -b chrome -u https://*/ 
