@@ -23,12 +23,12 @@ from browser import Browser, BrowserContext
 
 version = 'V3.230618'
 banner = rf'''
- ____                    _         ____        _     _           
-|  _ \  ___  _   _ _   _(_)_ __   / ___| _ __ (_) __| | ___ _ __ 
+ ____                    _         ____        _     _
+|  _ \  ___  _   _ _   _(_)_ __   / ___| _ __ (_) __| | ___ _ __
 | | | |/ _ \| | | | | | | | '_ \  \___ \| '_ \| |/ _` |/ _ \ '__|
-| |_| | (_) | |_| | |_| | | | | |  ___) | |_) | | (_| |  __/ |   
-|____/ \___/ \__,_|\__, |_|_| |_| |____/| .__/|_|\__,_|\___|_|   
-                    |___/                |_|                      
+| |_| | (_) | |_| | |_| | | | | |  ___) | |_) | | (_| |  __/ |
+|____/ \___/ \__,_|\__, |_|_| |_| |____/| .__/|_|\__,_|\___|_|
+                    |___/                |_|
                             {version}
                 Github: https://github.com/erma0/douyin
 '''
@@ -446,10 +446,8 @@ class Douyin(object):
         # has_more控制是否提取初始页面数据render-data，但打开主页后会立即hook到一次请求
         # 此时has_more可能会变成0，不应影响提取render-data
         if self.has_more is not False:
-            if self.type == 'post':  # post页面需提取
+            if self.type == 'post' and self.render_data['post']:  # post页面需提取
                 # 从新到旧排序,无视置顶作品（此需求一般用来采集最新作品）
-                if self.render_data['post'] is None:
-                    self.quit('页面初始数据为空，可能出现验证码')
                 if self.has_more:
                     self.has_more = self.render_data['post']['hasMore']
                 render_data_ls = self.render_data['post']['data']

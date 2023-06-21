@@ -20,9 +20,9 @@ class Login(object):
         url = 'https://sso.douyin.com/check_login/'
         res = self.context.request.get(url).json()
         is_login: bool = res.get("has_login", False)
-        # if is_login:  # 重新登录（备用功能，有些朋友说偶尔出现无法采集的情况，重新登陆后能解决）
-        #     # self.context.request.get(res.get("redirect_url", url))
-        #     self._login(url_login=res.get("redirect_url", "https://sso.douyin.com/"))
+        if is_login:  # 重新登录（有些朋友偶尔出现无法采集的情况，重新登陆后就正常，所以加入此功能）
+            # self.context.request.get(res.get("redirect_url", url))
+            self._login(url_login=res.get("redirect_url", "https://sso.douyin.com/"))
         return is_login
 
     @staticmethod
