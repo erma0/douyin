@@ -21,7 +21,7 @@ from playwright.sync_api import Error, Route, TimeoutError
 
 from browser import Browser, BrowserContext
 
-version = 'V3.230618'
+version = 'V3.230621'
 banner = rf'''
  ____                    _         ____        _     _
 |  _ \  ___  _   _ _   _(_)_ __   / ___| _ __ (_) __| | ___ _ __
