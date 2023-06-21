@@ -29,7 +29,7 @@ from spider import Douyin
               type=click.Choice(['post', 'like', 'music', 'search', 'follow', 'fans', 'collection', 'video', 'favorite'],
                                 case_sensitive=False),
               default='post',
-              help='选填。采集类型，支持[主页作品/喜欢/音乐/搜索/关注/粉丝/合集/单作品/收藏]，默认采集post作品，能够自动识别搜索/音乐/合集/单作品以及本账号的作品/喜欢/收藏。')
+              help='选填。采集类型，支持[主页作品/喜欢/音乐/搜索/关注/粉丝/合集/单作品/收藏]，默认采集post作品，能够自动识别搜索/音乐/合集/单作品以及本账号的喜欢/收藏。')
 @click.option('-b',
               '--browser',
               type=click.Choice(["chrome", "msedge", "chrome-beta", "msedge-beta", "msedge-dev"], case_sensitive=False),
@@ -47,13 +47,16 @@ def main(urls, num, grab, download, login, headless, type, browser, path, pathty
     """
 
     if not urls:  # 未输入目标地址
-        if type in ['post', 'like', 'favorite']:  # 采集本账号
+        if type in ['like', 'favorite']:  # 采集本账号
             edge = Browser(channel=browser, headless=headless)
             start(edge.context, urls, num, grab, download, type, path, pathtype)
             edge.stop()
             return
-        else:
+        elif type in ['post', 'music', 'search', 'collection', 'video']:  # 自动识别类型
             urls = (input('目标URL或文件路径：'), )
+        else:
+            print('请输入目标URL或文件路径')
+            return
 
     edge = Browser(channel=browser, need_login=login, headless=headless)
 
