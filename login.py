@@ -46,8 +46,8 @@ class Login(object):
         cookies = self.context.cookies()
         cookies.append({"name": "LOGIN_STATUS", "value": "1", "domain": ".douyin.com", "path": "/"})
         cookies.append({"name": "SEARCH_RESULT_LIST_TYPE", "value": "%22multi%22", "domain": ".douyin.com", "path": "/"})
-        self.save_cookies(cookies)
-        # self.save_cookies(cookies, key=['toutiao_sso_user_ss'])  # 'sessionid'
+        # self.save_cookies(cookies)
+        self.save_cookies(cookies, key=['toutiao_sso_user_ss', 'toutiao_sso_user'])  # 重新登陆时只需要一条cookie
         return cookies
 
     def new_login(self) -> None:

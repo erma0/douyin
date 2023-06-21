@@ -21,7 +21,7 @@ from playwright.sync_api import Error, Route, TimeoutError
 
 from browser import Browser, BrowserContext
 
-version = 'V3.230618'
+version = 'V3.230621'
 banner = rf'''
  ____                    _         ____        _     _
 |  _ \  ___  _   _ _   _(_)_ __   / ___| _ __ (_) __| | ___ _ __
@@ -43,11 +43,12 @@ class Douyin(object):
                  num: int = -1,
                  type: str = 'post',
                  down_path: str = '下载',
-                 path_type: str = 'id'):  # 默认用id命名文件（夹）
+                 path_type: str = 'id',
+                 msToken: bool = False):
         """
         初始化
         type=['post', 'like', 'music', 'search', 'follow', 'fans', 'collection', 'video', 'favorite']
-        path_type='title'时，使用昵称/标题来命名文件（夹），但可能影响用户作品增量采集
+        默认用id命名文件（夹），当path_type='title'时，使用昵称/标题来命名文件（夹），但可能影响用户作品增量采集
         因为可能还没拿到用户昵称，就已经先拿到作品列表的请求了，此时会导致重复采集
         """
         self.context = context
@@ -55,6 +56,7 @@ class Douyin(object):
         self.type = type
         self.down_path = down_path
         self.path_type = path_type
+        self.msToken = msToken
         self.url = url.strip() if url else ''
 
         self.has_more = True
@@ -258,8 +260,9 @@ class Douyin(object):
         if self.results:
             logger.success(f'采集完成，本次共采集到{len(self.results)}条结果')
             if self.type in ['post', 'like', 'music', 'search', 'collection', 'video', 'favorite']:  # 视频列表保存为Aria下载文件
+                self.msToken = [_['value'] for _ in self.context.cookies() if _['name'] == 'msToken'] if self.msToken else None
+                _ = []
                 with open(self.aria2_conf, 'w', encoding='utf-8') as f:
-                    _ = []
                     for line in self.results:  # 只保存本次采集结果的下载配置
                         filename = f'{line["id"]}_{line["desc"]}'
                         if isinstance(line["download_addr"], list):
@@ -270,7 +273,12 @@ class Douyin(object):
                                 for index, addr in enumerate(line["download_addr"])
                             ]
                         elif isinstance(line["download_addr"], str):
-                            _.append(f'{line["download_addr"]}\n\tdir={self.down_path}\n\tout={filename}.mp4\n')
+                            if self.msToken:  # 下载0kb时，使用msToken
+                                _.append(
+                                    f'{line["download_addr"]}\n\tdir={self.down_path}\n\tout={filename}.mp4\n\tuser-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36\n\theader=Cookie:msToken={self.msToken[0]}\n'
+                                )
+                            else:
+                                _.append(f'{line["download_addr"]}\n\tdir={self.down_path}\n\tout={filename}.mp4\n')  # 能正常下载的
                         else:
                             logger.error("下载地址错误")
                     f.writelines(_)
@@ -339,8 +347,8 @@ class Douyin(object):
                 self.url = 'https://www.douyin.com/user/self?showTab=favorite_collection'
             elif self.type == 'like':
                 self.url = 'https://www.douyin.com/user/self?showTab=like'
-            elif self.type == 'post':
-                self.url = 'https://www.douyin.com/user/self?showTab=post'
+            elif self.type in ['post', 'follow', 'fans']:  # 命令行post必须输入URL
+                self.url = 'https://www.douyin.com/user/self'
             else:
                 self.quit('请输入URL')
 
@@ -376,7 +384,6 @@ class Douyin(object):
                 self.type = 'like'
                 hookURL += 'aweme/favorit'
                 if not self.url.endswith('showTab=like'):
-                    # self.url = self.url.split('?')[0] + '?showTab=like'
                     self.url = f'https://www.douyin.com/user/{self.id}?showTab=like'
             elif self.type == 'favorite' or self.url.endswith('?showTab=favorite_collection'):
                 self.type = 'favorite'
