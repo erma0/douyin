@@ -18,7 +18,7 @@ from spider import Douyin
 
 
 @click.command()
-@click.option('-u', '--urls', type=click.STRING, multiple=True, help='账号/话题/音乐等URL或文件路径（文件格式为一行一个URL），支持多次输入。采集本账号喜欢/收藏/关注/粉丝时无需输入')
+@click.option('-u', '--urls', type=click.STRING, multiple=True, help='账号/话题/音乐等URL或文件路径（文件内一行一个URL），可多次输入。采集本账号喜欢/收藏/关注/粉丝时可空')
 @click.option('-n', '--num', default=-1, help='选填。最大采集数量，默认不限制')
 @click.option('-g', '--grab', is_flag=True, help='选填。只采集信息，不下载作品')
 @click.option('-d', '--download', is_flag=True, help='选填。不采集，直接下载之前采集过的配置文件，用于下载失败时重试')
@@ -27,10 +27,10 @@ from spider import Douyin
 @click.option('-h', '--headless', default=True, is_flag=True, help='选填。指定是否使用headless模式（不显示浏览器界面），默认为True，出现问题时使用此参数以便观察')
 @click.option('-t',
               '--type',
-              type=click.Choice(['post', 'like', 'music', 'search', 'follow', 'fans', 'collection', 'video', 'favorite'],
+              type=click.Choice(['post', 'like', 'music', 'search', 'follow', 'fans', 'collection', 'video', 'favorite', 'id'],
                                 case_sensitive=False),
               default='post',
-              help='选填。采集类型，支持[主页作品/喜欢/音乐/搜索/关注/粉丝/合集/单作品/收藏]，默认采集post作品，能够自动识别搜索/音乐/合集/单作品以及本账号的喜欢/收藏。')
+              help='选填。采集类型，支持[主页作品/喜欢/音乐/搜索/关注/粉丝/合集/单作品/收藏/抖音号查信息]，默认采集post作品，能够自动识别搜索/音乐/合集/单作品以及本账号的喜欢/收藏。')
 @click.option('-b',
               '--browser',
               type=click.Choice(["chrome", "msedge", "chrome-beta", "msedge-beta", "msedge-dev"], case_sensitive=False),
@@ -82,7 +82,7 @@ def start(context, url, num, grab, download, type, path, pathtype, mstoken):
         a.has_more = False
     a.run()
 
-    if grab or type in ['follow', 'fans']:  # 不需要下载
+    if grab or type in ['follow', 'fans', 'id']:  # 不需要下载
         return
     a.download()
 
