@@ -29,7 +29,6 @@ class Browser(object):
                                                        args=['--disable-blink-features=AutomationControlled'])
         if ua == 'pc':
             self._ua: dict = self.playwright.devices['Desktop Edge']
-            self._ua.pop('user_agent')
         else:
             self._ua = self.playwright.devices['iPhone 12']
         if need_login:  # 重用登录状态
