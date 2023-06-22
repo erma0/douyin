@@ -47,7 +47,7 @@ class Douyin(object):
                  msToken: bool = False):
         """
         初始化
-        type=['post', 'like', 'music', 'search', 'follow', 'fans', 'collection', 'video', 'favorite']
+        type=['post', 'like', 'music', 'search', 'follow', 'fans', 'collection', 'video', 'favorite', 'id']
         默认用id命名文件（夹），当path_type='title'时，使用昵称/标题来命名文件（夹），但可能影响用户作品增量采集
         因为可能还没拿到用户昵称，就已经先拿到作品列表的请求了，此时会导致重复采集
         """
@@ -124,6 +124,23 @@ class Douyin(object):
         except re.error:
             res = re.compile(u'[\uD800-\uDBFF][\uDC00-\uDFFF]')
         return res.sub(restr, desstr)
+
+    def _append_user(self, user_list: List[dict]):
+        if not user_list:
+            logger.error("本次请求结果为空")
+            return
+        with self.lock:  # 加锁避免意外冲突
+            if self.has_more:
+                for item in user_list:
+                    if item['is_red_uniqueid']:  # 完全匹配
+                        info: dict = item['user_info']
+                        for key in list(info.keys()):
+                            if not info[key]:
+                                info.pop(key)
+                        self.results.append(info)  # 用于保存信息
+                        logger.info(f'采集中，已采集到{len(self.results)}条结果')
+                        break
+                self.has_more = False  # 只查第一页
 
     def _append_users(self, user_list: List[dict]):
         if not user_list:
@@ -282,9 +299,12 @@ class Douyin(object):
                         else:
                             logger.error("下载地址错误")
                     f.writelines(_)
-            elif self.type in ['follow', 'fans']:  # 用户列表保存主页链接
+            elif self.type in ['follow', 'fans', 'id']:  # 用户列表保存主页链接
                 with open(self.aria2_conf, 'w', encoding='utf-8') as f:
-                    f.writelines([line.get('sec_uid', None) for line in self.results])
+                    f.writelines([
+                        f"https://www.douyin.com/user/{line.get('sec_uid', 'None')}" for line in self.results
+                        if line.get('sec_uid', None)
+                    ])
             with open(f'{self.down_path}.json', 'w', encoding='utf-8') as f:  # 保存所有数据到文件，包括旧数据
                 if self.type == 'post':  # 除主页作品外都不需要按时间排序
                     self.results.sort(key=lambda item: item['id'], reverse=True)
@@ -309,6 +329,9 @@ class Douyin(object):
                     elif self.type == 'fans':
                         info = resj.get('followers')
                         self._append_users(info)
+                    elif self.type == 'id':
+                        info = resj.get('user_list')
+                        self._append_user(info)
                     elif self.type == 'search':
                         info = []
                         for item in resj.get('data'):
@@ -353,7 +376,9 @@ class Douyin(object):
                 self.quit('请输入URL')
 
         hostname = urlparse(self.url).hostname
-        if self.url.isdigit():  # 数字ID，作品
+        if self.type == 'id':  # 搜索用户ID
+            self.url = f'https://www.douyin.com/search/{self.url}?type=user'
+        elif self.url.isdigit():  # 数字ID，作品
             self.url = f'https://www.douyin.com/video/{self.url}'
         elif hostname and hostname.endswith('douyin.com'):  # 链接
             if hostname == 'v.douyin.com':
@@ -367,9 +392,12 @@ class Douyin(object):
         if _type in ['video', 'note']:  # 自动识别 单个作品 video
             self.type = 'video'
             hookURL = '单个作品无需hookURL'
-        if _type == 'search':  # 自动识别 搜索
-            self.type = 'search'
-            hookURL += 'general/search'
+        if _type == 'search':
+            if self.type == 'id':  # 搜索 用户ID
+                hookURL += 'discover/search'
+            else:
+                self.type = 'search'  # 搜索 综合或视频
+                hookURL += '(general/search|search/item)'
         elif _type == 'music':  # 自动识别 音乐
             self.type = 'music'
             hookURL += 'music'
@@ -416,10 +444,11 @@ class Douyin(object):
         _app = render_data.pop('app', None)
         self.client_data = _app if _app else render_data.pop('1', None)
         self._location = render_data.pop('_location', None)
-        self.render_data = render_data.popitem()[1]
+        self.render_data = render_data.popitem()[1] if render_data else None
 
         if self.type in ['post', 'like', 'follow', 'fans', 'favorite']:
-            self.info = self.render_data['user']  # 备用
+            if self.render_data:
+                self.info = self.render_data['user']  # 备用
             self.title = self.info['user']['nickname']
             if self.type == 'follow':  # 点击关注列表
                 self.page.locator('[data-e2e="user-info-follow"]').click()
@@ -427,19 +456,25 @@ class Douyin(object):
             elif self.type == 'fans':  # 点击粉丝列表
                 self.page.locator('[data-e2e="user-info-fans"]').click()
                 self.page.locator('[data-e2e="user-fans-container"]').click()
+        elif self.type == 'id':
+            self.title = self.id
         elif self.type == 'search':
             self.title = self.id
-            self.info = self.render_data['defaultSearchParams']
+            if self.render_data:
+                self.info = self.render_data['defaultSearchParams']
             # self.title = self.info['keyword']
         elif self.type == 'collection':
-            self.info = self.render_data['aweme']['detail']['mixInfo']
+            if self.render_data:
+                self.info = self.render_data['aweme']['detail']['mixInfo']
             self.title = self.info['mixName']
         elif self.type == 'music':  # 聚焦滚动列表
-            self.info = self.render_data['musicDetail']
+            if self.render_data:
+                self.info = self.render_data['musicDetail']
             self.title = self.info['title']
             self.page.locator('[data-e2e="scroll-list"]').last.click()
         elif self.type == 'video':
-            self.info = self.render_data['aweme']['detail']
+            if self.render_data:
+                self.info = self.render_data['aweme']['detail']
             self.title = self.id
         else:  # 备用
             pass
@@ -453,14 +488,14 @@ class Douyin(object):
         # has_more控制是否提取初始页面数据render-data，但打开主页后会立即hook到一次请求
         # 此时has_more可能会变成0，不应影响提取render-data
         if self.has_more is not False:
-            if self.type == 'post' and self.render_data['post']:  # post页面需提取
+            if self.type == 'post' and self.render_data.get('post', None):  # post页面需提取
                 # 从新到旧排序,无视置顶作品（此需求一般用来采集最新作品）
                 if self.has_more:
                     self.has_more = self.render_data['post']['hasMore']
                 render_data_ls = self.render_data['post']['data']
                 render_data_ls.sort(key=lambda item: item.get('aweme_id', item.get('awemeId')), reverse=True)
                 self._append_awemes(render_data_ls)
-            elif self.type == 'video':  # video页面需提取
+            elif self.type == 'video' and self.render_data.get('aweme', None):  # video页面需提取
                 render_data_ls = [self.render_data['aweme']['detail']]
                 self._append_awemes(render_data_ls)
                 self.has_more = False
@@ -484,7 +519,7 @@ class Douyin(object):
             try:
                 with self.page.expect_request_finished(lambda request: self.hookURL.search(request.url), timeout=3000):
                     self.page_next()  # 加载下一批数据
-                    print('下一页')
+                    # print('下一页')
             except TimeoutError:  # 重试
                 self.pageDown += 1
                 logger.error("重试 + 1")
@@ -497,14 +532,14 @@ class Douyin(object):
 
 
 def test():
-    edge = Browser(headless=False)
+    edge = Browser(headless=True)
 
-    a = Douyin(
-        context=edge.context,
-        url='https://v.douyin.com/U3eAtXx/'
-        # url='https://www.douyin.com/user/MS4wLjABAAAA1UojDGpM_JuQ91nbVjo6jLfJSpQ5hswNRBaAndW_5spMTAUJ4xjhOKtOW0f5IDa8'
-        # url='https://www.douyin.com/user/MS4wLjABAAAAtSPIL_StfoqgclIO3YGO_wnQeGsRQuFP7hA3j6tUv2sXA2oGfVm9fwCLq8bmurs3?showTab=post'
-    )  # 作品
+    # a = Douyin(
+    #     context=edge.context,
+    #     url='https://v.douyin.com/U3eAtXx/'
+    #     # url='https://www.douyin.com/user/MS4wLjABAAAA1UojDGpM_JuQ91nbVjo6jLfJSpQ5hswNRBaAndW_5spMTAUJ4xjhOKtOW0f5IDa8'
+    #     # url='https://www.douyin.com/user/MS4wLjABAAAAtSPIL_StfoqgclIO3YGO_wnQeGsRQuFP7hA3j6tUv2sXA2oGfVm9fwCLq8bmurs3?showTab=post'
+    # )  # 作品
     # a = Douyin(
     #     context=edge.context,
     #     url='https://www.douyin.com/user/MS4wLjABAAAAtSPIL_StfoqgclIO3YGO_wnQeGsRQuFP7hA3j6tUv2sXA2oGfVm9fwCLq8bmurs3?showTab=like'
@@ -529,8 +564,9 @@ def test():
     # a = Douyin(context=edge.context,url='https://www.douyin.com/collection/7018087406876231711', type='collection')  # 合集
     # a = Douyin(context=edge.context, type='like')  # 登录账号的喜欢
     # a = Douyin(context=edge.context, type='favorite')  # 登录账号的收藏
+    a = Douyin(context=edge.context, url='xinhuashe', type='id')  # 合集
     a.run()
-    a.download()
+    # a.download()
     # python ./douyin.py -u https://v.douyin.com/BGf3Wp6/ -t like
 
     edge.stop()

@@ -82,8 +82,8 @@ douyin
     - 🐔使用帮助
 
     ```ps
-    -u, --urls TEXT                 账号/话题/音乐等URL或文件路径（文件格式为一行一个URL），支持多次输入。采集本账号
-                                    喜欢/收藏/关注/粉丝时无需输入
+    -u, --urls TEXT                 账号/话题/音乐等URL或文件路径（文件内一行一个URL），可多次输入。采集本账号喜欢/
+                                    收藏/关注/粉丝时可空
     -n, --num INTEGER               选填。最大采集数量，默认不限制
     -g, --grab                      选填。只采集信息，不下载作品
     -d, --download                  选填。不采集，直接下载之前采集过的配置文件，用于下载失败时重试
@@ -92,9 +92,10 @@ douyin
                                     使用此参数
     -h, --headless                  选填。指定是否使用headless模式（不显示浏览器界面），默认为True，出现问题时使
                                     用此参数以便观察
-    -t, --type [post|like|music|search|follow|fans|collection|video|favorite]
-                                    选填。采集类型，支持[主页作品/喜欢/音乐/搜索/关注/粉丝/合集/单作品/收藏]，默认
-                                    采集post作品，能够自动识别搜索/音乐/合集/单作品以及本账号的喜欢/收藏。
+    -t, --type [post|like|music|search|follow|fans|collection|video|favorite|id]
+                                    选填。采集类型，支持[主页作品/喜欢/音乐/搜索/关注/粉丝/合集/单作品/收藏/抖音号
+                                    查信息]，默认采集post作品，能够自动识别搜索/音乐/合集/单作品以及本账号的喜欢/收
+                                    藏。
     -b, --browser [chrome|msedge|chrome-beta|msedge-beta|msedge-dev]
                                     选填。浏览器类型，默认使用稳定版EDGE，可选[chrome/msedge]以及beta
                                     或dev版本，如需使用Firefox或WebKit请自行修改browser文件
@@ -118,6 +119,9 @@ douyin
 
     # 采集本账号的粉丝
     ./douyin -t fans
+
+    # 查询抖音号信息（可查精确粉丝数）
+    ./douyin -t id -u xinhuashe
 
     # 采集目标地址（主页）的全部作品
     ./douyin -u https://*/ 

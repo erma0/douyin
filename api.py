@@ -208,6 +208,21 @@ def get_video(url: str):
     return deepcopy(a.results[0])
 
 
+@app.get(
+    "/api/user",
+    response_class=UJSONResponse,
+    response_model=DataUser,
+    tags=['同步'],
+    response_model_exclude_unset=True,
+    response_model_exclude_defaults=True,
+)
+def get_user(id: str):
+    start_browser()
+    a = DouyinAPI(context=edge.context, url=id, type='id', down_path=download_path)
+    a.run()
+    return deepcopy(a.results[0])
+
+
 @app.get("/api/info", response_class=UJSONResponse, tags=['同步'])
 def get_info(url: str):
     start_browser()
