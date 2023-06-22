@@ -51,7 +51,7 @@ class Login(object):
         return cookies
 
     def new_login(self) -> None:
-        edge = Browser(channel="msedge", need_login=False, headless=False)
+        edge = Browser(channel="msedge", need_login=False, headless=False, image=True)
         self.context = edge.context
         cookies = self._login()
         edge.stop()

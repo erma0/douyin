@@ -21,7 +21,7 @@ from playwright.sync_api import Error, Route, TimeoutError
 
 from browser import Browser, BrowserContext
 
-version = 'V3.230621'
+version = 'V3.230622'
 banner = rf'''
  ____                    _         ____        _     _
 |  _ \  ___  _   _ _   _(_)_ __   / ___| _ __ (_) __| | ___ _ __
@@ -98,9 +98,7 @@ class Douyin(object):
         """
         取302跳转地址
         """
-        # a = self.context.request.head(url)
         r = self.context.new_page()
-        r.route("**/*", lambda route: route.abort() if route.request.resource_type != "document" else route.continue_())
         r.goto(url, wait_until='domcontentloaded')
         url = r.url
         r.close()
@@ -435,7 +433,6 @@ class Douyin(object):
     def page_init(self):
         self.page = self.context.new_page()
         self.page.set_default_timeout(0)
-        self.page.route("**/*", lambda route: route.abort() if route.request.resource_type == "image" else route.continue_())
         if self.has_more:
             self.page.route(self.hookURL, self.handle)
         self.page.goto(self.url)
@@ -524,10 +521,6 @@ class Douyin(object):
                 self.pageDown += 1
                 logger.error("重试 + 1")
         self.save()  # 保存结果
-        # self.page.unroute(self.hookURL)
-        # self.page.unroute("**/*")
-        # self.page.wait_for_timeout(1000)
-        # self.page.screenshot(path="end.png")
         self.page.close()
 
 

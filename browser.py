@@ -6,7 +6,12 @@ from playwright.sync_api import BrowserContext, sync_playwright
 
 class Browser(object):
 
-    def __init__(self, channel: str = 'msedge', need_login: bool = True, headless: bool = True, ua: str = 'pc'):
+    def __init__(self,
+                 channel: str = 'msedge',
+                 need_login: bool = True,
+                 headless: bool = True,
+                 ua: str = 'pc',
+                 image: bool = False):
         """
         可用对象包括：
         self.context
@@ -17,29 +22,15 @@ class Browser(object):
         不能在同一线程内多次创建playwright实例，不能在不同线程调用同一个全局playwright对象
         若需要在线程内调用，则需要在每个线程内创建playwright实例，可参考do_login写法
         """
-        self.start(channel, need_login, headless, ua)
+        self.start(channel, need_login, headless, ua, image)
 
-    def start(self, channel, need_login, headless, ua) -> BrowserContext:
+    def anti_js(self):
         """
-        启动浏览器
+        注入js反检测，没用
         """
-        self.playwright = sync_playwright().start()
-        self.browser = self.playwright.chromium.launch(channel=channel,
-                                                       headless=headless,
-                                                       args=['--disable-blink-features=AutomationControlled'])
-        if ua == 'pc':
-            self._ua: dict = self.playwright.devices['Desktop Edge']
-        else:
-            self._ua = self.playwright.devices['iPhone 12']
-        if need_login:  # 重用登录状态
-            self.do_login()
-        else:
-            self.context = self.browser.new_context(
-                **self._ua,
-                permissions=['notifications'],
-                ignore_https_errors=True,
-            )
-        # self.anti_js()
+        # js ="./js/anti.js"
+        js = "./js/stealth.min.js"
+        self.context.add_init_script(path=js)
 
     def do_login(self):
         """
@@ -63,6 +54,37 @@ class Browser(object):
             self.context.clear_cookies()
             self.context.add_cookies(cookies)
 
+    def start(self, channel, need_login, headless, ua, image) -> BrowserContext:
+        """
+        启动浏览器
+        """
+        _args = [
+            '--disable-blink-features=AutomationControlled',
+        ]
+        if not image:  # 不显示图片
+            _args.append("--blink-settings=imagesEnabled=false")
+        self.playwright = sync_playwright().start()
+        self.browser = self.playwright.chromium.launch(
+            channel=channel,
+            headless=headless,
+            ignore_default_args=['--enable-automation'],
+            args=_args,
+        )
+        if ua == 'pc':
+            self._ua: dict = self.playwright.devices['Desktop Edge']
+            # self._ua['user_agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.50'
+        else:
+            self._ua = self.playwright.devices['iPhone 12']
+        if need_login:  # 重用登录状态
+            self.do_login()
+        else:
+            self.context = self.browser.new_context(
+                **self._ua,
+                permissions=['notifications'],
+                ignore_https_errors=True,
+            )
+        # self.anti_js()
+
     def stop(self):
         """
         关闭浏览器
@@ -71,20 +93,15 @@ class Browser(object):
         self.browser.close()
         self.playwright.stop()
 
-    def anti_js(self):
-        """
-        注入js反检测，没用到
-        """
-        js = """
-        window.chrome = {"app":{"isInstalled":false,"InstallState":{"DISABLED":"disabled","INSTALLED":"installed","NOT_INSTALLED":"not_installed"},"RunningState":{"CANNOT_RUN":"cannot_run","READY_TO_RUN":"ready_to_run","RUNNING":"running"}},"runtime":{"OnInstalledReason":{"CHROME_UPDATE":"chrome_update","INSTALL":"install","SHARED_MODULE_UPDATE":"shared_module_update","UPDATE":"update"},"OnRestartRequiredReason":{"APP_UPDATE":"app_update","OS_UPDATE":"os_update","PERIODIC":"periodic"},"PlatformArch":{"ARM":"arm","ARM64":"arm64","MIPS":"mips","MIPS64":"mips64","X86_32":"x86-32","X86_64":"x86-64"},"PlatformNaclArch":{"ARM":"arm","MIPS":"mips","MIPS64":"mips64","X86_32":"x86-32","X86_64":"x86-64"},"PlatformOs":{"ANDROID":"android","CROS":"cros","LINUX":"linux","MAC":"mac","OPENBSD":"openbsd","WIN":"win"},"RequestUpdateCheckStatus":{"NO_UPDATE":"no_update","THROTTLED":"throttled","UPDATE_AVAILABLE":"update_available"}}};
-        Object.defineProperty(navigator,'plugins',{get:()=>[{0:{type:"application/x-google-chrome-pdf",suffixes:"pdf",description:"Portable Document Format",enabledPlugin:Plugin},description:"Portable Document Format",filename:"internal-pdf-viewer",length:1,name:"Chrome PDF Plugin"},{0:{type:"application/pdf",suffixes:"pdf",description:"",enabledPlugin:Plugin},description:"",filename:"mhjfbmdgcfjbbpaeojofohoefgiehjai",length:1,name:"Chrome PDF Viewer"}]});
-        """
-        self.context.add_init_script(js)
-
 
 if __name__ == "__main__":
-    edge = Browser(headless=False)
+    edge = Browser()
+    # edge = Browser(headless=False)
     p = edge.context.new_page()
-    p.goto('http://baidu.com')
-    input()
+    # p.goto('https://antispider1.scrape.center/')
+    # p.goto('https://antoinevastel.com/bots/')
+    # p.keyboard.press('End')
+    p.goto('https://antoinevastel.com/bots/datadome')  # 过不去
+    # p.goto('https://www.douyin.com/search/xinhuashe?&type=user')
+    # p.screenshot(path="end.png")
     edge.stop()
