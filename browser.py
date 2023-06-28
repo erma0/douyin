@@ -72,7 +72,7 @@ class Browser(object):
         )
         if ua == 'pc':
             self._ua: dict = self.playwright.devices['Desktop Edge']
-            # self._ua['user_agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.50'
+            self._ua['user_agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.50'
         else:
             self._ua = self.playwright.devices['iPhone 12']
         if need_login:  # 重用登录状态

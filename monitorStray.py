@@ -2,6 +2,7 @@ import os
 import sys
 import threading
 import time
+from typing import List
 
 import schedule
 from PIL import Image
@@ -36,7 +37,7 @@ def start() -> None:
     print('任务开始')
     edge = Browser()
     with open('url.txt', 'r', encoding='utf-8') as f:
-        lines: list[str] = f.readlines()
+        lines: List[str] = f.readlines()
     for url in lines:
         a = API(edge.context, url)
         a.run()
