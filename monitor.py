@@ -1,4 +1,5 @@
 import time
+from typing import List
 
 import schedule
 
@@ -11,7 +12,7 @@ edge = Browser()
 def start() -> None:
     print('开始一轮')
     with open('url.txt', 'r', encoding='utf-8') as f:
-        lines: list[str] = f.readlines()
+        lines: List[str] = f.readlines()
     for url in lines:
         a = Douyin(edge.context, url)
         a.run()

@@ -1,3 +1,5 @@
+from typing import List
+
 import ujson as json
 
 from browser import Browser, BrowserContext
@@ -26,7 +28,7 @@ class Login(object):
         return is_login
 
     @staticmethod
-    def save_cookies(cookies: list, key: list[str] = None):
+    def save_cookies(cookies: List, key: List[str] = None):
         """
         默认保存全部cookie，可选仅保存指定key
         """
