@@ -28,7 +28,7 @@ class Browser(object):
         """
         注入js反检测，没用
         """
-        # js ="./js/anti.js"
+        # js = "./js/anti.js"
         js = "./js/stealth.min.js"
         self.context.add_init_script(path=js)
 
@@ -38,7 +38,8 @@ class Browser(object):
         """
         from login import Login
 
-        storage_state = "./auth.json" if os.path.exists("./auth.json") else None
+        storage_state = "./auth.json" if os.path.exists(
+            "./auth.json") else None
         self.context = self.browser.new_context(
             **self._ua,
             storage_state=storage_state,
@@ -58,23 +59,24 @@ class Browser(object):
         """
         启动浏览器
         """
-        _args = [
-            '--disable-blink-features=AutomationControlled',
-        ]
-        if not image:  # 不显示图片
+        # navigator.webdriver=false
+        _args = ['--disable-blink-features=AutomationControlled']
+        if not image:  # 禁止显示图片
             _args.append("--blink-settings=imagesEnabled=false")
         self.playwright = sync_playwright().start()
         self.browser = self.playwright.chromium.launch(
             channel=channel,
             headless=headless,
-            ignore_default_args=['--enable-automation'],
+            ignore_default_args=['--enable-automation'],  # 禁止显示“受到自动化软件控制”
             args=_args,
         )
         if ua == 'pc':
             self._ua: dict = self.playwright.devices['Desktop Edge']
-            self._ua['user_agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.50'
-        else:
+            self._ua['user_agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36 Edg/117.0.2045.60'
+        elif ua == 'mobile':
             self._ua = self.playwright.devices['iPhone 12']
+        else:
+            self._ua = {}
         if need_login:  # 重用登录状态
             self.do_login()
         else:
@@ -103,5 +105,5 @@ if __name__ == "__main__":
     # p.keyboard.press('End')
     p.goto('https://antoinevastel.com/bots/datadome')  # 过不去
     # p.goto('https://www.douyin.com/search/xinhuashe?&type=user')
-    # p.screenshot(path="end.png")
+    p.screenshot(path="end.png")
     edge.stop()

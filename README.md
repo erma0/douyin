@@ -27,15 +27,12 @@ PS.
 - 采集账号的喜欢列表需账号打开权限或登录本人账号
 - 支持输入文件路径批量操作（同一类型，一行一个目标地址）
 - 支持增量采集账号主页作品
-- **支持监控主页最新作品**
-- **支持搭建API接口**
 
 ## ‍🚩待办
 
 > 💡欢迎PR或建议
 
-- [x] API - FastAPI
-- [ ] WEB UI - AMIS
+- [ ] 精简功能，修复一下bug
 - [ ] GUI - Eel
 
 ## 🌳文件结构
@@ -45,15 +42,11 @@ douyin
 ├─ dist                          # 编译输出目录
 │  ├─ aria2c.exe                    # aria2下载器
 │  ├─ douyin.exe                    # 主程序
-│  └─ monitorStray.exe              # 监控新作品
 ├─ results                       # 网页返回数据样板
 ├─ browser.py                    # 浏览器启闭
-├─ api.py                        # 搭建API接口
 ├─ exec.py                       # 命令行解析
 ├─ ico.ico                       # 图标logo
 ├─ login.py                      # 登录
-├─ monitor.py                    # 监控-命令行
-├─ monitorStray.py               # 监控-托盘图标
 ├─ README.md                     # 项目说明
 ├─ requirements.txt              # 依赖库
 ├─ spider.py                     # 爬虫核心代码
@@ -72,7 +65,7 @@ douyin
 
 1. Windows只需下载 [releases](https://github.com/erma0/douyin/releases) 或 `dist`目录中的两个文件
 
-    > ⚠️ Linux或macOS请从[官方地址下载对应的Aria2](https://github.com/aria2/aria2/releases)，然后运行源码或自行编译
+    > ⚠️ Linux或macOS请从[官方地址下载对应的Aria2](https://github.com/aria2/aria2/releases)，然后自行修改源码调试运行
 
     - douyin.exe
     - aria2c.exe
@@ -82,27 +75,7 @@ douyin
     - 🐔使用帮助
 
     ```ps
-    -u, --urls TEXT                 账号/话题/音乐等URL或文件路径（文件内一行一个URL），可多次输入。采集本账号喜欢/
-                                    收藏/关注/粉丝时可空
-    -n, --num INTEGER               选填。最大采集数量，默认不限制
-    -g, --grab                      选填。只采集信息，不下载作品
-    -d, --download                  选填。不采集，直接下载之前采集过的配置文件，用于下载失败时重试
-    -l, --login                     选填。指定是否登录，默认要登录，可避免一些风控，采集关注粉丝等信息时必须登录
-    -m, --mstoken                   选填。指定是否在下载配置文件中设置UA及mstoken，默认不需要，出现下载0kb时尝试
-                                    使用此参数
-    -h, --headless                  选填。指定是否使用headless模式（不显示浏览器界面），默认为True，出现问题时使
-                                    用此参数以便观察
-    -t, --type [post|like|music|search|follow|fans|collection|video|favorite|id]
-                                    选填。采集类型，支持[主页作品/喜欢/音乐/搜索/关注/粉丝/合集/单作品/收藏/抖音号
-                                    查信息]，默认采集post作品，能够自动识别搜索/音乐/合集/单作品以及本账号的喜欢/收
-                                    藏。
-    -b, --browser [chrome|msedge|chrome-beta|msedge-beta|msedge-dev]
-                                    选填。浏览器类型，默认使用稳定版EDGE，可选[chrome/msedge]以及beta
-                                    或dev版本，如需使用Firefox或WebKit请自行修改browser文件
-    -p, --path TEXT                 选填。下载文件夹，默认为[下载]
-    -pt, --pathtype [id|title]      选填。文件夹命名格式，默认为[type]_[id]，可选[title]（不需要主页作品增
-                                    量采集时建议填title，即使用[标题/昵称/关键词]来命名）
-    --help                          Show this message and exit.
+    
     ```
 
     - 🏀使用例子（在程序所在目录打开命令行）
@@ -185,14 +158,6 @@ douyin
     aria2c -c --console-log-level warn -d ./下载目录 -i 生成的下载配置文件.txt
     ```
 
-### 🍕监控新作品🆕
-
-1. 只需要下载`monitorStray.exe`文件
-2. 在同目录下新建一个`url.txt`文件，一行一个主页链接
-3. 双击运行`monitorStray.exe`即可，托盘图标可以控制启停
-
-> ⚠️ Linux或macOS请直接运行`monitor.py`源码，或自行编译`monitorStray.py`
-
 ## 🔨编译
 
 > ❗**不能upx压缩，否则playwright无法启动**
@@ -228,15 +193,6 @@ douyin
 
     ```ps
     pyinstaller -F ./exec.py -i ./ico.ico -n douyin
-    ```
-
-    - 编译监控程序
-
-    ```ps
-    # 命令行程序
-    pyinstaller -F ./monitor.py -i ./ico.ico 
-    # 托盘程序
-    pyinstaller -w -F ./monitorStray.py -i ./ico.ico --add-data "ico.ico;."
     ```
 
 > ⚠️截至目前`playwright`最新版，Windows编译时需自行[修改`playwright`源码](https://github.com/microsoft/playwright-python/issues/1778#issuecomment-1565339726)才能隐藏命令行黑窗口，也就是在`playwright/_impl/_transport.py`文件的`create_subprocess_exec` 函数中加上下面这行内容，或者直接使用`1.29.0`版本的`playwright`
