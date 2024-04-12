@@ -1,3 +1,12 @@
+# 此项目无人维护
+# 有同样需求的朋友建议使用MediaCrawler或TikTokDownloader
+
+> [https://github.com/NanmiCoder/MediaCrawler](https://github.com/NanmiCoder/MediaCrawler)
+
+> [https://github.com/JoeanAmier/TikTokDownloader](https://github.com/JoeanAmier/TikTokDownloader)
+
+---
+
 ![douyin](https://socialify.git.ci/erma0/douyin/image?description=1&font=Source%20Code%20Pro&forks=1&issues=1&language=1&name=1&owner=1&pattern=Circuit%20Board&stargazers=1&theme=Auto)
 
 # ✨抖音爬虫
