@@ -1,3 +1,5 @@
 click
 loguru
+ujson
 requests
+execjs
