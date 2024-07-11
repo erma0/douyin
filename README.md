@@ -1,4 +1,4 @@
-![douyin](https://socialify.git.ci/erma0/douyin/image?description=1&font=Source%20Code%20Pro&forks=1&issues=1&language=1&name=1&owner=1&pattern=Circuit%20Board&stargazers=1&theme=Auto)
+![douyin](https://socialify.git.ci/erma0/douyin/image?description=1&font=Source%20Code%20Pro&forks=1&issues=1&language=1&owner=1&pattern=Circuit%20Board&stargazers=1&theme=Auto)
 
 # ✨抖音爬虫
 
@@ -33,11 +33,11 @@
   - [x] 指定音乐原声作品数据
   - [x] 指定挑战话题作品数据
   - [x] 指定合集作品数据
+  - [x] 指定用户关注列表数据
+  - [x] 指定用户粉丝列表数据
   - [x] 指定关键词搜索作品数据
   - [ ] 指定关键词搜索用户数据
   - [ ] 指定关键词搜索直播数据
-  - [x] 指定用户关注列表数据
-  - [x] 指定用户粉丝列表数据
   - [ ] 指定作品评论数据
   - [ ] 指定作品评论回复数据
 
@@ -71,27 +71,31 @@ PS.
 ```
 
 ### 🏀使用例子（在程序所在目录打开命令行）
-- [x] 指定作品数据
+- [x] 获取指定用户主页/音乐/话题/合集/作品等数据
     ```ps
-    ./douyin -t https://*/
+    ./douyin -u https://*/
+    ```
+- [x] 获取当前用户喜欢/收藏作品等数据
+    ```ps
+    ./douyin -t like
     ```
 - [x] 其他功能
     ```ps
     # -l 限制数量，只需要前5条结果
-    ./douyin -l 5 -t https://*/ 
+    ./douyin -l 5 -u https://*/ 
 
     # 连续输入多个目标地址
-    ./douyin -t https://*1/ -t https://*2/ 
+    ./douyin -u https://*1/ -u https://*2/ 
 
     # 输入文件[user.txt]中的多个目标
-    ./douyin -t ./user.txt
+    ./douyin -u ./user.txt
     ```
 
 - 💡 手动使用aria2c下载
     ```ps
     aria2c -c --console-log-level warn -i 生成的下载配置文件.txt
     ```
-> 也可参考test.py文件中的代码使用
+> **也可参考test.py文件中的代码使用**
 
 ## 🔨编译
 
