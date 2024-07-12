@@ -261,8 +261,6 @@ class Douyin(object):
                               'count': 18, "mix_id": self.id}
                 elif self.type == 'search':
                     uri = '/aweme/v1/web/search/item/'  # 视频
-                    # uri = '/aweme/v1/web/search/single/'  # 综合
-                    # uri = '/aweme/v1/web/live/search/'  # 直播
                     params = {
                         "search_id": logid,
                         "search_channel": "aweme_video_web",
