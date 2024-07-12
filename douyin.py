@@ -341,7 +341,7 @@ class Douyin(object):
             except:
                 retry += 1
                 logger.error(f'采集请求出错... 进行第{retry}次重试')
-                break
+                continue
             finally:
                 # 重试max_retry次
                 if retry >= max_retry:
@@ -445,9 +445,9 @@ class Douyin(object):
                             'tag_id': hashtag.get('hashtag_id', hashtag.get('hashtagId')),
                             'tag_name': hashtag.get('hashtag_name', hashtag.get('hashtagName'))
                         } for hashtag in text_extra]
-                    video_tag = item.get('video_tag', item.get('videoTag'))
-                    if video_tag:
-                        aweme['video_tag'] = video_tag
+                    # video_tag = item.get('video_tag', item.get('videoTag'))
+                    # if video_tag:
+                    #     aweme['video_tag'] = video_tag
 
                     if self.type == 'collection':
                         aweme['no'] = item['mix_info']['statis']['current_episode']
