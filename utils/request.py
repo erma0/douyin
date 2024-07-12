@@ -20,24 +20,26 @@ from utils.execjs_fix import execjs
 
 class Request(object):
 
-    def __init__(self, cookie=''):
+    def __init__(self, cookie='', ua=''):
         if cookie:
             cookie = cookies_to_dict(cookie)
         else:
             cookie = get_cookie()
+        if not ua:
+            ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.95 Safari/537.36"
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+            "User-Agent": ua,
             "sec-fetch-site": "same-origin",
             "sec-fetch-mode": "cors",
             "sec-fetch-dest": "empty",
             "sec-ch-ua-platform": "Windows",
             "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua": '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
-            "referer": "https://www.douyin.com/?recommend=1",
+            "sec-ch-ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+            "referer": "https://www.douyin.com/search/%E4%B8%8D%E8%89%AF%E4%BA%BA?type=video",
             "priority": "u=1, i",
             "pragma": "no-cache",
             "cache-control": "no-cache",
-            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "accept-language": "zh-CN,zh;q=0.9",
             "accept": "application/json, text/plain, */*",
             "dnt": "1",
         }
@@ -124,9 +126,10 @@ class Request(object):
         params['screen_height'] = cookie.get('dy_sheight', 1440)
         params['cpu_core_num'] = cookie.get('device_web_cpu_core', 24)
         params['device_memory'] = cookie.get('device_web_memory_size', 8)
-        params['verifyFp'] = cookie.get('s_v_web_id', None)
-        params['fp'] = cookie.get('s_v_web_id', None)
         params['webid'] = self.get_webid()
+        if params.get('search_id', None) is None:
+            params['verifyFp'] = cookie.get('s_v_web_id', None)
+            params['fp'] = cookie.get('s_v_web_id', None)
         return params
 
     def get_webid(self):
