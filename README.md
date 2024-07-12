@@ -59,9 +59,8 @@ PS.
 
 > 📭**功能未全部测试，有问题请提交issue或联系邮箱<ermao6@qq.com>，也可加Q群`738029092`反馈（请提供测试链接以便复现问题）**
 
-1. 下载 [releases](https://github.com/erma0/douyin/releases) 或 `dist`目录中的两个文件
+1. 下载 [releases](https://github.com/erma0/douyin/releases) 或 `dist`目录中的一个文件
     - douyin.exe
-    - aria2c.exe
     > ⚠️ Linux或macOS请从[官方地址下载对应的Aria2](https://github.com/aria2/aria2/releases)，然后自行修改源码调试运行
 2. 在程序所在目录打开命令行，输入对应命令，或者直接双击打开douyin.exe后根据提示输入信息
 
@@ -114,7 +113,7 @@ PS.
 3. 打包EXE，图标可自行更换
 
     ```ps
-    pyinstaller -F ./cli.py -i ./static/ico.ico -n douyin
+    pyinstaller -F ./cli.py -i ./static/ico.ico -n douyin --add-data "lib:lib" --add-data "aria2c.exe:."
     ```
 
 
