@@ -1,4 +1,5 @@
 
+import os
 import requests
 import ujson as json
 from loguru import logger
@@ -38,5 +39,9 @@ def url_redirect(url):
 
 
 def save_json(filename: str, data):
+    path = os.path.dirname(filename)
+    if path:
+        os.makedirs(path, exist_ok=True)
+
     with open(f'{filename}.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False)
