@@ -10,8 +10,10 @@ def download(path, aria2_conf):
     """
     if os.path.exists(aria2_conf):
         logger.info('开始下载')
-        command = ['aria2c', '-c', '--console-log-level',
-                   'warn', '-d', path, '-i', aria2_conf]
+        command = [
+            os.path.join(os.path.dirname(__file__), '../aria2c'),
+            '-c', '--console-log-level', 'warn', '-d', path, '-i', aria2_conf
+        ]
         subprocess.run(command)
     else:
         logger.error('没有发现可下载的配置文件')

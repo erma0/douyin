@@ -72,8 +72,9 @@ class Request(object):
 
     def get_sign(self, uri: str, params: dict) -> dict:
         query = '&'.join([f'{k}={quote(str(v))}' for k, v in params.items()])
+        file = os.path.join(os.path.dirname(__file__), '../lib/douyin.js')
         DOUYIN_SIGN = execjs.compile(
-            open('lib/douyin.js', 'r', encoding='utf-8').read())
+            open(file, 'r', encoding='utf-8').read())
 
         call_name = 'sign_datail'
         if 'reply' in uri:
