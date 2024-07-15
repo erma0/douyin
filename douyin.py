@@ -41,9 +41,7 @@ class Douyin(object):
         self.results = []
         self.lock = Lock()
 
-        req = Request(cookie)
-        self.http = req.http
-        self.request = req.request
+        self.request = Request(cookie)
 
     def run(self):
 
@@ -86,11 +84,11 @@ class Douyin(object):
             else:
                 id = target
                 if self.type in ['search', 'user', 'live']:  # 搜索 视频 用户 直播间
-                    url = f'https://www.douyin.com/search/{quote(id)}'
-                    if self.type == 'search':
-                        self.url = f'{url}?type=video'
-                    else:
-                        self.url = f'{url}?type={self.type}'
+                    self.url = f'https://www.douyin.com/search/{quote(id)}'
+                    # if self.type == 'search':
+                    #     self.url = f'{self.url}?type=video'
+                    # else:
+                    #     self.url = f'{self.url}?type={self.type}'
                 # 数字ID: 单个作品id 音乐id 合集id
                 elif self.type in ['video', 'note', 'music', 'hashtag', 'collection'] and id.isdigit():
                     if self.type in ['video', 'note']:
@@ -109,28 +107,30 @@ class Douyin(object):
     def __get_target_info(self):
         self.__get_target_id()
 
-        response = self.http.get(self.url)
-        if response.status_code != 200 or response.text == '':
-            quit(f'获取目标信息请求失败, url: {self.url}')
         # 目标信息
         if self.type in ['search', 'user', 'live']:
-            pattern = r'<script id="RENDER_DATA" type="application/json">([\s\S]*?)</script>'
-            match = re.search(pattern, response.text)
-            if match:
-                render_data = unquote(match.group(1))
-            else:
-                quit(f'获取目标信息失败, type: {self.type}')
+            # 想要访问搜索界面 需要UA与cookie对应 后续api请求需要修改参数中的浏览器版本号
+            # 直接跳过这一步
+            # pattern = r'<script id="RENDER_DATA" type="application/json">([\s\S]*?)</script>'
+            # match = re.search(pattern, text)
+            # if match:
+            #     render_data = unquote(match.group(1))
+            # else:
+            #     quit(f'获取目标信息失败, type: {self.type}')
+            self.title = self.id
         else:
+            text = self.request.getHTML(self.url)
             # self\.__pace_f\.push\(\[1,"\d:([\s\S]*?)(\\n")?\]\)</script>
             pattern = r'self\.__pace_f\.push\(\[1,"\d:\[\S+?({[\s\S]*?)\]\\n"\]\)</script>'
-            render_data: str = re.findall(pattern, response.text)[-1]
-        if render_data:
-            render_data = render_data.replace('\\"', '"').replace('\\\\', '\\')
-            self.render_data = json.loads(render_data)
-            if self.render_data:
+            render_data: str = re.findall(pattern, text)[-1]
+            if render_data:
+                render_data = render_data.replace(
+                    '\\"', '"').replace('\\\\', '\\')
+                self.render_data = json.loads(render_data)
                 if self.type in ['search', 'user', 'live']:
-                    self.info = self.render_data['app']['defaultSearchParams']
-                    self.title = self.id
+                    # self.info = self.render_data['app']['defaultSearchParams']
+                    # self.title = self.id
+                    pass
                 elif self.type == 'collection':
                     self.info = self.render_data['aweme']['detail']['mixInfo']
                     self.title = self.info['mixName']
@@ -148,26 +148,24 @@ class Douyin(object):
                     self.title = self.info['nickname']
                 else:  # 其他情况
                     quit(f'获取目标信息请求失败, type: {self.type}')
-
-                self.down_path = os.path.join(
-                    self.down_path, str_to_path(f'{self.type}_{self.title}'))
-                self.aria2_conf = f'{self.down_path}.txt'
-                # 增量采集，先取回旧数据
-                # if self.type in ['post', 'like', 'favorite']:
-                if self.type == 'post':
-                    if os.path.exists(f'{self.down_path}.json') and not self.results_old:
-                        with open(f'{self.down_path}.json', 'r', encoding='utf-8') as f:
-                            self.results_old = json.load(f)
-        else:
-            quit(f'提取目标信息失败, url: {self.url}')
+            else:
+                quit(f'提取目标信息失败, url: {self.url}')
+        self.down_path = os.path.join(
+            self.down_path, str_to_path(f'{self.type}_{self.title}'))
+        self.aria2_conf = f'{self.down_path}.txt'
+        # 增量采集，先取回旧数据
+        if self.type == 'post':
+            if os.path.exists(f'{self.down_path}.json') and not self.results_old:
+                with open(f'{self.down_path}.json', 'r', encoding='utf-8') as f:
+                    self.results_old = json.load(f)
 
     def __get_self_uid(self):
         url = 'https://www.douyin.com/user/self'
-        response = self.http.get(url)
-        if response.status_code != 200 or response.text == '':
+        text = self.request.getHTML(url)
+        if text == '':
             quit(f'获取UID请求失败, url: {url}')
         pattern = r'secUid\\":\\"([-\w]+)\\"'
-        match = re.search(pattern, response.text)
+        match = re.search(pattern, text)
         if match:
             return match.group(1)
         else:
@@ -184,7 +182,7 @@ class Douyin(object):
     def get_aweme_detail(self) -> tuple[dict, bool]:
         params = {"aweme_id": self.id}
         uri = '/aweme/v1/web/aweme/detail/'
-        resp, succ = self.request(uri, params)
+        resp = self.request.getJSON(uri, params)
         aweme_detail = resp.get('aweme_detail', {})
         if aweme_detail:
             self.__append_awemes([aweme_detail])
@@ -195,9 +193,9 @@ class Douyin(object):
     def get_user(self):
         params = {"publish_video_strategy_type": 2,
                   "sec_user_id": self.id, "personal_center_strategy": 1}
-        resp, succ = self.request('/aweme/v1/web/user/profile/other/', params)
-        # print(succ, resp)
-        if succ:
+        resp = self.request.getJSON(
+            '/aweme/v1/web/user/profile/other/', params)
+        if resp:
             self.info = resp.get('user', {})
             # 下载路径
             self.down_path = os.path.join(self.down_path, str_to_path(
@@ -213,8 +211,8 @@ class Douyin(object):
         url = f'https://www.douyin.com/web/api/v2/user/info/?sec_uid={
             self.id}'
         try:
-            res = self.http.get(url).json()
-            self.info = res['user_info']
+            resp = self.request.getJSON(url)
+            self.info = resp['user_info']
             # 下载路径
             self.down_path = os.path.join(self.down_path, str_to_path(
                 f"{self.info['nickname']}_{self.id}"))
@@ -285,15 +283,14 @@ class Douyin(object):
                         'count': 10,
                         "from_group_id": "",
                         "is_filter_search": 0,
-                        "keyword": unquote(self.id),
+                        "keyword": quote(self.id),
                         "list_type": "single",
                         "need_filter_settings": 0,
                         "offset": max_cursor,
                         "search_id": logid,
                         "query_correct_type": 1,
-                        # "new_user_login": 0,
                         "search_channel": "aweme_user_web",
-                        "search_source": "normal_search"
+                        "search_source": "tab_search"
                     }
                 elif self.type == 'live':
                     uri = '/aweme/v1/web/discover/search/'
@@ -325,16 +322,17 @@ class Douyin(object):
                         "sec_user_id": self.id
                     }
 
-                resp, succ = self.request(uri, params, data)
+                resp = self.request.getJSON(uri, params, data)
                 for name in ['max_cursor', 'cursor', 'min_time']:
                     max_cursor = resp.get(name, 0)
                     if max_cursor:
                         break
-                logid = resp['log_pb']['impr_id']
+                if not logid:
+                    logid = resp['log_pb']['impr_id']
                 self.has_more = resp.get('has_more', 0)
                 for name in ['aweme_list', 'user_list', 'data', 'followings', 'followers']:
-                    aweme_list = resp.get(name, [])
-                    if aweme_list:
+                    items_list = resp.get(name, [])
+                    if items_list:
                         break
             except:
                 retry += 1
@@ -345,12 +343,12 @@ class Douyin(object):
                 if retry >= max_retry:
                     self.has_more = False
 
-            if aweme_list:
+            if items_list:
                 retry = 0
                 if self.type in ['post', 'like', 'favorite', 'search', 'music', 'hashtag', 'collection']:
-                    self.__append_awemes(aweme_list)
+                    self.__append_awemes(items_list)
                 elif self.type in ['user', 'live', 'follow', 'fans']:
-                    self.__append_users(aweme_list)
+                    self.__append_users(items_list)
                 else:
                     quit(f'类型错误，type：{self.type}')
             elif self.has_more:
@@ -361,10 +359,10 @@ class Douyin(object):
                 pass
         self.save()
 
-    def __append_awemes(self, aweme_list: List[dict]):
+    def __append_awemes(self, awemes_list: List[dict]):
         with self.lock:  # 加锁避免意外冲突
             if self.limit == 0 or len(self.results) < self.limit:
-                for item in aweme_list:
+                for item in awemes_list:
                     # =====兼容搜索=====
                     if item.get('aweme_info'):
                         item = item['aweme_info']
@@ -460,9 +458,9 @@ class Douyin(object):
         with self.lock:  # 加锁避免意外冲突
             if self.limit == 0 or len(self.results) < self.limit:
                 for item in user_list:
-                    # # =====兼容搜索=====
-                    # if item.get('user_info'):
-                    #     item = item['user_info']
+                    # =====兼容搜索=====
+                    if item.get('user_info'):
+                        item = item['user_info']
                     # =====限制数量=====
                     if self.limit > 0 and len(self.results) >= self.limit:
                         self.has_more = False
@@ -536,7 +534,7 @@ class Douyin(object):
                             # 提供UA和msToken，防止下载0kb
                             _.append(
                                 f'{line["download_addr"]}\n\tdir={self.down_path}\n\tout={filename}.mp4\n\tuser-agent={
-                                    self.http.headers.get("User-Agent")}\n\theader="Cookie:msToken={self.http.cookies.get("msToken")}"\n'
+                                    self.request.HEADERS.get("User-Agent")}\n\theader="Cookie:msToken={self.request.COOKIES.get("msToken")}"\n'
                             )
                             # 正常下载的
                             # _.append(f'{line["download_addr"]}\n\tdir={self.down_path}\n\tout={filename}.mp4\n')

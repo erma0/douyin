@@ -20,7 +20,7 @@ if __name__ == "__main__":
     #     type='like',
     #     limit=33
     # )
-    a = Douyin(type='like')  # 当前登录账号的喜欢
+    # a = Douyin(type='like')  # 当前登录账号的喜欢
 
     # ✅video 作品
     # a = Douyin(target='https://v.douyin.com/UhYnoMS/')
@@ -44,14 +44,15 @@ if __name__ == "__main__":
     # a = Douyin(target='https://www.douyin.com/hashtag/1588002245131278', limit=23)
     # a = Douyin(target='1588002245131278', type='hashtag', limit=23)
 
-    # ⛔search 搜索  cookie和UA需要对应  接口不稳定，原因不明
-    # ❌search 搜索 作品
+    # ✅search 搜索 作品
     # a = Douyin(
     #     target='https://www.douyin.com/search/%E4%B8%8D%E8%89%AF%E4%BA%BA', limit=23)
     # a = Douyin(target='不良人', type='search', limit=23)
-    # ❌user 搜索 用户
-    # a = Douyin(target='xinhuashe', type='user', limit=22)
+
+    # ✅user 搜索 用户 可能会出现返回结果不稳定，原因不明
+    a = Douyin(target='xinhuashe', type='user', limit=22)
     # a = Douyin(target='新华社', type='user', limit=22)
+
     # ❌live 搜索 直播 ws接口 暂未实现
     # a = Douyin(target='xinhuashe', type='live')
 
