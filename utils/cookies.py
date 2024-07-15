@@ -7,8 +7,10 @@ from loguru import logger
 from utils.util import save_json
 
 
-def get_cookie() -> dict:
-    if os.path.exists('config/cookie.json'):
+def get_cookie_dict(cookie='') -> dict:
+    if cookie:
+        cookie = cookies_to_dict(cookie)
+    elif os.path.exists('config/cookie.json'):
         with open('config/cookie.json', 'r', encoding='utf-8') as f:
             cookie = json.load(f)
     elif os.path.exists('config/cookie.txt'):
@@ -52,5 +54,5 @@ def cookies_to_dict(cookie_string: str) -> dict:
 
 
 if __name__ == "__main__":
-    save_json('edge_cookie', get_cookie())
+    save_json('edge_cookie', get_cookie_dict())
     # save_json('dict_cookie', cookies_to_dict(x))
