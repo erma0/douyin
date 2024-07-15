@@ -114,6 +114,9 @@ PS.
 
     ```ps
     pyinstaller -F ./cli.py -i ./static/ico.ico -n douyin --add-data "lib:lib" --add-data "aria2c.exe:."
+
+    # 或者使用配置文件
+    pyinstaller ./douyin.spec
     ```
 
 
