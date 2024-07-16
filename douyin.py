@@ -1,10 +1,10 @@
 # -*- encoding: utf-8 -*-
 '''
-@File    :   main.py
-@Time    :   2024年07月02日 23:37:14 星期二
+@File    :   douyin.py
+@Time    :   2024年07月16日 12:06:14 星期二
 @Author  :   erma0
 @Version :   1.0
-@Link    :   https://erma0.cn
+@Link    :   https://github.com/erma0
 @Desc    :   抖音爬虫
 '''
 
