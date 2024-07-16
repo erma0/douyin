@@ -3,13 +3,20 @@ import os
 import requests
 import ujson as json
 from loguru import logger
+import browser_cookie3
 
 from utils.util import save_json
 
 
 def get_cookie_dict(cookie='') -> dict:
     if cookie:
-        cookie = cookies_to_dict(cookie)
+        # 自动读取的cookie有效期短，且不一定有效
+        if cookie in ['edge', 'chrome']:
+            cj = eval(f"browser_cookie3.{cookie}(domain_name='douyin.com')")
+            cookie = requests.utils.dict_from_cookiejar(cj)
+        else:
+            cookie = cookies_to_dict(cookie)
+        save_cookie(cookie)
     elif os.path.exists('config/cookie.json'):
         with open('config/cookie.json', 'r', encoding='utf-8') as f:
             cookie = json.load(f)

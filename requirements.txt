@@ -2,4 +2,5 @@ click
 loguru
 ujson
 requests
-execjs
+PyExecJS
+browser_cookie3

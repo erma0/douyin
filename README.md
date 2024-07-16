@@ -68,7 +68,8 @@ PS.
 > 2. 没有请求就刷新一下，找到`https://www.douyin.com/`或者其他JSON请求（可以在 `过滤/筛选器` 中输入`cookie-name:odin_tt`）
 > 
 > 3. 在`标头/Headers`中找到`请求标头/Request Headers`，复制`Cookie`的值，保存到`config/cookie.txt`文件中。
-
+> 
+> PS. 可以使用`-c edge/chrome`命令自动获取本地edge/chrome浏览器中的cookie，不过取到的cookie不一定有效，且有效期很短，仅作为备选功能使用（实测chrome有效，Edge经常无效）。
 
 > ⚠️ 据说用作品详情页中`/aweme/v1/web/aweme/detail/`接口请求带的cookie成功率较高。
 

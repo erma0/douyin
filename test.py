@@ -22,6 +22,10 @@ if __name__ == "__main__":
     # )
     # a = Douyin(type='like')  # 当前登录账号的喜欢
 
+    # ✅自动读取cookie
+    a = Douyin(type='like', cookie='chrome')  # ✅ Chromed cookie很短但有效
+    # a = Douyin(type='like', cookie='edge')  # ❌ Edge的cookie较长但无效
+
     # ✅video 作品
     # a = Douyin(target='https://v.douyin.com/UhYnoMS/')
 
@@ -35,7 +39,7 @@ if __name__ == "__main__":
 
     # ✅collection 合集作品
     # a = Douyin(target='https://www.douyin.com/collection/7018087406876231711', limit=23)
-    # a = Douyin(target='7018087406876231711', type='collection', limit=23)
+    # a = Douyin(target='7018087406876231711', type='collection', limit=23, cookie='chrome')
 
     # ✅favorite 收藏作品
     # a = Douyin(type='favorite')  # 当前登录账号的收藏
@@ -49,8 +53,8 @@ if __name__ == "__main__":
     #     target='https://www.douyin.com/search/%E4%B8%8D%E8%89%AF%E4%BA%BA', limit=23)
     # a = Douyin(target='不良人', type='search', limit=23)
 
-    # ✅user 搜索 用户 可能会出现返回结果不稳定，原因不明
-    a = Douyin(target='xinhuashe', type='user', limit=22)
+    # ⭕user 搜索 用户 可能会出现返回结果不稳定，原因不明
+    # a = Douyin(target='xinhuashe', type='user', limit=22)
     # a = Douyin(target='新华社', type='user', limit=22)
 
     # ❌live 搜索 直播 ws接口 暂未实现

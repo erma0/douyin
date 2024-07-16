@@ -16,7 +16,7 @@ from loguru import logger
 from douyin import Douyin
 
 
-version = 'V4.240715'
+version = 'V4.240716'
 banner = rf'''
  ____                    _         ____        _     _
 |  _ \  ___  _   _ _   _(_)_ __   / ___| _ __ (_) __| | ___ _ __
@@ -40,12 +40,13 @@ print(banner)
               default='post',
               help='选填。采集类型，默认采集post作品，支持[主页作品/喜欢/音乐/话题/搜索（用户/视频/直播）/关注/粉丝/合集/收藏/视频/图文]，输入URL链接时能够自动识别部分类型。')
 @click.option('-p', '--path', type=click.STRING, default='下载', help='选填。下载文件夹，默认为[下载]')
-@click.option('-c', '--cookie', type=click.STRING, help='选填。已登录账号的cookie，可以直接填在config/cookie.txt文件中，也可在运行时输入')
+@click.option('-c', '--cookie', type=click.STRING, help='选填。已登录账号的cookie，可以直接填在config/cookie.txt文件中，也可在运行时手动输入，也可输入[edge/chrome]将会自动从本地浏览器读取cookie')
 def main(urls, limit, download, type, path, cookie):
     if not urls:  # 未输入目标
         if type in ['like', 'favorite', 'follow', 'fans']:
             # 直接采集本账号
             start(urls, limit, download, type, path, cookie)
+            return
         else:
             # 提示输入目标关键词/URL链接/ID或文件路径
             # 未指定类型时，部分链接可根据输入的URL自动识别类型
