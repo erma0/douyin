@@ -2,7 +2,7 @@
 
 # ✨抖音爬虫
 
-> ❤️[开源不易，欢迎star⭐，若能帮助到您，可以请作者喝杯奶茶☕](#请作者喝杯奶茶)
+> ❤️[开源不易，欢迎star⭐](#star-history)
 
 ## 📢声明
 
@@ -137,9 +137,3 @@ PS.
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=erma0/douyin&type=Date)](https://star-history.com/#erma0/douyin&Date)
-
-## ☕请作者喝杯奶茶
-
-![支付宝微信收款][1]
-
-  [1]: https://erma0.cn/images/qrcode/shouqianma.png
