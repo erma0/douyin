@@ -395,14 +395,10 @@ class Douyin(object):
                     ]:
                         if not aweme.get(i):
                             aweme.pop(i, '')
-                    for i in ['duration']:
-                        if item.get(i):
-                            aweme[i] = item[i]
                     if _type <= 66 or _type in [69, 107]:  # 视频 77西瓜视频
-                        play_addr = item['video'].get(
-                            'play_addr', item.get('awemeType'))
+                        play_addr = item['video'].get('play_addr')
                         if play_addr:
-                            download_addr = item['video']['play_addr']['url_list'][-1]
+                            download_addr = play_addr['url_list'][-1]
                         else:
                             # download_addr = f"https:{item['video']['playApi']}"
                             download_addr: str = item['download']['urlList'][-1]
@@ -422,19 +418,31 @@ class Douyin(object):
                     aweme.pop('aweme_id', '')
                     aweme['id'] = item.get('aweme_id', item.get('awemeId'))
                     aweme['time'] = _time
+                    aweme['type'] = _type
                     desc = str_to_path(item.get('desc'))
                     aweme['desc'] = desc
+                    aweme['duration'] = item.get(
+                        'duration', item['video'].get('duration'))
                     music: dict = item.get('music')
                     if music:
                         aweme['music_title'] = str_to_path(music['title'])
                         aweme['music_url'] = music.get(
                             'play_url', music.get('playUrl'))['uri']
-                    cover = item['video'].get('origin_cover')
+                    cover = item['video'].get('cover')
                     if cover:
                         aweme['cover'] = cover['url_list'][-1]
                     else:
                         aweme['cover'] = f"https:{
-                            item['video']['originCover']}"
+                            item['video']['dynamicCover']}"
+                    author = item.get('author', item.get('authorInfo'))
+                    if author:
+                        avatarThumb = author.get(
+                            'avatar_thumb', author.get('avatarThumb'))
+                        aweme['author_avatar'] = avatarThumb.get(
+                            'url_list', avatarThumb.get('url_list'))[-1]
+                        aweme['author_nickname'] = author.get('nickname')
+                        aweme['author_uid'] = author.get(
+                            'sec_uid', author.get('secUid'))
                     text_extra = item.get('text_extra', item.get('textExtra'))
                     if text_extra:
                         aweme['text_extra'] = [{
