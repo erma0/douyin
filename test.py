@@ -20,10 +20,10 @@ if __name__ == "__main__":
     #     type='like',
     #     limit=33
     # )
-    # a = Douyin(type='like')  # 当前登录账号的喜欢
+    a = Douyin(type='like')  # 当前登录账号的喜欢
 
     # ✅自动读取cookie
-    a = Douyin(type='like', cookie='chrome')  # ✅ Chromed cookie很短但有效
+    # a = Douyin(type='like', cookie='chrome')  # ✅ Chromed cookie很短但有效
     # a = Douyin(type='like', cookie='edge')  # ❌ Edge的cookie较长但无效
 
     # ✅video 作品
