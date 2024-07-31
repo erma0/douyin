@@ -54,7 +54,8 @@ class Douyin(object):
         elif self.type in ['post', 'like', 'favorite', 'search', 'music', 'hashtag', 'collection']:
             self.get_awemes_list()
         elif self.type in ['video', 'note']:
-            self.get_aweme()
+            # self.get_aweme()
+            self.get_aweme_detail()
         else:  # 其他情况
             quit(f'获取目标类型错误, type: {self.type}')
 
@@ -117,6 +118,10 @@ class Douyin(object):
             #     render_data = unquote(match.group(1))
             # else:
             #     quit(f'获取目标信息失败, type: {self.type}')
+            self.title = self.id
+        elif self.type in ['video', 'note']:
+            # 通过api获取
+            # 页面源码获取的结果存在部分无法下载的情况
             self.title = self.id
         else:
             text = self.request.getHTML(self.url)
@@ -429,7 +434,7 @@ class Douyin(object):
                         aweme['music_url'] = music.get(
                             'play_url', music.get('playUrl'))['uri']
                     cover = item['video'].get('cover')
-                    if cover:
+                    if type(cover) is dict:
                         aweme['cover'] = cover['url_list'][-1]
                     else:
                         aweme['cover'] = f"https:{
@@ -439,7 +444,7 @@ class Douyin(object):
                         avatarThumb = author.get(
                             'avatar_thumb', author.get('avatarThumb'))
                         aweme['author_avatar'] = avatarThumb.get(
-                            'url_list', avatarThumb.get('url_list'))[-1]
+                            'url_list', avatarThumb.get('urlList'))[-1]
                         aweme['author_nickname'] = author.get('nickname')
                         aweme['author_uid'] = author.get(
                             'sec_uid', author.get('secUid'))
@@ -539,13 +544,21 @@ class Douyin(object):
                                     line["id"]}_{index + 1}.jpeg\n')
 
                         elif type(line["download_addr"]) is str:
-                            # 提供UA和msToken，防止下载0kb
-                            _.append(
-                                f'{line["download_addr"]}\n\tdir={self.down_path}\n\tout={filename}.mp4\n\tuser-agent={
-                                    self.request.HEADERS.get("User-Agent")}\n\theader="Cookie:msToken={self.request.COOKIES.get("msToken")}"\n'
-                            )
-                            # 正常下载的
-                            # _.append(f'{line["download_addr"]}\n\tdir={self.down_path}\n\tout={filename}.mp4\n')
+                            # # 提供UA和cookie
+                            # _.append(
+                            #     f'{line["download_addr"]}\n\tdir={self.down_path}\n\tout={filename}.mp4\n\tuser-agent={
+                            #         self.request.HEADERS.get("User-Agent")}\n\theader="Cookie:{cookies_dict_to_str(self.request.COOKIES)}"\n')
+                            # 提供UA和msToken
+                            # _.append(
+                            #     f'{line["download_addr"]}\n\tdir={self.down_path}\n\tout={filename}.mp4\n\tuser-agent={
+                            #         self.request.HEADERS.get("User-Agent")}\n\theader="Cookie:msToken={self.request.get_ms_token()}"\n')
+                            # 提供UA
+                            # _.append(
+                            #     f'{line["download_addr"]}\n\tdir={self.down_path}\n\tout={
+                            #         filename}.mp4\n\tuser-agent={self.request.HEADERS.get("User-Agent")}\n')
+                            # 正常下载
+                            _.append(f'{line["download_addr"]}\n\tdir={
+                                     self.down_path}\n\tout={filename}.mp4\n')
                         else:
                             logger.error("下载地址错误")
                 f.writelines(_)

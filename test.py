@@ -20,7 +20,7 @@ if __name__ == "__main__":
     #     type='like',
     #     limit=33
     # )
-    a = Douyin(type='like')  # 当前登录账号的喜欢
+    # a = Douyin(type='like')  # 当前登录账号的喜欢
 
     # ✅自动读取cookie
     # a = Douyin(type='like', cookie='chrome')  # ✅ Chromed cookie很短但有效
@@ -28,6 +28,8 @@ if __name__ == "__main__":
 
     # ✅video 作品
     # a = Douyin(target='https://v.douyin.com/UhYnoMS/')
+    # a = Douyin(target='https://www.douyin.com/video/7395182828473847091')
+    a = Douyin(target='https://www.douyin.com/video/7393803716924640553')
 
     # ✅note 作品
     # a = Douyin(target='7233251303269453089', type='note')
@@ -77,4 +79,4 @@ if __name__ == "__main__":
     # a.get_user_aweme()
     # a.get_user_info()
     a.run()
-    # a.download_all()
+    a.download_all()
