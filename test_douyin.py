@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # ✅video 作品
     # a = Douyin(target='https://v.douyin.com/UhYnoMS/')
     # a = Douyin(target='https://www.douyin.com/video/7395182828473847091')
-    a = Douyin(target='https://www.douyin.com/video/7393803716924640553')
+    # a = Douyin(target='https://www.douyin.com/video/7393803716924640553')
 
     # ✅note 作品
     # a = Douyin(target='7233251303269453089', type='note')
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     # a = Douyin(type='favorite')  # 当前登录账号的收藏
 
     # ✅hashtag 话题作品
-    # a = Douyin(target='https://www.douyin.com/hashtag/1588002245131278', limit=23)
+    a = Douyin(target='https://www.douyin.com/hashtag/1588002245131278', limit=23)
     # a = Douyin(target='1588002245131278', type='hashtag', limit=23)
 
     # ✅search 搜索 作品
