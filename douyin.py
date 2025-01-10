@@ -127,9 +127,9 @@ class Douyin(object):
             text = self.request.getHTML(self.url)
             # self\.__pace_f\.push\(\[1,"\d:([\s\S]*?)(\\n")?\]\)</script>
             pattern = r'self\.__pace_f\.push\(\[1,"\d:\[\S+?({[\s\S]*?)\]\\n"\]\)</script>'
-            render_data: str = re.findall(pattern, text)[-1]
+            render_data: str = re.findall(pattern, text)
             if render_data:
-                render_data = render_data.replace(
+                render_data = render_data[-1].replace(
                     '\\"', '"').replace('\\\\', '\\')
                 self.render_data = json.loads(render_data)
                 if self.type in ['search', 'user', 'live']:
@@ -154,7 +154,7 @@ class Douyin(object):
                 else:  # 其他情况
                     quit(f'获取目标信息请求失败, type: {self.type}')
             else:
-                quit(f'提取目标信息失败, url: {self.url}')
+                quit(f'提取目标信息失败，可能是cookie无效。url: {self.url}')
         self.down_path = os.path.join(
             self.down_path, str_to_path(f'{self.type}_{self.title}'))
         self.aria2_conf = f'{self.down_path}.txt'
@@ -374,7 +374,7 @@ class Douyin(object):
                     # =====限制数量=====
                     if self.limit > 0 and len(self.results) >= self.limit:
                         self.has_more = False
-                        logger.info(f'已达到限制采集数量：{len(self.results)}')
+                        logger.info(f'已达到限制采集数量： {len(self.results)}')
                         return
                     # =====增量采集=====
                     _time = item.get('create_time', item.get('createTime'))
@@ -462,10 +462,10 @@ class Douyin(object):
                         aweme['no'] = item['mix_info']['statis']['current_episode']
                     self.results.append(aweme)  # 用于保存信息
 
-                logger.info(f'采集中，已采集到{len(self.results)}条结果')
+                logger.info(f'采集中，已采集到 {len(self.results)} 条结果')
             else:
                 self.has_more = False
-                logger.info(f'已达到限制采集数量：{len(self.results)}')
+                logger.info(f'已达到限制采集数量： {len(self.results)}')
 
     def __append_users(self, user_list: List[dict]):
         with self.lock:  # 加锁避免意外冲突
@@ -477,7 +477,7 @@ class Douyin(object):
                     # =====限制数量=====
                     if self.limit > 0 and len(self.results) >= self.limit:
                         self.has_more = False
-                        logger.info(f'已达到限制采集数量：{len(self.results)}')
+                        logger.info(f'已达到限制采集数量： {len(self.results)}')
                         return
                     user_info = {}
                     user_info['nickname'] = str_to_path(item['nickname'])
@@ -503,29 +503,30 @@ class Douyin(object):
                     if musician and musician.get('music_count'):  # 原创音乐人
                         user_info['original_musician'] = item['original_musician']
                     self.results.append(user_info)  # 用于保存信息
-                logger.info(f'采集中，已采集到{len(self.results)}条结果')
+                logger.info(f'采集中，已采集到 {len(self.results)} 条结果')
             else:
                 self.has_more = False
-                logger.info(f'已达到限制采集数量：{len(self.results)}')
+                logger.info(f'已达到限制采集数量： {len(self.results)}')
 
     def download_all(self):
         """
         采集完成后，统一下载已采集的结果
         """
-        download(self.down_path, self.aria2_conf)
+        if self.type not in ['user', 'follow', 'fans', 'live']:
+            download(self.down_path, self.aria2_conf)
 
     def save(self):
         if self.results:
-            logger.success(f'采集完成，本次共采集到{len(self.results)}条结果')
+            logger.success(f'采集完成，本次共采集到 {len(self.results)} 条结果')
             # 保存下载配置文件
             _ = []
             with open(self.aria2_conf, 'w', encoding='utf-8') as f:
                 # 保存主页链接
                 if self.type in ['user', 'follow', 'fans', 'live']:
-                    f.writelines([
-                        f"https://www.douyin.com/user/{line.get('sec_uid', 'None')}" for line in self.results
+                    _ = [
+                        f"https://www.douyin.com/user/{line.get('sec_uid', 'None')}\n" for line in self.results
                         if line.get('sec_uid', None)
-                    ])
+                    ]
                 # 保存作品下载配置
                 else:
                     for line in self.results:  # 只下载本次采集结果

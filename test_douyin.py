@@ -6,6 +6,7 @@ if __name__ == "__main__":
     # 主页作品/喜欢/音乐/搜索（用户/视频/直播）/关注/粉丝/合集/收藏/视频/图文
 
     # ✅post 主页作品
+    a = Douyin('https://v.douyin.com/iSNbMea7/')  # 视频
     # a = Douyin('https://v.douyin.com/i6G7cBea/', limit=22)  # 视频
     # a = Douyin(
     #     'https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4',
@@ -47,7 +48,7 @@ if __name__ == "__main__":
     # a = Douyin(type='favorite')  # 当前登录账号的收藏
 
     # ✅hashtag 话题作品
-    a = Douyin(target='https://www.douyin.com/hashtag/1588002245131278', limit=23)
+    # a = Douyin(target='https://www.douyin.com/hashtag/1588002245131278', limit=23)
     # a = Douyin(target='1588002245131278', type='hashtag', limit=23)
 
     # ✅search 搜索 作品
@@ -64,13 +65,13 @@ if __name__ == "__main__":
 
     # ✅fans 粉丝
     # a = Douyin(
-    #     target='https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4',
+    #     target='https://www.douyin.com/user/MS4wLjABAAAAoOAjq-KborUpL2ezhf4SdMXL5Uge2Yu_sk2Fji-VvkQ?from_tab_name=main',
     #     type='fans',
     #     limit=60)
 
     # ✅follow 关注
     # a = Douyin(
-    #     target='https://www.douyin.com/user/MS4wLjABAAAA8U_l6rBzmy7bcy6xOJel4v0RzoR_wfAubGPeJimN__4',
+    #     target='https://www.douyin.com/user/MS4wLjABAAAAoOAjq-KborUpL2ezhf4SdMXL5Uge2Yu_sk2Fji-VvkQ',
     #     type='follow')
 
     #  python main.py -t https://v.douyin.com/BGf3Wp6/

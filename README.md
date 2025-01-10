@@ -62,15 +62,15 @@ PS.
 
 **🟢注意： cookie是有过期时间的，有效cookie内容一般在60条左右。**
 
-> 1. 打开抖音网页版（推荐使用`Chrome/Edge`），按`F12`打开开发者工具，切换到`网络/Network`标签页
+> 1. 打开抖音网页版的任意用户主页（推荐使用`Chrome/Edge`浏览器），例如`https://v.douyin.com/iybvCom1/`,再按`F12`打开开发者工具，然后切换到`网络/Network`标签页
 > 
-> 2. 没有请求就刷新一下，找到`https://www.douyin.com/`或者其他JSON请求（可以在 `过滤/筛选器` 中输入`cookie-name:odin_tt`）
+> 2. 在 `过滤/筛选器` 中输入`v1/web/aweme/post`，找到任一个`post/?`开头的JSON请求（没有请求就刷新一下）
 > 
-> 3. 在`标头/Headers`中找到`请求标头/Request Headers`，复制`Cookie`的值，保存到`config/cookie.txt`文件中。
-> 
+> 3. 在`标头/Headers`中往下滑，找到`请求标头/Request Headers`下面的`Cookie`，复制`Cookie`右边的值（可以双击直接全选），再保存到`config/cookie.txt`文件中。
+> ![示意图](./static/image.png)
 > PS. 可以使用`-c edge/chrome`命令自动获取本地edge/chrome浏览器中的cookie，不过取到的cookie不一定有效，且有效期很短，仅作为备选功能使用（实测chrome有效，Edge经常无效）。
 
-> ⚠️ 据说用作品详情页中`/aweme/v1/web/aweme/detail/`接口请求带的cookie成功率较高。
+> ⚠️ 据说用作品详情页中`/aweme/v1/web/aweme/detail/`接口请求带的cookie成功率较高，未测试。
 
 ### 🉑直接运行
 

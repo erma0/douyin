@@ -17,12 +17,12 @@ def get_cookie_dict(cookie='') -> dict:
         else:
             cookie = cookies_str_to_dict(cookie)
         save_cookie(cookie)
-    elif os.path.exists('config/cookie.json'):
-        with open('config/cookie.json', 'r', encoding='utf-8') as f:
-            cookie = json.load(f)
     elif os.path.exists('config/cookie.txt'):
         with open('config/cookie.txt', 'r', encoding='utf-8') as f:
             cookie = cookies_str_to_dict(f.read())
+    elif os.path.exists('config/cookie.json'):
+        with open('config/cookie.json', 'r', encoding='utf-8') as f:
+            cookie = json.load(f)
     else:
         cookie = cookies_str_to_dict(input('请输入cookie:'))
         save_cookie(cookie)
