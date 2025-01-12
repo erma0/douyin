@@ -15,8 +15,8 @@ from urllib.parse import quote
 import requests
 from loguru import logger
 
-from utils.cookies import get_cookie_dict
-from utils.execjs_fix import execjs
+from .cookies import get_cookie_dict
+from .execjs_fix import execjs
 
 
 class Request(object):

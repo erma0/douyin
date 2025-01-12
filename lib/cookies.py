@@ -1,19 +1,22 @@
 import os
 
+import rookiepy
 import requests
 import ujson as json
 from loguru import logger
-import browser_cookie3
 
-from utils.util import save_json
+from .util import save_json
+
+
+def get_browser_cookie(browser='chrome'):
+    return eval(f"rookiepy.{browser}(['douyin.com'])[0]")
 
 
 def get_cookie_dict(cookie='') -> dict:
     if cookie:
         # 自动读取的cookie有效期短，且不一定有效
-        if cookie in ['edge', 'chrome']:
-            cj = eval(f"browser_cookie3.{cookie}(domain_name='douyin.com')")
-            cookie = requests.utils.dict_from_cookiejar(cj)
+        if cookie in ['edge', 'chrome', 'load']:
+            cookie = get_browser_cookie(cookie)
         else:
             cookie = cookies_str_to_dict(cookie)
         save_cookie(cookie)
@@ -62,8 +65,3 @@ def cookies_str_to_dict(cookie_string: str) -> dict:
 
 def cookies_dict_to_str(cookie_string: dict) -> str:
     return '; '.join([f'{key}={value}' for key, value in cookie_string.items()])
-
-
-if __name__ == "__main__":
-    save_json('edge_cookie', get_cookie_dict())
-    # save_json('dict_cookie', cookies_to_dict(x))

@@ -17,9 +17,9 @@ from urllib.parse import parse_qs, quote, unquote, urlparse
 import ujson as json
 from loguru import logger
 
-from utils.download import download
-from utils.request import Request
-from utils.util import quit, save_json, str_to_path, url_redirect
+from .download import download
+from .request import Request
+from .util import quit, save_json, str_to_path, url_redirect
 
 
 class Douyin(object):

@@ -13,7 +13,7 @@ import os
 import click
 from loguru import logger
 
-from douyin import Douyin
+from lib.douyin import Douyin
 
 
 version = 'V4.240716'
