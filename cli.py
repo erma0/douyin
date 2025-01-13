@@ -16,7 +16,7 @@ from loguru import logger
 from lib.douyin import Douyin
 
 
-version = 'V4.240716'
+version = 'V4.250113'
 banner = rf'''
  ____                    _         ____        _     _
 |  _ \  ___  _   _ _   _(_)_ __   / ___| _ __ (_) __| | ___ _ __
