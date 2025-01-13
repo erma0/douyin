@@ -72,7 +72,7 @@ class Request(object):
     }
     filepath = os.path.dirname(__file__)
     SIGN = execjs.compile(
-        open(os.path.join(filepath, '../lib/douyin.js'), 'r', encoding='utf-8').read())
+        open(os.path.join(filepath, 'js/douyin.js'), 'r', encoding='utf-8').read())
     WEBID = ''
 
     def __init__(self, cookie='', UA=''):
