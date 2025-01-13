@@ -3,4 +3,4 @@ loguru
 ujson
 requests
 PyExecJS
-browser_cookie3
+rookiepy
