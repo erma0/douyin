@@ -38,6 +38,7 @@ interface DownloadPanelProps {
 export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs = false }) => {
   const [activeTab, setActiveTab] = useState<'active' | 'waiting' | 'stopped'>('active');
   const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
+  const [showOnlyErrors, setShowOnlyErrors] = useState(false);
   
   const {
     activeTasks,
@@ -78,11 +79,27 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
     }
   };
 
+  // 重试所有失败的任务
+  const handleRetryAllFailed = async () => {
+    const failedTasks = stoppedTasks.filter(t => t.status === 'error');
+    for (const task of failedTasks) {
+      await handleRetry(task);
+    }
+  };
+
+  // 统计失败任务数量
+  const errorCount = stoppedTasks.filter(t => t.status === 'error').length;
+
 
 
   // 渲染任务列表
   const renderTaskList = (tasks: Aria2Task[], type: 'active' | 'waiting' | 'stopped') => {
-    if (tasks.length === 0) {
+    // 如果在已停止标签且开启了仅显示失败，则过滤任务
+    const filteredTasks = (type === 'stopped' && showOnlyErrors) 
+      ? tasks.filter(t => t.status === 'error')
+      : tasks;
+
+    if (filteredTasks.length === 0) {
       return (
         <div className="h-full flex flex-col items-center justify-center text-gray-400">
           <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
@@ -99,8 +116,36 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
     }
 
     return (
-      <div className="grid gap-4">
-        {tasks.map((task) => (
+      <div className="space-y-4">
+        {/* 已停止标签的筛选器 */}
+        {type === 'stopped' && tasks.length > 0 && errorCount > 0 && (
+          <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+            <button
+              onClick={() => setShowOnlyErrors(false)}
+              className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
+                !showOnlyErrors
+                  ? 'bg-blue-100 text-blue-700 font-medium'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              全部 ({tasks.length})
+            </button>
+            <button
+              onClick={() => setShowOnlyErrors(true)}
+              className={`px-3 py-1.5 text-sm rounded-lg transition-all flex items-center gap-1.5 ${
+                showOnlyErrors
+                  ? 'bg-red-100 text-red-700 font-medium'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <AlertCircle size={14} />
+              仅失败 ({errorCount})
+            </button>
+          </div>
+        )}
+
+        <div className="grid gap-4">
+          {filteredTasks.map((task) => (
           <TaskItem
             key={task.gid}
             task={task}
@@ -114,7 +159,8 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
             formatSpeed={formatSpeed}
 
           />
-        ))}
+          ))}
+        </div>
       </div>
     );
   };
@@ -198,7 +244,9 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
                     : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
                 }`}
               >
-                已停止 {totalStopped > 0 && <span className="ml-1.5 px-2 py-0.5 bg-white/20 rounded-full text-xs">{totalStopped}</span>}
+                已停止 
+                {totalStopped > 0 && <span className="ml-1.5 px-2 py-0.5 bg-white/20 rounded-full text-xs">{totalStopped}</span>}
+                {errorCount > 0 && <span className="ml-1.5 px-2 py-0.5 bg-red-500 text-white rounded-full text-xs">{errorCount}</span>}
               </button>
             </div>
 
@@ -248,6 +296,18 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
                 <XCircle size={16} />
                 取消全部
               </button>
+
+              {/* 重试全部失败按钮 - 仅在已停止标签且有失败任务时显示 */}
+              {activeTab === 'stopped' && errorCount > 0 && (
+                <button
+                  onClick={handleRetryAllFailed}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm text-blue-700 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 hover:from-blue-100 hover:to-cyan-100 hover:border-blue-300"
+                  title={`重试 ${errorCount} 个失败任务`}
+                >
+                  <AlertCircle size={16} />
+                  重试失败 ({errorCount})
+                </button>
+              )}
               
               {/* 清空记录按钮 */}
               <button
