@@ -12,7 +12,7 @@ function Write-Err { Write-Host "✗ $args" -ForegroundColor Red }
 
 try {
     Write-Host "`n╔════════════════════════════════════════╗" -ForegroundColor Magenta
-    Write-Host "║   DouyinCrawler - 开发环境构建       ║" -ForegroundColor Magenta
+    Write-Host "║      DouyinCrawler - 开发环境构建      ║" -ForegroundColor Magenta
     Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Magenta
     
     # 1. 检查依赖
@@ -79,7 +79,7 @@ try {
     
     # 完成
     Write-Host "`n╔════════════════════════════════════════╗" -ForegroundColor Green
-    Write-Host "║           构建成功完成！             ║" -ForegroundColor Green
+    Write-Host "║            构建成功完成！             ║" -ForegroundColor Green
     Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Green
     
     Write-Host "运行应用: " -NoNewline
@@ -89,7 +89,7 @@ try {
     Write-Host "`n⚠ 首次使用请在设置中配置 Cookie`n" -ForegroundColor Yellow
 } catch {
     Write-Host "`n╔════════════════════════════════════════╗" -ForegroundColor Red
-    Write-Host "║             构建失败！               ║" -ForegroundColor Red
+    Write-Host "║              构建失败！              ║" -ForegroundColor Red
     Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Red
     Write-Err "错误: $_"
     Write-Host "`n尝试: .\build.ps1 -Clean`n" -ForegroundColor Yellow
