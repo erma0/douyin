@@ -1,0 +1,5 @@
+{
+  "name": "爬虫界面1130",
+  "description": "A modern frontend for Douyin crawler with pywebview integration",
+  "requestFramePermissions": []
+}

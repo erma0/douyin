@@ -1,0 +1,39 @@
+{
+  "name": "douyin-crawler",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "dependencies": {
+    "lucide-react": "^0.555.0",
+    "memoize-one": "6.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-virtualized-auto-sizer": "1.0.24",
+    "react-window": "1.8.10"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.17",
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.0.0",
+    "@vitest/ui": "^4.0.15",
+    "autoprefixer": "^10.4.22",
+    "fast-check": "^4.3.0",
+    "jsdom": "^27.3.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.17",
+    "terser": "^5.44.1",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0",
+    "vitest": "^4.0.15"
+  }
+}

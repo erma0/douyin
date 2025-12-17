@@ -1,14 +1,78 @@
-.vscode
+# ==========================
+# 自定义部分
+# ==========================
 下载/
 test.py
 user.*
 cookie.*
 
+# 下载目录中的所有数据文件（保留目录结构）
+download/
+
+# 配置文件和日志（包含用户数据）
+config/*
+!config/.gitkeep
+
+# 测试目录
+test/
+
+# Aria2 可执行文件（内置到项目，但不提交到git）
+aria2c
+aria2c.exe
+
+# ==========================
+# Python / Pywebview 后端部分
+# ==========================
+
+# Python 编译文件和缓存
 __pycache__/
 *.py[cod]
 *$py.class
-*.manifest
-*.spec
-build/
+.pytest_cache/
 
-aria2c.exe
+# Python 虚拟环境 (根据你的习惯，列出了常见的命名)
+venv/
+.venv/
+env/
+.env
+
+# PyInstaller 打包产物
+/build/
+/dist/
+
+# 前端构建产物
+/frontend/dist/
+
+# ==========================
+# React / Vite 前端部分
+# ==========================
+
+# Node 依赖
+node_modules/
+
+# pnpm 错误日志
+pnpm-debug.log*
+
+# 本地环境变量
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ==========================
+# 操作系统 / IDE 通用部分
+# ==========================
+
+# ai IDE 配置
+.trae/
+.kiro/
+
+# VS Code 配置
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# 其它临时文件
+*.log
