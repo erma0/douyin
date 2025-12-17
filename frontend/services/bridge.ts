@@ -151,10 +151,10 @@ export const bridge = {
    */
   subscribeToLogs: async (callback: (log: any) => void): Promise<(() => void)> => {
     if (window.pywebview) {
-      await (window.pywebview.api as any).subscribe_to_logs(callback);
+      await window.pywebview.api.subscribe_to_logs(callback);
       return () => {
         try {
-          (window.pywebview.api as any).unsubscribe_from_logs(callback);
+          window.pywebview.api.unsubscribe_from_logs(callback);
         } catch (error) {
           console.error('[Bridge] 取消订阅失败:', error);
         }
@@ -168,7 +168,7 @@ export const bridge = {
    */
   getTaskStatus: async (taskId?: string): Promise<any[]> => {
     if (window.pywebview) {
-      return await (window.pywebview.api as any).get_task_status(taskId);
+      return await window.pywebview.api.get_task_status(taskId);
     }
     throw new Error('Backend not available');
   },
@@ -176,9 +176,9 @@ export const bridge = {
   /**
    * 获取 Aria2 配置
    */
-  getAria2Config: async (): Promise<any> => {
+  getAria2Config: async (): Promise<{ host: string; port: number; secret: string }> => {
     if (window.pywebview) {
-      return await (window.pywebview.api as any).get_aria2_config();
+      return await window.pywebview.api.get_aria2_config();
     }
     throw new Error('Backend not available');
   },
@@ -188,7 +188,7 @@ export const bridge = {
    */
   isFirstRun: async (): Promise<boolean> => {
     if (window.pywebview) {
-      return await (window.pywebview.api as any).is_first_run_check();
+      return await window.pywebview.api.is_first_run_check();
     }
     return false;
   },
@@ -199,7 +199,7 @@ export const bridge = {
    */
   startAria2: async (): Promise<void> => {
     if (window.pywebview) {
-      await (window.pywebview.api as any).start_aria2_after_loaded();
+      await window.pywebview.api.start_aria2_after_loaded();
     }
   },
 
@@ -208,7 +208,7 @@ export const bridge = {
    */
   getTaskResults: async (taskId: string): Promise<any[]> => {
     if (window.pywebview) {
-      return await (window.pywebview.api as any).get_task_results(taskId);
+      return await window.pywebview.api.get_task_results(taskId);
     }
     throw new Error('Backend not available');
   },
@@ -218,7 +218,7 @@ export const bridge = {
    */
   getClipboardText: async (): Promise<string> => {
     if (window.pywebview) {
-      return await (window.pywebview.api as any).get_clipboard_text();
+      return await window.pywebview.api.get_clipboard_text();
     }
     throw new Error('Backend not available');
   },
@@ -232,7 +232,7 @@ export const bridge = {
         throw new Error('Backend not available');
       }
       
-      return await (window.pywebview.api as any).read_config_file(filePath);
+      return await window.pywebview.api.read_config_file(filePath);
     } catch (error) {
       handleError(error, { filePath }, { 
         customMessage: '读取配置文件失败' 
@@ -269,7 +269,7 @@ export const bridge = {
         throw new Error('Backend not available');
       }
       
-      return await (window.pywebview.api as any).get_aria2_config_path(taskId);
+      return await window.pywebview.api.get_aria2_config_path(taskId);
     } catch (error) {
       handleError(error, { taskId }, { 
         customMessage: '获取配置文件路径失败' 
@@ -287,9 +287,28 @@ export const bridge = {
         throw new Error('Backend not available');
       }
       
-      return await (window.pywebview.api as any).check_file_exists(filePath);
+      return await window.pywebview.api.check_file_exists(filePath);
     } catch (error) {
       console.error('[Bridge] 检查文件存在失败:', error);
+      return false;
+    }
+  },
+
+  /**
+   * 打开文件夹
+   */
+  openFolder: async (folderPath: string): Promise<boolean> => {
+    try {
+      console.log('[Bridge] 准备打开文件夹:', folderPath);
+      if (!window.pywebview) {
+        throw new Error('Backend not available');
+      }
+      
+      const result = await window.pywebview.api.open_folder(folderPath);
+      console.log('[Bridge] 打开文件夹返回结果:', result);
+      return result;
+    } catch (error) {
+      console.error('[Bridge] 打开文件夹失败:', error);
       return false;
     }
   }

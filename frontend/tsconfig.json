@@ -13,6 +13,10 @@
     "types": [
       "node"
     ],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types"
+    ],
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",

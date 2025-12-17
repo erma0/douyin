@@ -17,6 +17,7 @@ Aria2管理模块 - 简化版
 
 import os
 import subprocess
+import sys
 import time
 from typing import Optional
 

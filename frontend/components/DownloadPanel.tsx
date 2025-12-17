@@ -22,8 +22,10 @@ import {
   Link as LinkIcon,
   PauseCircle,
   PlayCircle,
-  XCircle
+  XCircle,
+  FolderOpen
 } from 'lucide-react';
+import { bridge } from '../services/bridge';
 import { aria2Service, Aria2Task } from '../services/aria2Service';
 import { useAria2Manager } from '../hooks/useAria2Manager';
 import { formatSize, formatSpeed } from '../utils/formatters';
@@ -220,13 +222,13 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
               {/* 恢复按钮 */}
               <button
                 onClick={resumeAll}
-                disabled={!activeTasks.some(t => t.status === 'paused')}
+                disabled={!activeTasks.some(t => t.status === 'paused') && !waitingTasks.some(t => t.status === 'paused')}
                 className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm ${
-                  activeTasks.some(t => t.status === 'paused')
+                  activeTasks.some(t => t.status === 'paused') || waitingTasks.some(t => t.status === 'paused')
                     ? 'text-green-700 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 hover:from-green-100 hover:to-emerald-100 hover:border-green-300'
                     : 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
                 }`}
-                title={activeTasks.some(t => t.status === 'paused') ? "恢复全部暂停任务" : "没有暂停的任务"}
+                title={activeTasks.some(t => t.status === 'paused') || waitingTasks.some(t => t.status === 'paused') ? "恢复全部暂停任务" : "没有暂停的任务"}
               >
                 <PlayCircle size={16} />
                 恢复全部
@@ -393,7 +395,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                   <Pause size={16} className="text-gray-600 group-hover:text-orange-600" />
                 </button>
               )}
-              {type === 'active' && task.status === 'paused' && (
+              {(type === 'active' || type === 'waiting') && task.status === 'paused' && (
                 <button
                   onClick={() => onResume(task.gid)}
                   className="p-2 hover:bg-green-50 rounded-lg transition-colors group"
@@ -413,6 +415,23 @@ const TaskItem: React.FC<TaskItemProps> = ({
               )}
               {type === 'stopped' && (
                 <>
+                  {/* 打开文件夹按钮 - 只对已完成的任务显示 */}
+                  {task.status === 'complete' && task.dir && (
+                    <button
+                      onClick={async () => {
+                        console.log('点击打开文件夹，路径:', task.dir);
+                        const success = await bridge.openFolder(task.dir!);
+                        console.log('打开文件夹结果:', success);
+                        if (!success) {
+                          console.error('打开文件夹失败，路径:', task.dir);
+                        }
+                      }}
+                      className="p-2 hover:bg-blue-50 rounded-lg transition-colors group"
+                      title="打开文件夹"
+                    >
+                      <FolderOpen size={16} className="text-gray-600 group-hover:text-blue-600" />
+                    </button>
+                  )}
                   {/* 重试按钮 - 只对失败的任务显示 */}
                   {task.status === 'error' && (
                     <button

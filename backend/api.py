@@ -562,7 +562,7 @@ class API:
         开始采集任务（支持流式返回）
 
         启动一个新的数据采集任务，从抖音平台采集指定类型的数据。
-        采集过程中会通过 window.evaluate_js 实时调用前端全局函数 window.__douyinCallback 返回结果。
+        采集过程中会通过 window.evaluate_js 实时调用前端回调函数返回结果。
 
         Args:
             type: 任务类型
@@ -576,8 +576,8 @@ class API:
 
         Note:
             - 采集在后台线程中执行，不阻塞主线程
-            - 通过 window.evaluate_js 调用前端全局函数 window.__douyinCallback 实时返回结果
-            - 前端需要在调用此方法前注册全局函数 window.__douyinCallback
+            - 通过 window.evaluate_js 调用前端命名空间回调函数 window.__kiro_douyin.taskCallback
+            - 前端需要在调用此方法前通过 callbackManager 注册回调函数
             - 任务状态会被记录到task_status字典
         """
         # 输入验证
@@ -727,7 +727,7 @@ class API:
                                 callback_json = json.dumps(
                                     callback_data, ensure_ascii=False
                                 )
-                                js_code = f"window.__douyinCallback && window.__douyinCallback({callback_json})"
+                                js_code = f"window.__kiro_douyin && window.__kiro_douyin.taskCallback && window.__kiro_douyin.taskCallback({callback_json})"
                                 self._window.evaluate_js(js_code)
                             except Exception as e:
                                 logger.error(f"回调前端失败: {e}")
@@ -782,11 +782,11 @@ class API:
                                 f"回调数据: type={callback_data['type']}, data_count={len(callback_data['data'])}, total={callback_data['total']}"
                             )
 
-                            # 使用 window.evaluate_js 调用前端全局函数
+                            # 使用 window.evaluate_js 调用前端命名空间回调函数
                             callback_json = json.dumps(
                                 callback_data, ensure_ascii=False
                             )
-                            js_code = f"window.__douyinCallback && window.__douyinCallback({callback_json})"
+                            js_code = f"window.__kiro_douyin && window.__kiro_douyin.taskCallback && window.__kiro_douyin.taskCallback({callback_json})"
                             self._window.evaluate_js(js_code)
                             logger.info(
                                 f"✓ 通过 evaluate_js 回调前端成功: {len(works)} 条"
@@ -837,7 +837,7 @@ class API:
                         }
 
                         complete_json = json.dumps(complete_data, ensure_ascii=False)
-                        js_code = f"window.__douyinCallback && window.__douyinCallback({complete_json})"
+                        js_code = f"window.__kiro_douyin && window.__kiro_douyin.taskCallback && window.__kiro_douyin.taskCallback({complete_json})"
                         self._window.evaluate_js(js_code)
                         logger.info("✓ 完成回调已发送")
                     except Exception as e:
@@ -868,7 +868,7 @@ class API:
                         }
 
                         error_json = json.dumps(error_data, ensure_ascii=False)
-                        js_code = f"window.__douyinCallback && window.__douyinCallback({error_json})"
+                        js_code = f"window.__kiro_douyin && window.__kiro_douyin.taskCallback && window.__kiro_douyin.taskCallback({error_json})"
                         self._window.evaluate_js(js_code)
                         logger.info("✓ 错误回调已发送")
                     except Exception as callback_error:
@@ -1362,6 +1362,66 @@ class API:
         except Exception as e:
             logger.error(f"Error selecting folder: {e}")
             return self.settings["downloadPath"]
+
+    def open_folder(self, folder_path: str) -> bool:
+        """
+        打开文件夹
+
+        在系统文件管理器中打开指定的文件夹。
+
+        Args:
+            folder_path: 要打开的文件夹路径
+
+        Returns:
+            是否成功打开
+
+        Note:
+            - Windows: 使用 explorer
+            - macOS: 使用 open
+            - Linux: 使用 xdg-open
+        """
+        logger.info(f"打开文件夹: {folder_path}")
+        
+        try:
+            import platform
+            import subprocess
+            
+            # 确保路径存在
+            if not os.path.exists(folder_path):
+                logger.error(f"文件夹不存在: {folder_path}")
+                return False
+            
+            # 如果是文件路径，获取其所在目录
+            if os.path.isfile(folder_path):
+                folder_path = os.path.dirname(folder_path)
+            
+            system = platform.system()
+            
+            # Windows 下隐藏控制台窗口
+            startupinfo = None
+            if system == "Windows":
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = subprocess.SW_HIDE
+            
+            if system == "Windows":
+                # Windows: 使用 explorer，需要规范化路径
+                normalized_path = os.path.abspath(folder_path).replace('/', '\\')
+                # 使用 os.startfile 更可靠
+                os.startfile(normalized_path)
+            elif system == "Darwin":
+                # macOS: 使用 open
+                subprocess.Popen(['open', folder_path])
+            else:
+                # Linux: 使用 xdg-open
+                subprocess.Popen(['xdg-open', folder_path])
+            
+            logger.info(f"✓ 已打开文件夹: {folder_path}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"✗ 打开文件夹失败: {e}")
+            return False
 
     def get_aria2_config_path(self, task_id: str = None) -> str:
         """

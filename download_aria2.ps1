@@ -1,8 +1,9 @@
 ﻿# Aria2自动下载脚本
 # 自动下载aria2c.exe到项目目录
 
-Write-Host "=== Aria2 自动下载工具 ===" -ForegroundColor Cyan
-Write-Host ""
+Write-Host "`n╔════════════════════════════════════════╗" -ForegroundColor Cyan
+Write-Host "║        Aria2 自动下载工具           ║" -ForegroundColor Cyan
+Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Cyan
 
 $aria2Dir = "aria2"
 $aria2Exe = "$aria2Dir\aria2c.exe"
@@ -74,9 +75,9 @@ try {
     
     Write-Host "[成功] 清理完成" -ForegroundColor Green
     
-    Write-Host ""
-    Write-Host "=== 下载完成 ===" -ForegroundColor Cyan
-    Write-Host ""
+    Write-Host "`n╔════════════════════════════════════════╗" -ForegroundColor Green
+    Write-Host "║             下载完成！               ║" -ForegroundColor Green
+    Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Green
     Write-Host "[成功] aria2c.exe 已安装到: $aria2Exe" -ForegroundColor Green
     Write-Host ""
     

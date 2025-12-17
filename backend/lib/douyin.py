@@ -5,7 +5,7 @@
 @Author  :   erma0
 @Version :   1.0
 @Link    :   https://github.com/erma0
-@Desc    :   抖音爬虫
+@Desc    :   DouyinCrawler
 """
 
 import os

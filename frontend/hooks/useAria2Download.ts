@@ -20,8 +20,7 @@ interface DownloadInfo {
   url: string;
 }
 
-// 全局标志：是否已显示过连接成功提示
-let hasShownConnectedToast = false;
+
 
 /**
  * 下载统计接口
@@ -59,11 +58,13 @@ export const useAria2Download = () => {
    */
   useEffect(() => {
     const unsubscribe = aria2Service.onConnectionChange((isConnected) => {
-      // 只在状态从 false 变为 true 时显示提示，且全局只显示一次
-      if (isConnected && !prevConnectedRef.current && !hasShownConnectedToast) {
+      console.log(`[useAria2Download] 连接状态变化: ${isConnected}, 之前: ${prevConnectedRef.current}`);
+      
+      // 只在状态从 false 变为 true 时显示提示
+      if (isConnected && !prevConnectedRef.current) {
+        console.log('[useAria2Download] 显示连接成功提示');
         toast.success('Aria2 下载服务已连接');
         logger.success('Aria2 下载服务已连接');
-        hasShownConnectedToast = true;
       }
       prevConnectedRef.current = isConnected;
       setConnected(isConnected);

@@ -1,6 +1,6 @@
 ![douyin](https://socialify.git.ci/erma0/douyin/image?description=1&font=Source%20Code%20Pro&forks=1&issues=1&language=1&owner=1&pattern=Circuit%20Board&stargazers=1&theme=Auto)
 
-# ✨抖音爬虫
+# ✨DouyinCrawler
 
 > ❤️[开源不易，欢迎star⭐](#star-history)
 
@@ -61,7 +61,7 @@
 ### 快速启动
 
 - 从 [Releases](https://github.com/erma0/douyin/releases) 下载最新版本
-- 解压后双击运行 `抖音爬虫.exe`
+- 解压后双击运行 `DouyinCrawler.exe`
 
 
 详细使用说明请查看 [USAGE.md](USAGE.md)
@@ -98,8 +98,8 @@ python main.py        # 运行
 ```
 
 **打包产物：**
-- 单文件模式：`dist/抖音爬虫.exe`
-- 目录模式：`dist/抖音爬虫/抖音爬虫.exe`
+- 单文件模式：`dist/DouyinCrawler.exe`
+- 目录模式：`dist/DouyinCrawler/DouyinCrawler.exe`
 
 ## 📊 项目状态
 

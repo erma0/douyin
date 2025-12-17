@@ -38,10 +38,8 @@ env/
 
 # PyInstaller 打包产物
 /build/
-/dist/
-
-# 前端构建产物
-/frontend/dist/
+dist/
+release/
 
 # ==========================
 # React / Vite 前端部分

@@ -1,4 +1,4 @@
-# 完整打包脚本（前端+后端）
+﻿# 完整打包脚本（前端+后端）
 # 使用: .\build-all.ps1 [-Mode dir|onefile] [-Clean]
 
 param(
@@ -14,9 +14,9 @@ function Write-OK { Write-Host "✓ $args" -ForegroundColor Green }
 function Write-Err { Write-Host "✗ $args" -ForegroundColor Red }
 
 try {
-    Write-Host "`n╔═══════════════════════════════╗" -ForegroundColor Magenta
-    Write-Host "║   抖音爬虫 - 完整打包工具   ║" -ForegroundColor Magenta
-    Write-Host "╚═══════════════════════════════╝`n" -ForegroundColor Magenta
+    Write-Host "`n╔════════════════════════════════════════╗" -ForegroundColor Magenta
+    Write-Host "║   DouyinCrawler - 完整打包工具       ║" -ForegroundColor Magenta
+    Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Magenta
     
     # 1. 清理
     if ($Clean) {
@@ -42,11 +42,40 @@ try {
     # 3. 构建前端
     Write-Step "构建前端"
     
-    $buildFrontendArgs = @()
-    if ($Clean) { $buildFrontendArgs += "-Clean" }
+    # 检查 pnpm
+    $hasPnpm = Get-Command pnpm -ErrorAction SilentlyContinue
+    if (-not $hasPnpm) {
+        Write-Host "ℹ 未检测到 pnpm，正在安装..." -ForegroundColor Yellow
+        npm install -g pnpm
+        if ($LASTEXITCODE -ne 0) { throw "pnpm 安装失败" }
+    }
     
-    & .\build-frontend.ps1 @buildFrontendArgs
-    if ($LASTEXITCODE -ne 0) { throw "前端构建失败" }
+    # 进入前端目录
+    Push-Location frontend
+    
+    try {
+        # 安装依赖
+        if (-not (Test-Path "node_modules") -or $Clean) {
+            Write-Host "ℹ 安装前端依赖..." -ForegroundColor Blue
+            pnpm install
+            if ($LASTEXITCODE -ne 0) { throw "依赖安装失败" }
+        }
+        
+        # 构建
+        Write-Host "ℹ 构建前端资源..." -ForegroundColor Blue
+        pnpm build
+        if ($LASTEXITCODE -ne 0) { throw "前端构建失败" }
+        
+        # 验证构建产物
+        if (-not (Test-Path "dist/index.html")) {
+            throw "构建产物不完整"
+        }
+        
+        Write-OK "前端构建完成"
+    }
+    finally {
+        Pop-Location
+    }
     
     # 4. 打包后端
     Write-Step "打包后端 ($Mode 模式)"
@@ -57,7 +86,7 @@ try {
     python -m PyInstaller $specFile --clean --noconfirm
     if ($LASTEXITCODE -ne 0) { throw "打包失败" }
     
-    $exePath = if ($Mode -eq "onefile") { "dist/抖音爬虫.exe" } else { "dist/抖音爬虫/抖音爬虫.exe" }
+    $exePath = if ($Mode -eq "onefile") { "dist/DouyinCrawler.exe" } else { "dist/DouyinCrawler/DouyinCrawler.exe" }
     if (-not (Test-Path $exePath)) { throw "未找到可执行文件" }
     
     $exeSize = [math]::Round((Get-Item $exePath).Length / 1MB, 2)
@@ -68,15 +97,15 @@ try {
     
     $releaseDir = "release"
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-    $releaseName = "抖音爬虫_${Mode}_${timestamp}"
+    $releaseName = "DouyinCrawler_${Mode}_${timestamp}"
     $releaseTarget = Join-Path $releaseDir $releaseName
     
     New-Item -ItemType Directory -Path $releaseTarget -Force | Out-Null
     
     if ($Mode -eq "onefile") {
-        Copy-Item "dist/抖音爬虫.exe" $releaseTarget
+        Copy-Item "dist/DouyinCrawler.exe" $releaseTarget
     } else {
-        Copy-Item "dist/抖音爬虫/*" $releaseTarget -Recurse
+        Copy-Item "dist/DouyinCrawler/*" $releaseTarget -Recurse
     }
     
     # 复制文档
@@ -86,10 +115,10 @@ try {
     
     # 创建使用说明
     @"
-# 抖音爬虫 - 使用说明
+# DouyinCrawler - 使用说明
 
 ## 快速开始
-1. 双击运行 抖音爬虫.exe
+1. 双击运行 DouyinCrawler.exe
 2. 在设置中配置抖音 Cookie
 3. 开始使用
 
@@ -115,21 +144,21 @@ try {
     Write-OK "发布包已创建"
     
     # 完成
-    Write-Host "`n╔═══════════════════════════════╗" -ForegroundColor Green
-    Write-Host "║       打包成功完成！        ║" -ForegroundColor Green
-    Write-Host "╚═══════════════════════════════╝`n" -ForegroundColor Green
+    Write-Host "`n╔════════════════════════════════════════╗" -ForegroundColor Green
+    Write-Host "║             打包完成！               ║" -ForegroundColor Green
+    Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Green
     
     Write-Host "📦 压缩包: " -NoNewline
     Write-Host $zipPath -ForegroundColor Yellow
     Write-Host "💾 大小: " -NoNewline
     Write-Host "$zipSize MB" -ForegroundColor Yellow
     Write-Host "`n测试运行: " -NoNewline
-    Write-Host "$releaseTarget\抖音爬虫.exe`n" -ForegroundColor Cyan
+    Write-Host "$releaseTarget\DouyinCrawler.exe`n" -ForegroundColor Cyan
     
 } catch {
-    Write-Host "`n╔═══════════════════════════════╗" -ForegroundColor Red
-    Write-Host "║       打包失败！            ║" -ForegroundColor Red
-    Write-Host "╚═══════════════════════════════╝`n" -ForegroundColor Red
+    Write-Host "`n╔════════════════════════════════════════╗" -ForegroundColor Red
+    Write-Host "║             打包失败！               ║" -ForegroundColor Red
+    Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Red
     Write-Err "错误: $_"
     Write-Host "`n尝试: .\build-all.ps1 -Clean`n" -ForegroundColor Yellow
     exit 1

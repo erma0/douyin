@@ -12,6 +12,8 @@ import { useAria2Download } from './hooks/useAria2Download';
 import { bridge } from './services/bridge';
 import { logger } from './services/logger';
 import { DouyinWork, TaskType } from './types';
+import { registerTaskCallback, unregisterTaskCallback } from './utils/callbackManager';
+import { ErrorBoundary, LightErrorBoundary } from './components/ErrorBoundary';
 
 // 延迟加载虚拟滚动库（这些库比较大）
 import {
@@ -23,10 +25,7 @@ import {
 } from 'lucide-react';
 import memoize from 'memoize-one';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import * as ReactWindow from 'react-window';
-
-// 解决react-window类型定义缺失的问题
-const FixedSizeList = (ReactWindow as any).FixedSizeList;
+import { FixedSizeList } from 'react-window';
 
 // --- 虚拟滚动列表辅助工具 ---
 
@@ -318,9 +317,9 @@ export const App: React.FC = () => {
     setIsLoading(true);
     setShowLimitMenu(false); // 关闭数量限制菜单
 
-    // 注册全局回调函数，供后端通过 evaluate_js 调用
-    // PyWebView 不支持直接传递 JavaScript 函数，需要使用全局函数
-    (window as any).__douyinCallback = (message: any) => {
+    // 使用安全的回调管理器注册全局回调函数
+    // 避免命名冲突和内存泄漏
+    const cleanupCallback = registerTaskCallback((message) => {
       if (message.type === 'result') {
         // 实时追加新采集到的结果
         setResults(prev => {
@@ -372,8 +371,8 @@ export const App: React.FC = () => {
           }
         }
 
-        // 清理全局回调函数
-        delete (window as any).__douyinCallback;
+        // 清理回调函数
+        cleanupCallback();
       } else if (message.type === 'error') {
         // 采集失败
         setIsLoading(false);
@@ -389,10 +388,10 @@ export const App: React.FC = () => {
           toast.error(`采集失败: ${errorMsg}`);
         }
 
-        // 清理全局回调函数
-        delete (window as any).__douyinCallback;
+        // 清理回调函数
+        cleanupCallback();
       }
-    };
+    });
 
     try {
       // 调用后端API开始采集任务（不传递回调函数，后端通过 evaluate_js 调用全局函数）
@@ -505,8 +504,16 @@ export const App: React.FC = () => {
   const decrementMaxCount = () => setMaxCount(prev => Math.max(0, (prev || 0) - 1));
 
   return (
-    <div className="flex h-screen bg-[#F8F9FB] overflow-hidden font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-900">
-      <Sidebar
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        // 记录错误到日志系统
+        logger.error(`应用错误: ${error.message}`);
+        console.error('错误详情:', error, errorInfo);
+      }}
+    >
+      <div className="flex h-screen bg-[#F8F9FB] overflow-hidden font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-900">
+        <LightErrorBoundary fallbackMessage="侧边栏加载失败">
+          <Sidebar
         activeTab={activeTab}
         setActiveTab={handleTabChange}
         onOpenSettings={() => setIsSettingsOpen(true)}
@@ -514,12 +521,15 @@ export const App: React.FC = () => {
         setShowLogs={setShowLogs}
         isDownloading={isDownloading}
         downloadStats={downloadStats}
-      />
+          />
+        </LightErrorBoundary>
 
-      {/* 根据activeTab显示不同的主内容区域 */}
-      {activeTab === TaskType.DOWNLOAD_MANAGER ? (
-        <DownloadPanel isOpen={true} showLogs={showLogs} />
-      ) : (
+        {/* 根据activeTab显示不同的主内容区域 */}
+        {activeTab === TaskType.DOWNLOAD_MANAGER ? (
+          <LightErrorBoundary fallbackMessage="下载面板加载失败">
+            <DownloadPanel isOpen={true} showLogs={showLogs} />
+          </LightErrorBoundary>
+        ) : (
         <main className="flex-1 flex flex-col min-w-0 relative">
           {/* Sticky Header */}
           <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200/60 shadow-sm transition-all">
@@ -769,8 +779,9 @@ export const App: React.FC = () => {
               </div>
             </div>
           ) : (
-            <AutoSizer>
-              {({ height, width }) => {
+            <LightErrorBoundary fallbackMessage="列表加载失败">
+              <AutoSizer>
+                {({ height, width }) => {
                 const columnCount = getColumnCount(width);
                 const rowCount = Math.ceil(results.length / columnCount);
                 // Approx height of Card (Image aspect 3/4 + info section)
@@ -795,22 +806,25 @@ export const App: React.FC = () => {
                     {Row}
                   </FixedSizeList>
                 );
-              }}
-            </AutoSizer>
+                }}
+              </AutoSizer>
+            </LightErrorBoundary>
           )}
         </div>
 
-        <DetailModal
-          work={selectedWork}
-          onClose={() => setSelectedWorkId(null)}
-          onPrev={() => navigateWork('prev')}
-          onNext={() => navigateWork('next')}
-          hasPrev={selectedWorkIndex > 0}
-          hasNext={selectedWorkIndex < results.length - 1}
-          addDownload={addDownload}
-          startPolling={startPolling}
-          progress={downloadProgress}
-        />
+        <LightErrorBoundary fallbackMessage="详情弹窗加载失败">
+          <DetailModal
+            work={selectedWork}
+            onClose={() => setSelectedWorkId(null)}
+            onPrev={() => navigateWork('prev')}
+            onNext={() => navigateWork('next')}
+            hasPrev={selectedWorkIndex > 0}
+            hasNext={selectedWorkIndex < results.length - 1}
+            addDownload={addDownload}
+            startPolling={startPolling}
+            progress={downloadProgress}
+          />
+        </LightErrorBoundary>
         </main>
       )}
 
@@ -818,21 +832,28 @@ export const App: React.FC = () => {
       <ToastContainer />
 
       {/* 全局组件：设置弹窗 */}
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <LightErrorBoundary fallbackMessage="设置面板加载失败">
+        <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      </LightErrorBoundary>
 
       {/* 全局组件：日志面板 */}
-      <LogPanel isOpen={showLogs} onToggle={() => setShowLogs(!showLogs)} />
+      <LightErrorBoundary fallbackMessage="日志面板加载失败">
+        <LogPanel isOpen={showLogs} onToggle={() => setShowLogs(!showLogs)} />
+      </LightErrorBoundary>
 
       {/* 欢迎向导 */}
-      <WelcomeWizard
-        isOpen={showWelcomeWizard}
-        onClose={() => setShowWelcomeWizard(false)}
-        onComplete={() => {
-          setShowWelcomeWizard(false);
-          logger.info("欢迎向导已完成");
-          toast.success("配置已保存，欢迎使用！");
-        }}
-      />
-    </div>
+      <LightErrorBoundary fallbackMessage="欢迎向导加载失败">
+        <WelcomeWizard
+          isOpen={showWelcomeWizard}
+          onClose={() => setShowWelcomeWizard(false)}
+          onComplete={() => {
+            setShowWelcomeWizard(false);
+            logger.info("欢迎向导已完成");
+            toast.success("配置已保存，欢迎使用！");
+          }}
+        />
+      </LightErrorBoundary>
+      </div>
+    </ErrorBoundary>
   );
 };

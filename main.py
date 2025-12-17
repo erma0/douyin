@@ -54,7 +54,7 @@ def get_icon_path():
 
 if __name__ == "__main__":
     logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    logger.info("🎉 抖音爬虫客户端启动中...")
+    logger.info("🎉 DouyinCrawler客户端启动中...")
     logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
     try:
@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
         # 创建窗口
         window = webview.create_window(
-            title="抖音爬虫",
+            title="DouyinCrawler",
             url=entry,
             js_api=api,
             width=window_width,

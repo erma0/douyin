@@ -1,9 +1,10 @@
+import platform
 import subprocess
 import sys
 from functools import partial
 
 # Windows下隐藏控制台窗口
-if sys.platform == 'win32':
+if platform.system() == 'Windows':
     # 创建STARTUPINFO对象，隐藏窗口
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW

@@ -68,7 +68,7 @@ class Aria2Service {
   private connectionCheckInterval: NodeJS.Timeout | null = null;  // 连接检查定时器
   private connectionAttempts: number = 0;  // 连接尝试次数
   private maxConnectionAttempts: number = 0;  // 最大连接尝试次数（0表示无限重试）
-  private connectionCheckDelay: number = 500;  // 连接检查间隔（毫秒）- 改为0.5秒快速重试
+  private connectionCheckDelay: number = 1000;  // 连接检查间隔（毫秒）- 1秒间隔，平衡响应速度和资源消耗
   private connectionCallbacks: Set<(connected: boolean) => void> = new Set();  // 连接状态回调函数
 
   /**

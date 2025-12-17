@@ -59,18 +59,32 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
   const handleComplete = async () => {
     setIsSaving(true);
     try {
+      // 如果下载路径为空，先从后端获取默认路径
+      let finalSettings = { ...settings };
+      if (!finalSettings.downloadPath) {
+        try {
+          const currentSettings = await bridge.getSettings();
+          finalSettings.downloadPath = currentSettings.downloadPath;
+        } catch (err) {
+          console.error('获取默认路径失败:', err);
+          // 如果获取失败，使用一个占位符，后端会使用默认值
+          finalSettings.downloadPath = './download';
+        }
+      }
+      
       // 保存配置
-      await bridge.saveSettings(settings);
-      // 后端会输出保存日志，前端不弹窗
+      await bridge.saveSettings(finalSettings);
+      console.log('配置保存成功');
+      // 完成向导
+      onComplete();
     } catch (e) {
       console.error("Failed to save settings", e);
-      // 保存失败时只在控制台输出，不弹窗
       const errorMsg = e instanceof Error ? e.message : String(e);
-      console.error(`配置保存失败: ${errorMsg}`);
+      alert(`配置保存失败: ${errorMsg}\n\n请稍后在设置中重新配置。`);
+      // 即使保存失败也完成向导，让用户可以使用应用
+      onComplete();
     } finally {
       setIsSaving(false);
-      // 无论保存成功还是失败，都完成向导
-      onComplete();
     }
   };
 
@@ -97,7 +111,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
               <Sparkles className="text-white" size={18} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white">欢迎使用抖音爬虫</h3>
+              <h3 className="text-lg font-bold text-white">欢迎使用DouyinCrawler</h3>
               <p className="text-xs text-white/80">让我们开始配置您的应用</p>
             </div>
           </div>
@@ -157,7 +171,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl mx-auto mb-3 flex items-center justify-center">
                   <Sparkles className="text-white" size={28} />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900 mb-2">欢迎使用抖音爬虫！</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">欢迎使用DouyinCrawler！</h2>
                 <p className="text-sm text-gray-600">一个强大的抖音数据采集和下载工具</p>
               </div>
 
@@ -277,7 +291,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
                   </button>
                 </div>
                 <p className="mt-2 text-xs text-gray-500">
-                  💡 如果不设置，将使用默认路径：{settings.downloadPath || '用户下载文件夹/Douyin'}
+                  💡 如果不设置，将使用默认路径：程序所在目录/download
                 </p>
               </div>
 
@@ -290,7 +304,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
                   </div>
                   <div className="flex justify-between items-center">
                     <span>同时下载任务数：</span>
-                    <span className="font-semibold text-purple-600">3 个</span>
+                    <span className="font-semibold text-purple-600">5 个</span>
                   </div>
                   <p className="text-xs text-gray-500 pt-2 border-t border-gray-200">
                     这些参数已设置为推荐值，您可以稍后在设置中调整

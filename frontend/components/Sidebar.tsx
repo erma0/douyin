@@ -43,7 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span className="font-bold text-white text-xl">D</span>
         </div>
         <div>
-           <h1 className="text-lg font-bold tracking-wide">Douyin Pro</h1>
+           <h1 className="text-lg font-bold tracking-wide">Douyin</h1>
            <div className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Crawler Tool</div>
         </div>
       </div>
