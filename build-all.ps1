@@ -18,6 +18,16 @@ try {
     Write-Host "║      DouyinCrawler - 完整打包工具      ║" -ForegroundColor Magenta
     Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Magenta
     
+    # 0. 检查虚拟环境（可选但推荐）
+    if ($env:VIRTUAL_ENV) {
+        Write-Step "检测到虚拟环境"
+        Write-OK "虚拟环境: $env:VIRTUAL_ENV"
+    } else {
+        Write-Host "ℹ 提示: 建议在虚拟环境中打包" -ForegroundColor Yellow
+        Write-Host "  创建: python -m venv .venv" -ForegroundColor Gray
+        Write-Host "  激活: .\.venv\Scripts\activate`n" -ForegroundColor Gray
+    }
+    
     # 1. 清理
     if ($Clean) {
         Write-Step "清理旧文件"
@@ -32,11 +42,15 @@ try {
     # 2. 安装Python依赖
     Write-Step "安装 Python 依赖"
     
-    $hasPyInstaller = python -c "import PyInstaller" 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        pip install pyinstaller -q
-    }
-    pip install -r requirements.txt -q
+    # 直接安装所有依赖（包括 PyInstaller）
+    Write-Host "ℹ 安装 PyInstaller..." -ForegroundColor Blue
+    pip install pyinstaller --upgrade
+    if ($LASTEXITCODE -ne 0) { throw "PyInstaller 安装失败" }
+    
+    Write-Host "ℹ 安装项目依赖..." -ForegroundColor Blue
+    pip install -r requirements.txt
+    if ($LASTEXITCODE -ne 0) { throw "依赖安装失败" }
+    
     Write-OK "Python 依赖已就绪"
     
     # 3. 构建前端
@@ -83,8 +97,12 @@ try {
     $specFile = if ($Mode -eq "onefile") { "build.spec" } else { "build-dir.spec" }
     Write-Host "ℹ 打包中（需要几分钟）..." -ForegroundColor Blue
     
+    # 使用 python -m 确保使用虚拟环境中的 PyInstaller
     python -m PyInstaller $specFile --clean --noconfirm
-    if ($LASTEXITCODE -ne 0) { throw "打包失败" }
+    if ($LASTEXITCODE -ne 0) { 
+        Write-Host "`n提示: 如果是虚拟环境问题，请确保已激活虚拟环境" -ForegroundColor Yellow
+        throw "PyInstaller 打包失败"
+    }
     
     $exePath = if ($Mode -eq "onefile") { "dist/DouyinCrawler.exe" } else { "dist/DouyinCrawler/DouyinCrawler.exe" }
     if (-not (Test-Path $exePath)) { throw "未找到可执行文件" }
@@ -145,7 +163,7 @@ try {
     
     # 完成
     Write-Host "`n╔════════════════════════════════════════╗" -ForegroundColor Green
-    Write-Host "║              打包完成！              ║" -ForegroundColor Green
+    Write-Host "║               打包完成！               ║" -ForegroundColor Green
     Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Green
     
     Write-Host "📦 压缩包: " -NoNewline
@@ -157,7 +175,7 @@ try {
     
 } catch {
     Write-Host "`n╔════════════════════════════════════════╗" -ForegroundColor Red
-    Write-Host "║              打包失败！              ║" -ForegroundColor Red
+    Write-Host "║               打包失败！               ║" -ForegroundColor Red
     Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Red
     Write-Err "错误: $_"
     Write-Host "`n尝试: .\build-all.ps1 -Clean`n" -ForegroundColor Yellow

@@ -246,7 +246,7 @@ class Aria2Manager:
         aria2_config = {
             # === 基础配置 ===
             "dir": download_dir,  # 下载目录
-            "log": os.path.join(config_dir, "aria2.log"),  # 日志文件
+            # 不配置log，aria2将不写入日志文件
             # === RPC 配置 ===
             "enable-rpc": "true",  # 启用RPC
             "rpc-listen-all": "false",  # 只监听本地
