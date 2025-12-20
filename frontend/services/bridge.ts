@@ -1,7 +1,7 @@
 
-import { TaskType, AppSettings } from '../types';
-import { logger } from './logger';
+import { AppSettings, TaskType } from '../types';
 import { handleError } from '../utils/errorHandler';
+import { logger } from './logger';
 
 /**
  * 前后端通信桥接服务
@@ -21,7 +21,7 @@ export const bridge = {
   waitForReady: (timeout: number = 30000): Promise<boolean> => {
     return new Promise((resolve) => {
       const startTime = Date.now();
-      
+
       // 检查是否已经就绪
       if (window.pywebview?.api) {
         console.log('[Bridge] pywebview API 已就绪');
@@ -61,24 +61,24 @@ export const bridge = {
    * @param limit 采集数量限制
    */
   startTask: async (
-    type: TaskType, 
-    target: string, 
+    type: TaskType,
+    target: string,
     limit: number = 0
   ): Promise<{ task_id: string; status: string }> => {
     try {
       if (!window.pywebview) {
         throw new Error('Backend not available');
       }
-      
+
       logger.api.request('开始采集任务', { type, target, limit });
-      
+
       const result = await window.pywebview.api.start_task(type, target, limit);
-      
+
       logger.api.response('采集任务启动成功', { taskId: result.task_id, status: result.status });
       return result as { task_id: string; status: string };
     } catch (error) {
-      handleError(error, { type, target, limit }, { 
-        customMessage: '采集任务启动失败' 
+      handleError(error, { type, target, limit }, {
+        customMessage: '采集任务启动失败'
       });
       throw error;
     }
@@ -88,7 +88,7 @@ export const bridge = {
    * 打开外部链接
    */
   openExternal: (url: string) => {
-    if(window.pywebview) {
+    if (window.pywebview) {
       window.pywebview.api.open_url(url);
     } else {
       window.open(url, '_blank');
@@ -103,12 +103,12 @@ export const bridge = {
       if (!window.pywebview) {
         throw new Error('Backend not available');
       }
-      
+
       const settings = await window.pywebview.api.get_settings();
       logger.api.response('获取应用设置成功');
       return settings;
     } catch (error) {
-      handleError(error, {}, { 
+      handleError(error, {}, {
         customMessage: '获取应用设置失败',
         showToast: false  // 设置获取失败不显示Toast，避免干扰用户
       });
@@ -124,13 +124,13 @@ export const bridge = {
       if (!window.pywebview) {
         throw new Error('Backend not available');
       }
-      
+
       logger.api.request('保存应用设置', settings);
       await window.pywebview.api.save_settings(settings);
       logger.api.response('保存应用设置成功');
     } catch (error) {
-      handleError(error, settings, { 
-        customMessage: '保存应用设置失败' 
+      handleError(error, settings, {
+        customMessage: '保存应用设置失败'
       });
       throw error;
     }
@@ -145,7 +145,7 @@ export const bridge = {
     }
     throw new Error('Backend not available');
   },
-  
+
   /**
    * 订阅后端日志
    */
@@ -160,9 +160,9 @@ export const bridge = {
         }
       };
     }
-    return () => {};
+    return () => { };
   },
-  
+
   /**
    * 获取任务状态
    */
@@ -172,7 +172,7 @@ export const bridge = {
     }
     throw new Error('Backend not available');
   },
-  
+
   /**
    * 获取 Aria2 配置
    */
@@ -231,11 +231,11 @@ export const bridge = {
       if (!window.pywebview) {
         throw new Error('Backend not available');
       }
-      
+
       return await window.pywebview.api.read_config_file(filePath);
     } catch (error) {
-      handleError(error, { filePath }, { 
-        customMessage: '读取配置文件失败' 
+      handleError(error, { filePath }, {
+        customMessage: '读取配置文件失败'
       });
       throw error;
     }
@@ -253,8 +253,8 @@ export const bridge = {
       const result = await window.pywebview.api.get_browser_cookie(browser);
       return result;
     } catch (error) {
-      handleError(error, { browser }, { 
-        customMessage: '获取浏览器Cookie失败' 
+      handleError(error, { browser }, {
+        customMessage: '获取浏览器Cookie失败'
       });
       throw error;
     }
@@ -268,11 +268,11 @@ export const bridge = {
       if (!window.pywebview) {
         throw new Error('Backend not available');
       }
-      
+
       return await window.pywebview.api.get_aria2_config_path(taskId);
     } catch (error) {
-      handleError(error, { taskId }, { 
-        customMessage: '获取配置文件路径失败' 
+      handleError(error, { taskId }, {
+        customMessage: '获取配置文件路径失败'
       });
       throw error;
     }
@@ -286,7 +286,7 @@ export const bridge = {
       if (!window.pywebview) {
         throw new Error('Backend not available');
       }
-      
+
       return await window.pywebview.api.check_file_exists(filePath);
     } catch (error) {
       console.error('[Bridge] 检查文件存在失败:', error);
@@ -303,7 +303,7 @@ export const bridge = {
       if (!window.pywebview) {
         throw new Error('Backend not available');
       }
-      
+
       const result = await window.pywebview.api.open_folder(folderPath);
       console.log('[Bridge] 打开文件夹返回结果:', result);
       return result;

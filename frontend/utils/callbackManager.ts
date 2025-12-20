@@ -81,7 +81,7 @@ class CallbackManager {
 
     if (!window.__kiro_douyin) {
       console.error('[CallbackManager] 命名空间初始化失败');
-      return () => {};
+      return () => { };
     }
 
     // 检查是否已有回调函数注册

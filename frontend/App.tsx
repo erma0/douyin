@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DetailModal } from './components/DetailModal';
 import { DownloadPanel } from './components/DownloadPanel';
+import { ErrorBoundary, LightErrorBoundary } from './components/ErrorBoundary';
 import { LogPanel } from './components/LogPanel';
 import { SettingsModal } from './components/SettingsModal';
 import { Sidebar } from './components/Sidebar';
@@ -12,8 +13,7 @@ import { useAria2Download } from './hooks/useAria2Download';
 import { bridge } from './services/bridge';
 import { logger } from './services/logger';
 import { DouyinWork, TaskType } from './types';
-import { registerTaskCallback, unregisterTaskCallback } from './utils/callbackManager';
-import { ErrorBoundary, LightErrorBoundary } from './components/ErrorBoundary';
+import { registerTaskCallback } from './utils/callbackManager';
 
 // 延迟加载虚拟滚动库（这些库比较大）
 import {
@@ -198,7 +198,7 @@ export const App: React.FC = () => {
       setActiveTab(newTab);
       // 只有非下载管理页面才清空输入框
       if (newTab !== TaskType.DOWNLOAD_MANAGER) {
-        setInputVal(''); 
+        setInputVal('');
       }
       logger.info(`手动切换任务模式: ${newTab}`);
     }
@@ -313,7 +313,7 @@ export const App: React.FC = () => {
     setResults([]);
     setResultsTaskType(activeTab);
     setSavedInputVal(inputVal);
-    
+
     setIsLoading(true);
     setShowLimitMenu(false); // 关闭数量限制菜单
 
@@ -514,13 +514,13 @@ export const App: React.FC = () => {
       <div className="flex h-screen bg-[#F8F9FB] overflow-hidden font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-900">
         <LightErrorBoundary fallbackMessage="侧边栏加载失败">
           <Sidebar
-        activeTab={activeTab}
-        setActiveTab={handleTabChange}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        showLogs={showLogs}
-        setShowLogs={setShowLogs}
-        isDownloading={isDownloading}
-        downloadStats={downloadStats}
+            activeTab={activeTab}
+            setActiveTab={handleTabChange}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            showLogs={showLogs}
+            setShowLogs={setShowLogs}
+            isDownloading={isDownloading}
+            downloadStats={downloadStats}
           />
         </LightErrorBoundary>
 
@@ -530,329 +530,329 @@ export const App: React.FC = () => {
             <DownloadPanel isOpen={true} showLogs={showLogs} />
           </LightErrorBoundary>
         ) : (
-        <main className="flex-1 flex flex-col min-w-0 relative">
-          {/* Sticky Header */}
-          <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200/60 shadow-sm transition-all">
-            <div className="max-w-7xl mx-auto w-full px-8 py-5">
-              {(activeTab as TaskType) !== TaskType.DOWNLOAD_MANAGER && (
-              <>
-              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2 tracking-tight">
-                {activeTab === TaskType.SEARCH && <Search size={24} className="text-blue-500" />}
-                {activeTab === TaskType.SEARCH ? '关键词搜索' : '数据采集'}
-              </h2>
+          <main className="flex-1 flex flex-col min-w-0 relative">
+            {/* Sticky Header */}
+            <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200/60 shadow-sm transition-all">
+              <div className="max-w-7xl mx-auto w-full px-8 py-5">
+                {(activeTab as TaskType) !== TaskType.DOWNLOAD_MANAGER && (
+                  <>
+                    <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2 tracking-tight">
+                      {activeTab === TaskType.SEARCH && <Search size={24} className="text-blue-500" />}
+                      {activeTab === TaskType.SEARCH ? '关键词搜索' : '数据采集'}
+                    </h2>
 
-            {/* 搜索框 */}
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <div className={`relative flex group shadow-sm rounded-xl border transition-all bg-white z-20 ${inputError ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500'
-                  }`}>
-                  <div className="pl-4 flex items-center pointer-events-none bg-transparent">
-                    <Search className={`h-5 w-5 transition-colors ${inputError ? 'text-red-500' : 'text-gray-400 group-focus-within:text-blue-500'
-                      }`} />
-                  </div>
-                  <input
-                    type="text"
-                    className="block flex-1 px-4 py-3.5 leading-5 bg-transparent placeholder-gray-400 focus:outline-none"
-                    placeholder={getPlaceholder()}
-                    value={resultsTaskType === activeTab ? savedInputVal : inputVal}
-                    onChange={(e) => {
-                      // 自动清理输入：去除多余空格
-                      const cleanedValue = e.target.value.replace(/\s+/g, ' ');
-                      setInputVal(cleanedValue);
-
-                      // 清除输入错误
-                      if (inputError) {
-                        setInputError(null);
-                      }
-                    }}
-                    onPaste={(e) => {
-                      // 粘贴时自动清理：去除所有空格和前后斜杠
-                      e.preventDefault();
-                      const pastedText = e.clipboardData.getData('text');
-                      const cleanedText = pastedText.trim().replace(/\s+/g, '').replace(/^\/+|\/+$/g, '');
-                      setInputVal(cleanedText);
-
-                      // 清除输入错误
-                      if (inputError) {
-                        setInputError(null);
-                      }
-                    }}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  />
-
-                  {/* 粘贴按钮 - 通过后端读取剪贴板，无需浏览器权限 */}
-                  <button
-                    onClick={async () => {
-                      try {
-                        // 通过后端读取剪贴板（无需浏览器权限）
-                        const text = await bridge.getClipboardText();
-
-                        if (!text) {
-                          toast.info('剪贴板为空');
-                          return;
-                        }
-
-                        // 清理文本：去除空格和斜杠
-                        const cleanedText = text.trim().replace(/\s+/g, '').replace(/^\/+|\/+$/g, '');
-                        setInputVal(cleanedText);
-
-                        if (inputError) {
-                          setInputError(null);
-                        }
-
-                        toast.success('已粘贴剪贴板内容');
-                      } catch (err) {
-                        logger.error(`粘贴失败: ${err}`);
-                        toast.error('粘贴失败，请手动输入');
-                      }
-                    }}
-                    className="px-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors rounded-lg"
-                    title="一键粘贴剪贴板内容"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                  </button>
-
-                  {/* Max Count Dropdown Trigger - 仅在非单个作品采集时显示 */}
-                  {activeTab !== TaskType.POST && (
-                    <div className="relative border-l border-gray-100" ref={limitMenuRef}>
-                      <button
-                        onClick={() => setShowLimitMenu(!showLimitMenu)}
-                        className="h-full px-4 flex items-center gap-2 hover:bg-gray-50 transition-colors text-sm font-medium text-gray-600 outline-none"
-                      >
-                        <span className="text-xs text-gray-400">数量</span>
-                        <span className={`flex items-center gap-1 ${maxCount === 0 ? 'text-indigo-600 font-bold' : 'text-gray-700'}`}>
-                          {maxCount === 0 ? <InfinityIcon size={16} /> : maxCount}
-                        </span>
-                        <ChevronDown size={14} className={`text-gray-400 transition-transform ${showLimitMenu ? 'rotate-180' : ''}`} />
-                      </button>
-
-                      {/* Dropdown Menu */}
-                      {showLimitMenu && (
-                        <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 z-20 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <Layers size={12} /> 采集数量限制
-                          </h4>
-
-                          <div className="grid grid-cols-2 gap-2 mb-4">
-                            <button
-                              onClick={() => { setMaxCount(0); setShowLimitMenu(false); }}
-                              className={`flex items-center justify-center gap-2 py-2 rounded-lg text-sm border transition-all ${maxCount === 0
-                                ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-semibold'
-                                : 'border-gray-100 text-gray-600 hover:bg-gray-50'
-                                }`}
-                            >
-                              <InfinityIcon size={14} /> 全部
-                            </button>
-                            {[20, 50, 100].map(num => (
-                              <button
-                                key={num}
-                                onClick={() => { setMaxCount(num); setShowLimitMenu(false); }}
-                                className={`py-2 rounded-lg text-sm border transition-all ${maxCount === num
-                                  ? 'bg-blue-50 border-blue-200 text-blue-700 font-semibold'
-                                  : 'border-gray-100 text-gray-600 hover:bg-gray-50'
-                                  }`}
-                              >
-                                {num} 条
-                              </button>
-                            ))}
+                    {/* 搜索框 */}
+                    <div className="flex gap-3">
+                      <div className="flex-1">
+                        <div className={`relative flex group shadow-sm rounded-xl border transition-all bg-white z-20 ${inputError ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500'
+                          }`}>
+                          <div className="pl-4 flex items-center pointer-events-none bg-transparent">
+                            <Search className={`h-5 w-5 transition-colors ${inputError ? 'text-red-500' : 'text-gray-400 group-focus-within:text-blue-500'
+                              }`} />
                           </div>
+                          <input
+                            type="text"
+                            className="block flex-1 px-4 py-3.5 leading-5 bg-transparent placeholder-gray-400 focus:outline-none"
+                            placeholder={getPlaceholder()}
+                            value={resultsTaskType === activeTab ? savedInputVal : inputVal}
+                            onChange={(e) => {
+                              // 自动清理输入：去除多余空格
+                              const cleanedValue = e.target.value.replace(/\s+/g, ' ');
+                              setInputVal(cleanedValue);
 
-                          <div className="relative group/input">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">自定义</span>
-                            <input
-                              type="number"
-                              min="1"
-                              value={maxCount === 0 ? '' : maxCount}
-                              onChange={(e) => {
-                                const val = parseInt(e.target.value);
-                                setMaxCount(isNaN(val) ? 0 : val);
-                              }}
-                              placeholder="输入数量"
-                              className="w-full pl-14 pr-8 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
-                            <div className="absolute right-1 top-1 bottom-1 flex flex-col w-5 border-l border-gray-200">
+                              // 清除输入错误
+                              if (inputError) {
+                                setInputError(null);
+                              }
+                            }}
+                            onPaste={(e) => {
+                              // 粘贴时自动清理：去除所有空格和前后斜杠
+                              e.preventDefault();
+                              const pastedText = e.clipboardData.getData('text');
+                              const cleanedText = pastedText.trim().replace(/\s+/g, '').replace(/^\/+|\/+$/g, '');
+                              setInputVal(cleanedText);
+
+                              // 清除输入错误
+                              if (inputError) {
+                                setInputError(null);
+                              }
+                            }}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                          />
+
+                          {/* 粘贴按钮 - 通过后端读取剪贴板，无需浏览器权限 */}
+                          <button
+                            onClick={async () => {
+                              try {
+                                // 通过后端读取剪贴板（无需浏览器权限）
+                                const text = await bridge.getClipboardText();
+
+                                if (!text) {
+                                  toast.info('剪贴板为空');
+                                  return;
+                                }
+
+                                // 清理文本：去除空格和斜杠
+                                const cleanedText = text.trim().replace(/\s+/g, '').replace(/^\/+|\/+$/g, '');
+                                setInputVal(cleanedText);
+
+                                if (inputError) {
+                                  setInputError(null);
+                                }
+
+                                toast.success('已粘贴剪贴板内容');
+                              } catch (err) {
+                                logger.error(`粘贴失败: ${err}`);
+                                toast.error('粘贴失败，请手动输入');
+                              }
+                            }}
+                            className="px-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors rounded-lg"
+                            title="一键粘贴剪贴板内容"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                          </button>
+
+                          {/* Max Count Dropdown Trigger - 仅在非单个作品采集时显示 */}
+                          {activeTab !== TaskType.POST && (
+                            <div className="relative border-l border-gray-100" ref={limitMenuRef}>
                               <button
-                                onClick={incrementMaxCount}
-                                className="h-1/2 flex items-center justify-center hover:bg-gray-100 text-gray-500 rounded-tr-md transition-colors"
+                                onClick={() => setShowLimitMenu(!showLimitMenu)}
+                                className="h-full px-4 flex items-center gap-2 hover:bg-gray-50 transition-colors text-sm font-medium text-gray-600 outline-none"
                               >
-                                <ChevronUp size={10} />
+                                <span className="text-xs text-gray-400">数量</span>
+                                <span className={`flex items-center gap-1 ${maxCount === 0 ? 'text-indigo-600 font-bold' : 'text-gray-700'}`}>
+                                  {maxCount === 0 ? <InfinityIcon size={16} /> : maxCount}
+                                </span>
+                                <ChevronDown size={14} className={`text-gray-400 transition-transform ${showLimitMenu ? 'rotate-180' : ''}`} />
                               </button>
-                              <button
-                                onClick={decrementMaxCount}
-                                className="h-1/2 flex items-center justify-center hover:bg-gray-100 text-gray-500 rounded-br-md border-t border-gray-100 transition-colors"
-                              >
-                                <ChevronDown size={10} />
-                              </button>
+
+                              {/* Dropdown Menu */}
+                              {showLimitMenu && (
+                                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 z-20 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <Layers size={12} /> 采集数量限制
+                                  </h4>
+
+                                  <div className="grid grid-cols-2 gap-2 mb-4">
+                                    <button
+                                      onClick={() => { setMaxCount(0); setShowLimitMenu(false); }}
+                                      className={`flex items-center justify-center gap-2 py-2 rounded-lg text-sm border transition-all ${maxCount === 0
+                                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-semibold'
+                                        : 'border-gray-100 text-gray-600 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                      <InfinityIcon size={14} /> 全部
+                                    </button>
+                                    {[20, 50, 100].map(num => (
+                                      <button
+                                        key={num}
+                                        onClick={() => { setMaxCount(num); setShowLimitMenu(false); }}
+                                        className={`py-2 rounded-lg text-sm border transition-all ${maxCount === num
+                                          ? 'bg-blue-50 border-blue-200 text-blue-700 font-semibold'
+                                          : 'border-gray-100 text-gray-600 hover:bg-gray-50'
+                                          }`}
+                                      >
+                                        {num} 条
+                                      </button>
+                                    ))}
+                                  </div>
+
+                                  <div className="relative group/input">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">自定义</span>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      value={maxCount === 0 ? '' : maxCount}
+                                      onChange={(e) => {
+                                        const val = parseInt(e.target.value);
+                                        setMaxCount(isNaN(val) ? 0 : val);
+                                      }}
+                                      placeholder="输入数量"
+                                      className="w-full pl-14 pr-8 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                    <div className="absolute right-1 top-1 bottom-1 flex flex-col w-5 border-l border-gray-200">
+                                      <button
+                                        onClick={incrementMaxCount}
+                                        className="h-1/2 flex items-center justify-center hover:bg-gray-100 text-gray-500 rounded-tr-md transition-colors"
+                                      >
+                                        <ChevronUp size={10} />
+                                      </button>
+                                      <button
+                                        onClick={decrementMaxCount}
+                                        className="h-1/2 flex items-center justify-center hover:bg-gray-100 text-gray-500 rounded-br-md border-t border-gray-100 transition-colors"
+                                      >
+                                        <ChevronDown size={10} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          </div>
+                          )}
                         </div>
-                      )}
+                        {inputError && (
+                          <p className="mt-1.5 text-xs text-red-500 pl-1">{inputError}</p>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={handleSearch}
+                        disabled={isLoading || !inputVal.trim()}
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3.5 rounded-xl font-medium shadow-lg shadow-blue-500/30 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none flex items-center gap-2 z-20"
+                      >
+                        {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
+                        {isLoading ? '采集中...' : '开始采集'}
+                      </button>
                     </div>
-                  )}
-                </div>
-                {inputError && (
-                  <p className="mt-1.5 text-xs text-red-500 pl-1">{inputError}</p>
+                  </>
                 )}
               </div>
-
-              <button
-                onClick={handleSearch}
-                disabled={isLoading || !inputVal.trim()}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3.5 rounded-xl font-medium shadow-lg shadow-blue-500/30 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none flex items-center gap-2 z-20"
-              >
-                {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
-                {isLoading ? '采集中...' : '开始采集'}
-              </button>
             </div>
-            </>
+
+            {/* Action Bar */}
+            {results.length > 0 && resultsTaskType === activeTab && (
+              <div className="px-8 py-3 border-b border-gray-200 bg-white/50 backdrop-blur-sm flex items-center justify-between sticky top-[120px] z-20">
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <span className="font-semibold bg-gray-100 px-2 py-1 rounded text-gray-700">共 {results.length} 个作品</span>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleBatchDownload}
+                    disabled={results.length === 0 || !aria2Connected}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all transform active:scale-95 border ${results.length > 0 && aria2Connected
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-600/20 border-transparent'
+                      : 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
+                      }`}
+                    title="将所有采集结果添加到下载队列"
+                  >
+                    <Sparkles size={16} />
+                    一键下载全部
+                  </button>
+                </div>
+              </div>
             )}
-          </div>
-        </div>
 
-        {/* Action Bar */}
-        {results.length > 0 && resultsTaskType === activeTab && (
-          <div className="px-8 py-3 border-b border-gray-200 bg-white/50 backdrop-blur-sm flex items-center justify-between sticky top-[120px] z-20">
-            <div className="flex items-center gap-4 text-sm text-gray-600">
-              <span className="font-semibold bg-gray-100 px-2 py-1 rounded text-gray-700">共 {results.length} 个作品</span>
+            {/* Content Area with Virtual Scroll */}
+            <div className={`flex-1 transition-all duration-300 ${showLogs ? 'mb-64' : 'mb-0'}`}>
+              {(results.length === 0 || resultsTaskType !== activeTab) && !isLoading ? (
+                // 空状态：等待任务开始
+                <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-60">
+                  <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                    <Search size={64} className="text-gray-300" />
+                  </div>
+                  <p className="text-xl font-medium text-gray-500">等待任务开始...</p>
+                  <p className="text-sm mt-2">请在上方输入目标链接或关键词</p>
+                </div>
+              ) : (results.length === 0 || resultsTaskType !== activeTab) && isLoading ? (
+                // 加载状态：采集中
+                <div className="h-full flex flex-col items-center justify-center">
+                  <div className="relative w-32 h-32 mb-8">
+                    {/* 外圈旋转动画 */}
+                    <div className="absolute inset-0 rounded-full border-4 border-blue-100"></div>
+                    <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-blue-500 animate-spin"></div>
+
+                    {/* 中心图标 */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Loader2 size={48} className="text-blue-500 animate-spin" style={{ animationDuration: '2s' }} />
+                    </div>
+                  </div>
+
+                  <p className="text-xl font-semibold text-gray-700 mb-2">正在采集数据...</p>
+                  <p className="text-sm text-gray-500">请稍候，这可能需要一些时间</p>
+
+                  {/* 提示信息 */}
+                  <div className="mt-8 px-6 py-4 bg-blue-50 border border-blue-100 rounded-xl max-w-md">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center mt-0.5">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 text-sm text-blue-700">
+                        <p className="font-medium mb-1">采集提示</p>
+                        <p className="text-blue-600">采集过程中会实时显示进度，请关注日志面板查看详细信息</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <LightErrorBoundary fallbackMessage="列表加载失败">
+                  <AutoSizer>
+                    {({ height, width }) => {
+                      const columnCount = getColumnCount(width);
+                      const rowCount = Math.ceil(results.length / columnCount);
+                      // Approx height of Card (Image aspect 3/4 + info section)
+                      const itemHeight = 450;
+
+                      // Create item data bundle (memoized)
+                      const itemData = createItemData(
+                        results,
+                        columnCount,
+                        width,
+                        handleWorkClick
+                      );
+
+                      return (
+                        <FixedSizeList
+                          height={height}
+                          width={width}
+                          itemCount={rowCount}
+                          itemSize={itemHeight}
+                          itemData={itemData}
+                        >
+                          {Row}
+                        </FixedSizeList>
+                      );
+                    }}
+                  </AutoSizer>
+                </LightErrorBoundary>
+              )}
             </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={handleBatchDownload}
-                disabled={results.length === 0 || !aria2Connected}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all transform active:scale-95 border ${results.length > 0 && aria2Connected
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-600/20 border-transparent'
-                  : 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
-                  }`}
-                title="将所有采集结果添加到下载队列"
-              >
-                <Sparkles size={16} />
-                一键下载全部
-              </button>
-            </div>
-          </div>
+            <LightErrorBoundary fallbackMessage="详情弹窗加载失败">
+              <DetailModal
+                work={selectedWork}
+                onClose={() => setSelectedWorkId(null)}
+                onPrev={() => navigateWork('prev')}
+                onNext={() => navigateWork('next')}
+                hasPrev={selectedWorkIndex > 0}
+                hasNext={selectedWorkIndex < results.length - 1}
+                addDownload={addDownload}
+                startPolling={startPolling}
+                progress={downloadProgress}
+              />
+            </LightErrorBoundary>
+          </main>
         )}
 
-        {/* Content Area with Virtual Scroll */}
-        <div className={`flex-1 transition-all duration-300 ${showLogs ? 'mb-64' : 'mb-0'}`}>
-          {(results.length === 0 || resultsTaskType !== activeTab) && !isLoading ? (
-            // 空状态：等待任务开始
-            <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-60">
-              <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                <Search size={64} className="text-gray-300" />
-              </div>
-              <p className="text-xl font-medium text-gray-500">等待任务开始...</p>
-              <p className="text-sm mt-2">请在上方输入目标链接或关键词</p>
-            </div>
-          ) : (results.length === 0 || resultsTaskType !== activeTab) && isLoading ? (
-            // 加载状态：采集中
-            <div className="h-full flex flex-col items-center justify-center">
-              <div className="relative w-32 h-32 mb-8">
-                {/* 外圈旋转动画 */}
-                <div className="absolute inset-0 rounded-full border-4 border-blue-100"></div>
-                <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-blue-500 animate-spin"></div>
+        {/* 全局组件：Toast容器 - 在所有面板中都显示 */}
+        <ToastContainer />
 
-                {/* 中心图标 */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 size={48} className="text-blue-500 animate-spin" style={{ animationDuration: '2s' }} />
-                </div>
-              </div>
+        {/* 全局组件：设置弹窗 */}
+        <LightErrorBoundary fallbackMessage="设置面板加载失败">
+          <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+        </LightErrorBoundary>
 
-              <p className="text-xl font-semibold text-gray-700 mb-2">正在采集数据...</p>
-              <p className="text-sm text-gray-500">请稍候，这可能需要一些时间</p>
+        {/* 全局组件：日志面板 */}
+        <LightErrorBoundary fallbackMessage="日志面板加载失败">
+          <LogPanel isOpen={showLogs} onToggle={() => setShowLogs(!showLogs)} />
+        </LightErrorBoundary>
 
-              {/* 提示信息 */}
-              <div className="mt-8 px-6 py-4 bg-blue-50 border border-blue-100 rounded-xl max-w-md">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center mt-0.5">
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 text-sm text-blue-700">
-                    <p className="font-medium mb-1">采集提示</p>
-                    <p className="text-blue-600">采集过程中会实时显示进度，请关注日志面板查看详细信息</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <LightErrorBoundary fallbackMessage="列表加载失败">
-              <AutoSizer>
-                {({ height, width }) => {
-                const columnCount = getColumnCount(width);
-                const rowCount = Math.ceil(results.length / columnCount);
-                // Approx height of Card (Image aspect 3/4 + info section)
-                const itemHeight = 450;
-
-                // Create item data bundle (memoized)
-                const itemData = createItemData(
-                  results,
-                  columnCount,
-                  width,
-                  handleWorkClick
-                );
-
-                return (
-                  <FixedSizeList
-                    height={height}
-                    width={width}
-                    itemCount={rowCount}
-                    itemSize={itemHeight}
-                    itemData={itemData}
-                  >
-                    {Row}
-                  </FixedSizeList>
-                );
-                }}
-              </AutoSizer>
-            </LightErrorBoundary>
-          )}
-        </div>
-
-        <LightErrorBoundary fallbackMessage="详情弹窗加载失败">
-          <DetailModal
-            work={selectedWork}
-            onClose={() => setSelectedWorkId(null)}
-            onPrev={() => navigateWork('prev')}
-            onNext={() => navigateWork('next')}
-            hasPrev={selectedWorkIndex > 0}
-            hasNext={selectedWorkIndex < results.length - 1}
-            addDownload={addDownload}
-            startPolling={startPolling}
-            progress={downloadProgress}
+        {/* 欢迎向导 */}
+        <LightErrorBoundary fallbackMessage="欢迎向导加载失败">
+          <WelcomeWizard
+            isOpen={showWelcomeWizard}
+            onClose={() => setShowWelcomeWizard(false)}
+            onComplete={() => {
+              setShowWelcomeWizard(false);
+              logger.info("欢迎向导已完成");
+              toast.success("配置已保存，欢迎使用！");
+            }}
           />
         </LightErrorBoundary>
-        </main>
-      )}
-
-      {/* 全局组件：Toast容器 - 在所有面板中都显示 */}
-      <ToastContainer />
-
-      {/* 全局组件：设置弹窗 */}
-      <LightErrorBoundary fallbackMessage="设置面板加载失败">
-        <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-      </LightErrorBoundary>
-
-      {/* 全局组件：日志面板 */}
-      <LightErrorBoundary fallbackMessage="日志面板加载失败">
-        <LogPanel isOpen={showLogs} onToggle={() => setShowLogs(!showLogs)} />
-      </LightErrorBoundary>
-
-      {/* 欢迎向导 */}
-      <LightErrorBoundary fallbackMessage="欢迎向导加载失败">
-        <WelcomeWizard
-          isOpen={showWelcomeWizard}
-          onClose={() => setShowWelcomeWizard(false)}
-          onComplete={() => {
-            setShowWelcomeWizard(false);
-            logger.info("欢迎向导已完成");
-            toast.success("配置已保存，欢迎使用！");
-          }}
-        />
-      </LightErrorBoundary>
       </div>
     </ErrorBoundary>
   );

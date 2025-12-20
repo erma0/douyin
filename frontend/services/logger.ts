@@ -71,7 +71,7 @@ class LoggerService {
       this._isInitialized = true;
     }
   }
-  
+
   /**
    * 取消后端日志订阅
    * 在用户关闭日志面板时调用，减少性能开销（需求 6.4）
@@ -121,8 +121,8 @@ class LoggerService {
    * @returns 日志条目对象
    */
   private createEntry(
-    level: LogLevel, 
-    message: string, 
+    level: LogLevel,
+    message: string,
     options?: {
       context?: Record<string, any>;
       stack?: string;
@@ -152,8 +152,8 @@ class LoggerService {
    * @param options 额外选项
    */
   public log(
-    level: LogLevel, 
-    message: string, 
+    level: LogLevel,
+    message: string,
     options?: {
       context?: Record<string, any>;
       stack?: string;
@@ -163,12 +163,12 @@ class LoggerService {
   ) {
     const entry = this.createEntry(level, message, options);
     this.logs.push(entry);
-    
+
     // 限制日志数量，超出时移除最旧的日志
     if (this.logs.length > this.maxLogs) {
       this.logs.shift();
     }
-    
+
     this.notify();
   }
 
@@ -177,11 +177,11 @@ class LoggerService {
    * 用于详细的调试信息，默认不显示在UI中
    */
   public debug(
-    message: string, 
-    context?: Record<string, any>, 
+    message: string,
+    context?: Record<string, any>,
     category?: string
-  ) { 
-    this.log('debug', message, { context, category }); 
+  ) {
+    this.log('debug', message, { context, category });
   }
 
   /**
@@ -189,49 +189,49 @@ class LoggerService {
    * 用于关键事件和重要信息
    */
   public info(
-    message: string, 
-    context?: Record<string, any>, 
+    message: string,
+    context?: Record<string, any>,
     category?: string
-  ) { 
-    this.log('info', message, { context, category }); 
+  ) {
+    this.log('info', message, { context, category });
   }
-  
+
   /**
    * 记录成功级别日志
    * 用于操作成功的提示
    */
   public success(
-    message: string, 
-    context?: Record<string, any>, 
+    message: string,
+    context?: Record<string, any>,
     category?: string
-  ) { 
-    this.log('success', message, { context, category }); 
+  ) {
+    this.log('success', message, { context, category });
   }
-  
+
   /**
    * 记录警告级别日志
    * 用于非致命性问题
    */
   public warn(
-    message: string, 
-    context?: Record<string, any>, 
+    message: string,
+    context?: Record<string, any>,
     category?: string
-  ) { 
-    this.log('warn', message, { context, category }); 
+  ) {
+    this.log('warn', message, { context, category });
   }
-  
+
   /**
    * 记录错误级别日志
    * 用于错误和异常情况
    */
   public error(
-    message: string, 
-    contextOrError?: Record<string, any> | Error, 
+    message: string,
+    contextOrError?: Record<string, any> | Error,
     category?: string
-  ) { 
+  ) {
     let context: Record<string, any> | undefined;
     let stack: string | undefined;
-    
+
     if (contextOrError instanceof Error) {
       stack = contextOrError.stack;
       context = {
@@ -241,8 +241,8 @@ class LoggerService {
     } else {
       context = contextOrError;
     }
-    
-    this.log('error', message, { context, stack, category }); 
+
+    this.log('error', message, { context, stack, category });
   }
 
   /**
@@ -271,13 +271,13 @@ class LoggerService {
    * 记录下载相关日志
    */
   public download = {
-    start: (message: string, context?: Record<string, any>) => 
+    start: (message: string, context?: Record<string, any>) =>
       this.info(message, context, 'download'),
-    progress: (message: string, context?: Record<string, any>) => 
+    progress: (message: string, context?: Record<string, any>) =>
       this.info(message, context, 'download'),
-    success: (message: string, context?: Record<string, any>) => 
+    success: (message: string, context?: Record<string, any>) =>
       this.success(message, context, 'download'),
-    error: (message: string, errorOrContext?: Error | Record<string, any>) => 
+    error: (message: string, errorOrContext?: Error | Record<string, any>) =>
       this.error(message, errorOrContext, 'download')
   };
 
@@ -285,13 +285,13 @@ class LoggerService {
    * 记录采集相关日志
    */
   public collection = {
-    start: (message: string, context?: Record<string, any>) => 
+    start: (message: string, context?: Record<string, any>) =>
       this.info(message, context, 'collection'),
-    progress: (message: string, context?: Record<string, any>) => 
+    progress: (message: string, context?: Record<string, any>) =>
       this.info(message, context, 'collection'),
-    success: (message: string, context?: Record<string, any>) => 
+    success: (message: string, context?: Record<string, any>) =>
       this.success(message, context, 'collection'),
-    error: (message: string, errorOrContext?: Error | Record<string, any>) => 
+    error: (message: string, errorOrContext?: Error | Record<string, any>) =>
       this.error(message, errorOrContext, 'collection')
   };
 
@@ -299,11 +299,11 @@ class LoggerService {
    * 记录API相关日志
    */
   public api = {
-    request: (message: string, context?: Record<string, any>) => 
+    request: (message: string, context?: Record<string, any>) =>
       this.info(message, context, 'api'),
-    response: (message: string, context?: Record<string, any>) => 
+    response: (message: string, context?: Record<string, any>) =>
       this.info(message, context, 'api'),
-    error: (message: string, errorOrContext?: Error | Record<string, any>) => 
+    error: (message: string, errorOrContext?: Error | Record<string, any>) =>
       this.error(message, errorOrContext, 'api')
   };
 
@@ -311,9 +311,9 @@ class LoggerService {
    * 记录用户操作日志
    */
   public user = {
-    action: (message: string, context?: Record<string, any>) => 
+    action: (message: string, context?: Record<string, any>) =>
       this.info(message, context, 'user'),
-    error: (message: string, errorOrContext?: Error | Record<string, any>) => 
+    error: (message: string, errorOrContext?: Error | Record<string, any>) =>
       this.error(message, errorOrContext, 'user')
   };
 
@@ -328,29 +328,29 @@ class LoggerService {
   public getAllLogsText(includeContext = false, includeStack = false): string {
     return this.logs.map(l => {
       let logLine = `[${l.timestamp}] [${l.level.toUpperCase()}]`;
-      
+
       if (l.source) {
         logLine += ` [${l.source.toUpperCase()}]`;
       }
-      
+
       if (l.category) {
         logLine += ` [${l.category}]`;
       }
-      
+
       logLine += ` ${l.message}`;
-      
+
       if (includeContext && l.context) {
         logLine += `\n  Context: ${JSON.stringify(l.context, null, 2)}`;
       }
-      
+
       if (includeStack && l.stack) {
         logLine += `\n  Stack: ${l.stack}`;
       }
-      
+
       return logLine;
     }).join('\n');
   }
-  
+
   /**
    * 订阅后端日志
    * 接收后端发送的日志并整合到前端日志列表
@@ -372,14 +372,14 @@ class LoggerService {
             source: 'backend',
             category: backendLog.category
           };
-          
+
           // 将后端日志添加到日志列表
           this.logs.push(logEntry);
-          
+
           if (this.logs.length > this.maxLogs) {
             this.logs.shift();
           }
-          
+
           this.notify();
         } catch (error) {
           // 减少日志输出，避免影响性能
@@ -389,7 +389,7 @@ class LoggerService {
       // 减少日志输出，避免影响性能
     }
   }
-  
+
   /**
    * 映射后端日志级别到前端日志级别
    * 

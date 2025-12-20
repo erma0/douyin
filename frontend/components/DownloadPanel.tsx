@@ -3,31 +3,31 @@
  * 整体显示的下载管理界面，类似采集结果展示
  */
 
-import React, { useState } from 'react';
-import { 
-  Download, 
-  Pause, 
-  Play, 
-  X, 
-  Trash2, 
-  CheckCircle, 
+import {
   AlertCircle,
-  Clock,
-  FileText,
+  CheckCircle,
   ChevronDown,
   ChevronUp,
-  Loader2,
-  TrendingDown,
+  Clock,
+  Download,
+  FileText,
+  FolderOpen,
   HardDrive,
   Link as LinkIcon,
+  Loader2,
+  Pause,
   PauseCircle,
+  Play,
   PlayCircle,
-  XCircle,
-  FolderOpen
+  Trash2,
+  TrendingDown,
+  X,
+  XCircle
 } from 'lucide-react';
-import { bridge } from '../services/bridge';
-import { aria2Service, Aria2Task } from '../services/aria2Service';
+import React, { useState } from 'react';
 import { useAria2Manager } from '../hooks/useAria2Manager';
+import { aria2Service, Aria2Task } from '../services/aria2Service';
+import { bridge } from '../services/bridge';
 import { formatSize, formatSpeed } from '../utils/formatters';
 
 interface DownloadPanelProps {
@@ -39,7 +39,7 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
   const [activeTab, setActiveTab] = useState<'active' | 'waiting' | 'stopped'>('active');
   const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
-  
+
   const {
     activeTasks,
     waitingTasks,
@@ -56,19 +56,19 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
     try {
       // 获取任务的详细信息，包括原始URL
       const details = await aria2Service.getTaskDetails(task.gid);
-      
+
       if (details?.files?.[0]?.uris?.[0]?.uri) {
         const url = details.files[0].uris[0].uri;
-        
+
         // 先移除失败的任务记录
         await aria2Service.remove(task.gid);
-        
+
         // 重新添加下载任务
         const options: Record<string, any> = {
           dir: task.dir || '',
           out: task.filename || ''
         };
-        
+
         await aria2Service.addDownload(url, options);
         console.log(`重试任务: ${task.filename}`);
       } else {
@@ -95,7 +95,7 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
   // 渲染任务列表
   const renderTaskList = (tasks: Aria2Task[], type: 'active' | 'waiting' | 'stopped') => {
     // 如果在已停止标签且开启了仅显示失败，则过滤任务
-    const filteredTasks = (type === 'stopped' && showOnlyErrors) 
+    const filteredTasks = (type === 'stopped' && showOnlyErrors)
       ? tasks.filter(t => t.status === 'error')
       : tasks;
 
@@ -122,21 +122,19 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
           <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
             <button
               onClick={() => setShowOnlyErrors(false)}
-              className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
-                !showOnlyErrors
+              className={`px-3 py-1.5 text-sm rounded-lg transition-all ${!showOnlyErrors
                   ? 'bg-blue-100 text-blue-700 font-medium'
                   : 'text-gray-600 hover:bg-gray-100'
-              }`}
+                }`}
             >
               全部 ({tasks.length})
             </button>
             <button
               onClick={() => setShowOnlyErrors(true)}
-              className={`px-3 py-1.5 text-sm rounded-lg transition-all flex items-center gap-1.5 ${
-                showOnlyErrors
+              className={`px-3 py-1.5 text-sm rounded-lg transition-all flex items-center gap-1.5 ${showOnlyErrors
                   ? 'bg-red-100 text-red-700 font-medium'
                   : 'text-gray-600 hover:bg-gray-100'
-              }`}
+                }`}
             >
               <AlertCircle size={14} />
               仅失败 ({errorCount})
@@ -146,19 +144,19 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
 
         <div className="grid gap-4">
           {filteredTasks.map((task) => (
-          <TaskItem
-            key={task.gid}
-            task={task}
-            type={type}
-            onPause={aria2Service.pause.bind(aria2Service)}
-            onResume={aria2Service.resume.bind(aria2Service)}
-            onCancel={aria2Service.cancel.bind(aria2Service)}
-            onRemove={aria2Service.remove.bind(aria2Service)}
-            onRetry={handleRetry}
-            formatSize={formatSize}
-            formatSpeed={formatSpeed}
+            <TaskItem
+              key={task.gid}
+              task={task}
+              type={type}
+              onPause={aria2Service.pause.bind(aria2Service)}
+              onResume={aria2Service.resume.bind(aria2Service)}
+              onCancel={aria2Service.cancel.bind(aria2Service)}
+              onRemove={aria2Service.remove.bind(aria2Service)}
+              onRetry={handleRetry}
+              formatSize={formatSize}
+              formatSpeed={formatSpeed}
 
-          />
+            />
           ))}
         </div>
       </div>
@@ -218,33 +216,30 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
             <div className="flex gap-2">
               <button
                 onClick={() => setActiveTab('active')}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                  activeTab === 'active'
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${activeTab === 'active'
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
                     : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-                }`}
+                  }`}
               >
                 活动中 {totalActive > 0 && <span className="ml-1.5 px-2 py-0.5 bg-white/20 rounded-full text-xs">{totalActive}</span>}
               </button>
               <button
                 onClick={() => setActiveTab('waiting')}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                  activeTab === 'waiting'
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${activeTab === 'waiting'
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
                     : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-                }`}
+                  }`}
               >
                 等待中 {totalWaiting > 0 && <span className="ml-1.5 px-2 py-0.5 bg-white/20 rounded-full text-xs">{totalWaiting}</span>}
               </button>
               <button
                 onClick={() => setActiveTab('stopped')}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                  activeTab === 'stopped'
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${activeTab === 'stopped'
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
                     : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-                }`}
+                  }`}
               >
-                已停止 
+                已停止
                 {totalStopped > 0 && <span className="ml-1.5 px-2 py-0.5 bg-white/20 rounded-full text-xs">{totalStopped}</span>}
                 {errorCount > 0 && <span className="ml-1.5 px-2 py-0.5 bg-red-500 text-white rounded-full text-xs">{errorCount}</span>}
               </button>
@@ -256,41 +251,38 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
               <button
                 onClick={pauseAll}
                 disabled={!activeTasks.some(t => t.status === 'active')}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm ${
-                  activeTasks.some(t => t.status === 'active')
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm ${activeTasks.some(t => t.status === 'active')
                     ? 'text-orange-700 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 hover:from-orange-100 hover:to-amber-100 hover:border-orange-300'
                     : 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
-                }`}
+                  }`}
                 title={activeTasks.some(t => t.status === 'active') ? "暂停全部活动任务" : "没有正在下载的任务"}
               >
                 <PauseCircle size={16} />
                 暂停全部
               </button>
-              
+
               {/* 恢复按钮 */}
               <button
                 onClick={resumeAll}
                 disabled={!activeTasks.some(t => t.status === 'paused') && !waitingTasks.some(t => t.status === 'paused')}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm ${
-                  activeTasks.some(t => t.status === 'paused') || waitingTasks.some(t => t.status === 'paused')
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm ${activeTasks.some(t => t.status === 'paused') || waitingTasks.some(t => t.status === 'paused')
                     ? 'text-green-700 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 hover:from-green-100 hover:to-emerald-100 hover:border-green-300'
                     : 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
-                }`}
+                  }`}
                 title={activeTasks.some(t => t.status === 'paused') || waitingTasks.some(t => t.status === 'paused') ? "恢复全部暂停任务" : "没有暂停的任务"}
               >
                 <PlayCircle size={16} />
                 恢复全部
               </button>
-              
+
               {/* 取消按钮 */}
               <button
                 onClick={cancelAll}
                 disabled={totalActive === 0 && totalWaiting === 0}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm ${
-                  totalActive > 0 || totalWaiting > 0
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm ${totalActive > 0 || totalWaiting > 0
                     ? 'text-red-700 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 hover:from-red-100 hover:to-rose-100 hover:border-red-300'
                     : 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
-                }`}
+                  }`}
                 title={totalActive > 0 || totalWaiting > 0 ? "取消全部任务" : "没有可取消的任务"}
               >
                 <XCircle size={16} />
@@ -308,16 +300,15 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
                   重试失败 ({errorCount})
                 </button>
               )}
-              
+
               {/* 清空记录按钮 */}
               <button
                 onClick={() => setShowPurgeConfirm(true)}
                 disabled={totalStopped === 0}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm ${
-                  totalStopped > 0
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm ${totalStopped > 0
                     ? 'text-gray-700 bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 hover:from-gray-100 hover:to-slate-100 hover:border-gray-300'
                     : 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
-                }`}
+                  }`}
                 title={totalStopped > 0 ? "清空所有已停止任务记录" : "没有已停止的任务"}
               >
                 <Trash2 size={16} />
@@ -433,7 +424,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
           <div className={`${statusInfo.bg} p-3 rounded-xl shadow-sm shrink-0`}>
             <StatusIcon size={24} className={`${statusInfo.color} ${statusInfo.animate ? 'animate-spin' : ''}`} />
           </div>
-          
+
           <div className="flex-1 min-w-0 overflow-hidden">
             <h3 className="text-sm font-semibold text-gray-900 truncate pr-4">{task.filename}</h3>
           </div>
@@ -443,7 +434,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
             <span className={`px-3 py-1 ${statusInfo.bg} ${statusInfo.color} rounded-full text-xs font-medium border ${statusInfo.borderColor} whitespace-nowrap`}>
               {statusInfo.label}
             </span>
-            
+
             {/* 单个任务操作按钮 */}
             <div className="flex items-center gap-1">
               {type === 'active' && task.status === 'active' && (
@@ -532,15 +523,15 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 <span className="text-gray-500">{formatSize(task.completedLength)} / {formatSize(task.totalLength)}</span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-500 relative overflow-hidden"
-                style={{ width: `${task.progress}%` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                <div
+                  className="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-500 relative overflow-hidden"
+                  style={{ width: `${task.progress}%` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
           {/* 任务信息 */}
           <div className="flex items-center gap-3 text-xs text-gray-600 flex-wrap">

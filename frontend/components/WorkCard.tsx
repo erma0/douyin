@@ -1,7 +1,7 @@
 
+import { Heart, Image as ImageIcon, ImageOff, PlayCircle } from 'lucide-react';
 import React, { useState } from 'react';
 import { DouyinWork } from '../types';
-import { PlayCircle, Image as ImageIcon, Heart, ImageOff } from 'lucide-react';
 
 interface WorkCardProps {
   work: DouyinWork;
@@ -9,27 +9,27 @@ interface WorkCardProps {
   style?: React.CSSProperties; // For virtual scrolling positioning
 }
 
-export const WorkCard: React.FC<WorkCardProps> = React.memo(({ 
-  work, onClick, style 
+export const WorkCard: React.FC<WorkCardProps> = React.memo(({
+  work, onClick, style
 }) => {
   const [imageError, setImageError] = useState(false);
 
   return (
-    <div 
+    <div
       style={style}
       className="p-3" // Add padding to simulate gap in virtual list
     >
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:border-blue-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group relative overflow-hidden flex flex-col h-full"
       >
         {/* Thumbnail Container */}
-        <div 
+        <div
           className="aspect-[3/4] relative bg-gray-100 cursor-pointer overflow-hidden"
           onClick={() => onClick(work)}
         >
           {!imageError ? (
-            <img 
-              src={work.cover} 
+            <img
+              src={work.cover}
               alt={work.desc}
               loading="lazy"
               onError={() => setImageError(true)}
@@ -41,10 +41,10 @@ export const WorkCard: React.FC<WorkCardProps> = React.memo(({
               <span className="text-xs">封面加载失败</span>
             </div>
           )}
-          
+
           {/* Gradient Overlay (Only if image loaded) */}
           {!imageError && (
-             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity"></div>
           )}
 
           {/* Type Badge */}
@@ -55,17 +55,17 @@ export const WorkCard: React.FC<WorkCardProps> = React.memo(({
 
           {/* Hover Action */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-10">
-              <span className="bg-white/90 backdrop-blur text-gray-900 px-5 py-2 rounded-full text-sm font-bold shadow-xl transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                查看详情
-              </span>
+            <span className="bg-white/90 backdrop-blur text-gray-900 px-5 py-2 rounded-full text-sm font-bold shadow-xl transform translate-y-4 group-hover:translate-y-0 transition-transform">
+              查看详情
+            </span>
           </div>
 
           {/* Stats Overlay (Bottom) */}
           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs font-medium opacity-90 z-10">
-              <div className="flex items-center gap-1.5 bg-black/20 px-2 py-0.5 rounded-md backdrop-blur-sm">
-                <Heart size={12} className="text-white fill-white"/>
-                {work.stats.digg_count > 10000 ? (work.stats.digg_count/10000).toFixed(1)+'w' : work.stats.digg_count}
-              </div>
+            <div className="flex items-center gap-1.5 bg-black/20 px-2 py-0.5 rounded-md backdrop-blur-sm">
+              <Heart size={12} className="text-white fill-white" />
+              {work.stats.digg_count > 10000 ? (work.stats.digg_count / 10000).toFixed(1) + 'w' : work.stats.digg_count}
+            </div>
           </div>
         </div>
 

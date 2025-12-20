@@ -1,8 +1,10 @@
-import webview
-import sys
 import os
-from backend.api import API
+import sys
+
+import webview
 from loguru import logger
+
+from backend.api import API
 
 # 判断是否为打包环境
 IS_PACKAGED = getattr(sys, "frozen", False)
@@ -105,15 +107,16 @@ if __name__ == "__main__":
 
             if result:
                 logger.info("🔄 正在关闭应用...")
-                
+
                 # 清理后端资源
                 api.cleanup()
-                
+
                 # 给足够时间让所有资源释放
                 # 包括：日志文件、aria2进程、WebView缓存等
                 import time
+
                 time.sleep(1.0)
-                
+
                 return True
             return False
 
@@ -142,9 +145,10 @@ if __name__ == "__main__":
         # webview.start()返回后，窗口已关闭
         # 再次确保所有资源已释放
         logger.info("👋 应用已正常退出")
-        
+
         # 最终清理：确保所有文件句柄都已关闭
         import time
+
         time.sleep(0.5)
     except Exception as e:
         logger.error(f"💥 应用崩溃: {e}", exc_info=True)

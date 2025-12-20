@@ -3,11 +3,11 @@
  * 封装所有下载相关逻辑
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from '../components/Toast';
 import { aria2Service } from '../services/aria2Service';
 import { bridge } from '../services/bridge';
 import { logger } from '../services/logger';
-import { toast } from '../components/Toast';
 import { parseAria2Config } from '../utils/aria2ConfigParser';
 
 /**
@@ -59,7 +59,7 @@ export const useAria2Download = () => {
   useEffect(() => {
     const unsubscribe = aria2Service.onConnectionChange((isConnected) => {
       console.log(`[useAria2Download] 连接状态变化: ${isConnected}, 之前: ${prevConnectedRef.current}`);
-      
+
       // 只在状态从 false 变为 true 时显示提示
       if (isConnected && !prevConnectedRef.current) {
         console.log('[useAria2Download] 显示连接成功提示');
@@ -91,13 +91,13 @@ export const useAria2Download = () => {
     return () => {
       // 取消订阅连接状态变化
       unsubscribe();
-      
+
       // 清理轮询定时器
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
         pollIntervalRef.current = null;
       }
-      
+
       // 清理回调引用
       onCompleteCallbackRef.current = null;
     };
@@ -158,13 +158,13 @@ export const useAria2Download = () => {
         const activeTasks = await aria2Service.getActiveTasks();
         const waitingTasks = await aria2Service.getWaitingTasks();
         const allTasks = [...activeTasks, ...waitingTasks];
-        
+
         // 计算总下载速度
         currentSpeed = activeTasks.reduce((sum, task) => sum + (task.downloadSpeed || 0), 0);
-        
+
         // 创建GID到任务的映射
         const taskMap = new Map(allTasks.map(task => [task.gid, task]));
-        
+
         for (const [workId, info] of downloads.entries()) {
           const task = taskMap.get(info.gid);
           if (task) {
@@ -211,7 +211,7 @@ export const useAria2Download = () => {
           totalProgress += prog;
         }
       }
-      
+
       // 更新下载统计
       setDownloadStats({
         activeCount: downloads.size,
@@ -266,10 +266,10 @@ export const useAria2Download = () => {
 
     // 清空进度状态
     setProgress({});
-    
+
     // 重置统计
     statsRef.current = { completed: 0, failed: 0 };
-    
+
     // 清理完成回调
     onCompleteCallbackRef.current = null;
 
@@ -325,7 +325,7 @@ export const useAria2Download = () => {
       return true;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      
+
       if (errorMsg.includes('connect') || errorMsg.includes('连接')) {
         toast.error(`Aria2连接失败，请检查服务状态`);
         logger.error(`Aria2连接失败: ${errorMsg}`);
@@ -336,7 +336,7 @@ export const useAria2Download = () => {
         toast.error(`下载失败: ${filename} - ${errorMsg}`);
         logger.error(`下载失败: ${filename} - ${errorMsg}`);
       }
-      
+
       return false;
     }
   }, [connected, startPolling]);
@@ -378,20 +378,20 @@ export const useAria2Download = () => {
   const cancelDownload = useCallback(async (workId: string): Promise<boolean> => {
     const info = downloadsRef.current.get(workId);
     if (!info) return false;
-    
+
     try {
       await aria2Service.cancel(info.gid);
-      
+
       // 立即从跟踪映射表中移除
       downloadsRef.current.delete(workId);
-      
+
       // 清除进度状态
       setProgress(prev => {
         const newProgress = { ...prev };
         delete newProgress[workId];
         return newProgress;
       });
-      
+
       return true;
     } catch (error) {
       console.error('[useAria2Download] 取消任务失败:', error);
@@ -450,7 +450,7 @@ export const useAria2Download = () => {
         logger.error(errorMsg);
         return;
       }
-      
+
       // 解析任务列表
       const tasks = parseAria2Config(configContent);
 
@@ -483,7 +483,7 @@ export const useAria2Download = () => {
 
         try {
           const result = await addDownload(workId, task.url, task.out, task.dir, cookie);
-          
+
           if (result) {
             successCount++;
           } else {

@@ -1,7 +1,7 @@
 
+import { ChevronDown, Copy, Terminal, Trash2 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
-import { logger, LogEntry } from '../services/logger';
-import { Terminal, X, Trash2, Copy, ChevronDown, ChevronUp, Activity } from 'lucide-react';
+import { LogEntry, logger } from '../services/logger';
 
 interface LogPanelProps {
   isOpen: boolean;
@@ -65,21 +65,21 @@ export const LogPanel: React.FC<LogPanelProps> = ({ isOpen, onToggle }) => {
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <button 
+          <button
             onClick={copyLogs}
-            className="p-1.5 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors" 
+            className="p-1.5 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
             title="复制日志"
           >
             <Copy size={12} />
           </button>
-          <button 
+          <button
             onClick={() => logger.clear()}
-            className="p-1.5 hover:bg-gray-700 rounded text-gray-400 hover:text-red-400 transition-colors" 
+            className="p-1.5 hover:bg-gray-700 rounded text-gray-400 hover:text-red-400 transition-colors"
             title="清空日志"
           >
             <Trash2 size={12} />
           </button>
-          <button 
+          <button
             onClick={onToggle}
             className="p-1.5 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
           >
@@ -89,7 +89,7 @@ export const LogPanel: React.FC<LogPanelProps> = ({ isOpen, onToggle }) => {
       </div>
 
       {/* Log Body */}
-      <div 
+      <div
         className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar scroll-smooth"
         ref={scrollRef}
         onScroll={handleScroll}
@@ -100,12 +100,11 @@ export const LogPanel: React.FC<LogPanelProps> = ({ isOpen, onToggle }) => {
         {logs.map((log) => (
           <div key={log.id} className="text-xs flex gap-3 leading-relaxed hover:bg-white/5 px-1 -mx-1 rounded">
             <span className="text-gray-600 shrink-0 font-light select-none">[{log.timestamp}]</span>
-            <span className={`break-all ${
-              log.level === 'error' ? 'text-red-400 font-bold' :
-              log.level === 'warn' ? 'text-yellow-400' :
-              log.level === 'success' ? 'text-emerald-400' :
-              'text-blue-300'
-            }`}>
+            <span className={`break-all ${log.level === 'error' ? 'text-red-400 font-bold' :
+                log.level === 'warn' ? 'text-yellow-400' :
+                  log.level === 'success' ? 'text-emerald-400' :
+                    'text-blue-300'
+              }`}>
               {log.level === 'error' ? '✖ ' : log.level === 'success' ? '✔ ' : log.level === 'warn' ? '⚠ ' : 'ℹ '}
               {log.message}
             </span>
@@ -113,8 +112,8 @@ export const LogPanel: React.FC<LogPanelProps> = ({ isOpen, onToggle }) => {
         ))}
         {/* Blinking Cursor Effect */}
         <div className="flex items-center gap-2 mt-2">
-            <span className="text-emerald-500 text-xs font-bold">➜</span>
-            <span className="w-2 h-4 bg-emerald-500/50 animate-pulse"></span>
+          <span className="text-emerald-500 text-xs font-bold">➜</span>
+          <span className="w-2 h-4 bg-emerald-500/50 animate-pulse"></span>
         </div>
       </div>
     </div>

@@ -109,7 +109,7 @@ export class ErrorClassifier {
    */
   static classify(error: Error | string): ErrorType {
     const errorMessage = typeof error === 'string' ? error : error.message;
-    
+
     // 按优先级顺序检查，更具体的错误类型优先
     const priorityOrder = [
       ErrorType.ARIA2,
@@ -121,14 +121,14 @@ export class ErrorClassifier {
       ErrorType.NETWORK,
       ErrorType.UNKNOWN
     ];
-    
+
     for (const type of priorityOrder) {
       const patterns = this.patterns[type];
       if (patterns.some(pattern => pattern.test(errorMessage))) {
         return type;
       }
     }
-    
+
     return ErrorType.UNKNOWN;
   }
 }
@@ -143,47 +143,47 @@ export class ErrorMessageGenerator {
     suggestion?: string;
     actionable: boolean;
   }> = {
-    [ErrorType.NETWORK]: {
-      userMessage: '网络连接失败，请检查网络设置',
-      suggestion: '请检查网络连接或稍后重试',
-      actionable: true
-    },
-    [ErrorType.PERMISSION]: {
-      userMessage: '权限不足，无法执行操作',
-      suggestion: '请检查文件权限或以管理员身份运行',
-      actionable: true
-    },
-    [ErrorType.COOKIE]: {
-      userMessage: 'Cookie可能已失效，请更新登录信息',
-      suggestion: '请在设置中更新Cookie',
-      actionable: true
-    },
-    [ErrorType.FILE_NOT_FOUND]: {
-      userMessage: '未找到相关文件或数据',
-      suggestion: '请先完成采集任务或检查文件路径',
-      actionable: true
-    },
-    [ErrorType.ARIA2]: {
-      userMessage: 'Aria2下载服务异常',
-      suggestion: '请检查下载服务配置或重启应用',
-      actionable: true
-    },
-    [ErrorType.BACKEND]: {
-      userMessage: '后端服务不可用',
-      suggestion: '请确保主程序正在运行',
-      actionable: true
-    },
-    [ErrorType.VALIDATION]: {
-      userMessage: '输入内容格式不正确',
-      suggestion: '请检查输入内容并重新输入',
-      actionable: true
-    },
-    [ErrorType.UNKNOWN]: {
-      userMessage: '发生未知错误',
-      suggestion: '请稍后重试或联系技术支持',
-      actionable: false
-    }
-  };
+      [ErrorType.NETWORK]: {
+        userMessage: '网络连接失败，请检查网络设置',
+        suggestion: '请检查网络连接或稍后重试',
+        actionable: true
+      },
+      [ErrorType.PERMISSION]: {
+        userMessage: '权限不足，无法执行操作',
+        suggestion: '请检查文件权限或以管理员身份运行',
+        actionable: true
+      },
+      [ErrorType.COOKIE]: {
+        userMessage: 'Cookie可能已失效，请更新登录信息',
+        suggestion: '请在设置中更新Cookie',
+        actionable: true
+      },
+      [ErrorType.FILE_NOT_FOUND]: {
+        userMessage: '未找到相关文件或数据',
+        suggestion: '请先完成采集任务或检查文件路径',
+        actionable: true
+      },
+      [ErrorType.ARIA2]: {
+        userMessage: 'Aria2下载服务异常',
+        suggestion: '请检查下载服务配置或重启应用',
+        actionable: true
+      },
+      [ErrorType.BACKEND]: {
+        userMessage: '后端服务不可用',
+        suggestion: '请确保主程序正在运行',
+        actionable: true
+      },
+      [ErrorType.VALIDATION]: {
+        userMessage: '输入内容格式不正确',
+        suggestion: '请检查输入内容并重新输入',
+        actionable: true
+      },
+      [ErrorType.UNKNOWN]: {
+        userMessage: '发生未知错误',
+        suggestion: '请稍后重试或联系技术支持',
+        actionable: false
+      }
+    };
 
   /**
    * 生成用户友好的错误信息
@@ -194,7 +194,7 @@ export class ErrorMessageGenerator {
     actionable: boolean;
   } {
     const template = this.messages[type];
-    
+
     // 对于某些错误类型，可以使用原始消息的部分内容
     if (originalMessage && type === ErrorType.VALIDATION) {
       return {
@@ -202,7 +202,7 @@ export class ErrorMessageGenerator {
         userMessage: originalMessage
       };
     }
-    
+
     return template;
   }
 }
@@ -235,12 +235,12 @@ export class ErrorHandler {
 
     // 分类错误
     const type = ErrorClassifier.classify(error);
-    
+
     // 生成用户友好消息
-    const messageInfo = customMessage 
+    const messageInfo = customMessage
       ? { userMessage: customMessage, actionable: true }
       : ErrorMessageGenerator.generate(type, typeof error === 'string' ? error : error.message);
-    
+
     // 构建错误信息对象
     const errorInfo: ErrorInfo = {
       type,
@@ -252,7 +252,7 @@ export class ErrorHandler {
       actionable: messageInfo.actionable,
       suggestion: messageInfo.suggestion
     };
-    
+
     // 记录详细日志
     const logMessage = `[${type.toUpperCase()}] ${errorInfo.message}`;
     const logContext = {
@@ -261,7 +261,7 @@ export class ErrorHandler {
       timestamp: errorInfo.timestamp.toISOString(),
       stack: error instanceof Error ? error.stack : undefined
     };
-    
+
     switch (logLevel) {
       case 'error':
         logger.error(logMessage, logContext);
@@ -273,13 +273,13 @@ export class ErrorHandler {
         logger.info(logMessage, logContext);
         break;
     }
-    
+
     // 显示用户提示
     if (showToast) {
-      const toastMessage = messageInfo.suggestion 
+      const toastMessage = messageInfo.suggestion
         ? `${messageInfo.userMessage}。${messageInfo.suggestion}`
         : messageInfo.userMessage;
-        
+
       switch (type) {
         case ErrorType.NETWORK:
         case ErrorType.BACKEND:
@@ -297,7 +297,7 @@ export class ErrorHandler {
           toast.error(toastMessage);
       }
     }
-    
+
     return errorInfo;
   }
 
@@ -316,13 +316,13 @@ export class ErrorHandler {
     }
   ): Promise<ErrorInfo> {
     const { rethrow = false, ...handlerOptions } = options || {};
-    
+
     const errorInfo = this.handle(error, context, handlerOptions);
-    
+
     if (rethrow) {
       throw error;
     }
-    
+
     return errorInfo;
   }
 
@@ -340,11 +340,11 @@ export class ErrorHandler {
     }
   ): T {
     const { fallbackValue, ...handlerOptions } = options || {};
-    
+
     return ((...args: Parameters<T>) => {
       try {
         const result = fn(...args);
-        
+
         // 处理Promise返回值
         if (result instanceof Promise) {
           return result.catch((error) => {
@@ -352,7 +352,7 @@ export class ErrorHandler {
             return fallbackValue;
           });
         }
-        
+
         return result;
       } catch (error) {
         this.handle(error, { ...context, args }, handlerOptions);

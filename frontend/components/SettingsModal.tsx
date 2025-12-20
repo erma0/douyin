@@ -1,12 +1,12 @@
 
+import { ChevronDown, ChevronUp, Download, ExternalLink, FolderOpen, Save, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { X, Save, FolderOpen, ExternalLink, ChevronUp, ChevronDown, Download } from 'lucide-react';
-import { bridge } from '../services/bridge';
-import { logger } from '../services/logger';
-import { toast } from './Toast';
-import { AppSettings } from '../types';
 import { APP_DEFAULTS } from '../constants';
 import { aria2Service } from '../services/aria2Service';
+import { bridge } from '../services/bridge';
+import { logger } from '../services/logger';
+import { AppSettings } from '../types';
+import { toast } from './Toast';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -24,7 +24,7 @@ interface NumberInputProps {
 
 const NumberInput: React.FC<NumberInputProps> = ({ label, value, min, max, onChange }) => {
   const inputId = `input-${label.replace(/\s+/g, '-').toLowerCase()}`;
-  
+
   const handleIncrement = () => {
     if (value < max) onChange(value + 1);
   };
@@ -38,9 +38,9 @@ const NumberInput: React.FC<NumberInputProps> = ({ label, value, min, max, onCha
     if (!isNaN(val)) {
       // Allow typing, clamp on blur if needed, but here we just update
       // Ideally we clamp here or let user type freely but valid
-      onChange(val); 
+      onChange(val);
     } else if (e.target.value === '') {
-       onChange(0);
+      onChange(0);
     }
   };
 
@@ -113,7 +113,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   // 验证设置
   const validateSettings = (): boolean => {
     const newErrors: Partial<Record<keyof AppSettings, string>> = {};
-    
+
     // 验证下载路径
     if (!settings.downloadPath) {
       newErrors.downloadPath = "请选择下载路径";
@@ -124,17 +124,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         newErrors.downloadPath = "无效的路径格式";
       }
     }
-    
+
     // 验证最大重试次数
     if (settings.maxRetries < 1 || settings.maxRetries > 10) {
       newErrors.maxRetries = "最大重试次数必须在1-10之间";
     }
-    
+
     // 验证同时下载任务数
     if (settings.maxConcurrency < 1 || settings.maxConcurrency > 10) {
       newErrors.maxConcurrency = "同时下载任务数必须在1-10之间";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -145,12 +145,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       toast.error('请检查配置项是否正确');
       return;
     }
-    
+
     setIsSaving(true);
     try {
       await bridge.saveSettings(settings);
       logger.success('✓ 配置保存成功');
-      
+
       // 即时更新Aria2配置
       try {
         await aria2Service.updateGlobalOptions({
@@ -160,7 +160,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       } catch (err) {
         // 错误已在aria2Service中处理和记录
       }
-      
+
       toast.success('配置保存成功');
       // 等待后端日志传递到前端（100ms足够）
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -191,24 +191,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden transform transition-all scale-100"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
           <h3 className="text-lg font-bold text-gray-800">系统设置</h3>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors"
           >
             <X size={20} />
           </button>
         </div>
-        
+
         <div className="p-6 space-y-5">
           {/* Cookie Setting */}
           <div>
@@ -240,20 +240,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               name="cookie"
               value={settings.cookie}
               onChange={(e) => {
-                setSettings({...settings, cookie: e.target.value});
+                setSettings({ ...settings, cookie: e.target.value });
                 // 清除cookie错误
                 if (errors.cookie) {
                   setErrors(prev => {
-                    const newErrors = {...prev};
+                    const newErrors = { ...prev };
                     delete newErrors.cookie;
                     return newErrors;
                   });
                 }
               }}
               placeholder="请输入 douyin.com 的 Cookie..."
-              className={`w-full h-32 px-4 py-3 border rounded-xl bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none ${
-                errors.cookie ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-blue-500'
-              }`}
+              className={`w-full h-32 px-4 py-3 border rounded-xl bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none ${errors.cookie ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-blue-500'
+                }`}
             />
             {errors.cookie && (
               <p className="mt-1.5 text-xs text-red-500">{errors.cookie}</p>
@@ -265,7 +264,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {/* Download Path */}
           <div>
-             <label htmlFor="download-path-input" className="block text-sm font-semibold text-gray-700 mb-2">
+            <label htmlFor="download-path-input" className="block text-sm font-semibold text-gray-700 mb-2">
               默认下载路径
             </label>
             <div className="flex gap-2">
@@ -275,22 +274,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 type="text"
                 value={settings.downloadPath}
                 onChange={(e) => {
-                  setSettings({...settings, downloadPath: e.target.value});
+                  setSettings({ ...settings, downloadPath: e.target.value });
                   // 清除路径错误
                   if (errors.downloadPath) {
                     setErrors(prev => {
-                      const newErrors = {...prev};
+                      const newErrors = { ...prev };
                       delete newErrors.downloadPath;
                       return newErrors;
                     });
                   }
                 }}
                 placeholder="例如 D:\Downloads"
-                className={`flex-1 px-4 py-2.5 border rounded-xl bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all ${
-                  errors.downloadPath ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-blue-500'
-                }`}
+                className={`flex-1 px-4 py-2.5 border rounded-xl bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.downloadPath ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-blue-500'
+                  }`}
               />
-              <button 
+              <button
                 onClick={handleSelectFolder}
                 className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl flex items-center transition-colors"
                 title="选择文件夹"
@@ -304,53 +302,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-             {/* Max Retries */}
-             <div>
-               <NumberInput 
-                  label="最大重试次数"
-                  value={settings.maxRetries}
-                  min={1}
-                  max={10}
-                  onChange={(val) => {
-                    setSettings({...settings, maxRetries: val});
-                    // 清除错误
-                    if (errors.maxRetries) {
-                      setErrors(prev => {
-                        const newErrors = {...prev};
-                        delete newErrors.maxRetries;
-                        return newErrors;
-                      });
-                    }
-                  }}
-               />
-               {errors.maxRetries && (
-                 <p className="mt-1.5 text-xs text-red-500">{errors.maxRetries}</p>
-               )}
-             </div>
+            {/* Max Retries */}
+            <div>
+              <NumberInput
+                label="最大重试次数"
+                value={settings.maxRetries}
+                min={1}
+                max={10}
+                onChange={(val) => {
+                  setSettings({ ...settings, maxRetries: val });
+                  // 清除错误
+                  if (errors.maxRetries) {
+                    setErrors(prev => {
+                      const newErrors = { ...prev };
+                      delete newErrors.maxRetries;
+                      return newErrors;
+                    });
+                  }
+                }}
+              />
+              {errors.maxRetries && (
+                <p className="mt-1.5 text-xs text-red-500">{errors.maxRetries}</p>
+              )}
+            </div>
 
-             {/* Max Concurrency */}
-             <div>
-               <NumberInput 
-                  label="同时下载任务数"
-                  value={settings.maxConcurrency}
-                  min={1}
-                  max={10}
-                  onChange={(val) => {
-                    setSettings({...settings, maxConcurrency: val});
-                    // 清除错误
-                    if (errors.maxConcurrency) {
-                      setErrors(prev => {
-                        const newErrors = {...prev};
-                        delete newErrors.maxConcurrency;
-                        return newErrors;
-                      });
-                    }
-                  }}
-               />
-               {errors.maxConcurrency && (
-                 <p className="mt-1.5 text-xs text-red-500">{errors.maxConcurrency}</p>
-               )}
-             </div>
+            {/* Max Concurrency */}
+            <div>
+              <NumberInput
+                label="同时下载任务数"
+                value={settings.maxConcurrency}
+                min={1}
+                max={10}
+                onChange={(val) => {
+                  setSettings({ ...settings, maxConcurrency: val });
+                  // 清除错误
+                  if (errors.maxConcurrency) {
+                    setErrors(prev => {
+                      const newErrors = { ...prev };
+                      delete newErrors.maxConcurrency;
+                      return newErrors;
+                    });
+                  }
+                }}
+              />
+              {errors.maxConcurrency && (
+                <p className="mt-1.5 text-xs text-red-500">{errors.maxConcurrency}</p>
+              )}
+            </div>
           </div>
         </div>
 

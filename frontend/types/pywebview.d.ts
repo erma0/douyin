@@ -3,7 +3,7 @@
  * 为 window.pywebview API 提供完整的类型定义
  */
 
-import { TaskType, AppSettings } from '../types';
+import { AppSettings, TaskType } from '../types';
 
 declare global {
   interface Window {
@@ -81,4 +81,5 @@ declare global {
   }
 }
 
-export {};
+export { };
+

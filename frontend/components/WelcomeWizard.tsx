@@ -8,11 +8,11 @@
  * 4. 完成页面 - 显示配置完成信息
  */
 
+import { Check, ChevronLeft, ChevronRight, ExternalLink, FolderOpen, Sparkles, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { X, ChevronRight, ChevronLeft, Check, FolderOpen, ExternalLink, Sparkles } from 'lucide-react';
+import { APP_DEFAULTS } from '../constants';
 import { bridge } from '../services/bridge';
 import { AppSettings } from '../types';
-import { APP_DEFAULTS } from '../constants';
 
 interface WelcomeWizardProps {
   isOpen: boolean;
@@ -71,7 +71,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
           finalSettings.downloadPath = './download';
         }
       }
-      
+
       // 保存配置
       await bridge.saveSettings(finalSettings);
       console.log('配置保存成功');
@@ -115,7 +115,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
               <p className="text-xs text-white/80">让我们开始配置您的应用</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={handleSkip}
             className="p-2 hover:bg-white/20 rounded-full text-white transition-colors"
             title="跳过向导"
@@ -136,25 +136,22 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
               return (
                 <React.Fragment key={label}>
                   <div className="flex items-center gap-1.5">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${
-                      isActive 
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg' 
-                        : isCompleted
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${isActive
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                      : isCompleted
                         ? 'bg-green-500 text-white'
                         : 'bg-gray-200 text-gray-500'
-                    }`}>
+                      }`}>
                       {isCompleted ? <Check size={12} /> : index + 1}
                     </div>
-                    <span className={`text-xs font-medium ${
-                      isActive ? 'text-gray-900' : 'text-gray-500'
-                    }`}>
+                    <span className={`text-xs font-medium ${isActive ? 'text-gray-900' : 'text-gray-500'
+                      }`}>
                       {label}
                     </span>
                   </div>
                   {index < 3 && (
-                    <div className={`flex-1 h-1 mx-2 rounded-full transition-all ${
-                      isCompleted ? 'bg-green-500' : 'bg-gray-200'
-                    }`} />
+                    <div className={`flex-1 h-1 mx-2 rounded-full transition-all ${isCompleted ? 'bg-green-500' : 'bg-gray-200'
+                      }`} />
                   )}
                 </React.Fragment>
               );
@@ -242,7 +239,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
                   id="wizard-cookie-input"
                   name="cookie"
                   value={settings.cookie}
-                  onChange={(e) => setSettings({...settings, cookie: e.target.value})}
+                  onChange={(e) => setSettings({ ...settings, cookie: e.target.value })}
                   placeholder="请输入 douyin.com 的 Cookie...&#10;&#10;如果暂时不需要，可以跳过此步骤，稍后在设置中配置"
                   className="w-full h-40 px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
                 />
@@ -277,11 +274,11 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
                     name="downloadPath"
                     type="text"
                     value={settings.downloadPath}
-                    onChange={(e) => setSettings({...settings, downloadPath: e.target.value})}
+                    onChange={(e) => setSettings({ ...settings, downloadPath: e.target.value })}
                     placeholder="例如 D:\Downloads\Douyin"
                     className="flex-1 px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
-                  <button 
+                  <button
                     onClick={handleSelectFolder}
                     className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-200"
                     title="选择文件夹"

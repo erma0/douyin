@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { aria2Service, Aria2Task } from '../services/aria2Service';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from '../components/Toast';
+import { aria2Service, Aria2Task } from '../services/aria2Service';
 
 export const useAria2Manager = (isOpen: boolean) => {
   const [activeTasks, setActiveTasks] = useState<Aria2Task[]>([]);
@@ -58,7 +58,7 @@ export const useAria2Manager = (isOpen: boolean) => {
 
   const cancelAll = useCallback(async () => {
     if (!confirm('确定要取消所有活动和等待任务吗？')) return false;
-    
+
     try {
       // 取消所有活动任务
       for (const task of activeTasks) {
