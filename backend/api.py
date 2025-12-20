@@ -967,57 +967,20 @@ class API:
 
     def get_browser_cookie(self, browser: str = "edge") -> Dict[str, Any]:
         """
-        从浏览器获取Cookie
+        从浏览器获取Cookie（已废弃）
 
-        Args:
-            browser: 浏览器类型 ('chrome', 'edge', 'firefox')
+        该功能已移除，不同浏览器适配复杂且不稳定。
+        请手动从浏览器复制Cookie。
 
         Returns:
             包含cookie字符串和状态的字典：
-            - success: 是否成功获取
-            - cookie: Cookie字符串
-            - error: 错误信息（如果失败）
+            - success: False
+            - cookie: 空字符串
+            - error: 错误信息
         """
-        try:
-            from .lib.cookies import get_browser_cookie
-
-            logger.info(f"正在从 {browser} 浏览器获取Cookie...")
-
-            # 获取Cookie字典
-            cookie_dict = get_browser_cookie(browser)
-
-            if not cookie_dict:
-                return {
-                    "success": False,
-                    "cookie": "",
-                    "error": f"未能从 {browser} 浏览器获取到Cookie",
-                }
-
-            # 转换为字符串格式
-            cookie_str = self._cookie_manager.cookies_dict_to_str(cookie_dict)
-
-            if not cookie_str:
-                return {"success": False, "cookie": "", "error": "获取到的Cookie为空"}
-
-            # 验证Cookie有效性
-            if not self._cookie_manager.validate_cookie(cookie_str):
-                return {
-                    "success": False,
-                    "cookie": cookie_str,
-                    "error": "获取到的Cookie格式不正确或缺少必要字段",
-                }
-
-            logger.success(f"成功从 {browser} 浏览器获取Cookie")
-            return {"success": True, "cookie": cookie_str, "error": None}
-
-        except ImportError:
-            error_msg = "需要安装 rookiepy 库才能使用浏览器Cookie获取功能"
-            logger.error(error_msg)
-            return {"success": False, "cookie": "", "error": error_msg}
-        except Exception as e:
-            error_msg = f"从浏览器获取Cookie失败: {str(e)}"
-            logger.error(error_msg)
-            return {"success": False, "cookie": "", "error": error_msg}
+        error_msg = "浏览器Cookie自动获取功能已移除，请手动从浏览器复制Cookie"
+        logger.warning(error_msg)
+        return {"success": False, "cookie": "", "error": error_msg}
 
     def get_aria2_config(self) -> Dict[str, Any]:
         """

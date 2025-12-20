@@ -260,27 +260,8 @@ class CookieManager:
             logger.error(f"Cookie验证请求失败: {e}")
             return False
 
-    @staticmethod
-    def get_browser_cookie(browser="edge") -> Dict[str, str]:
-        """
-        从浏览器获取Cookie (需要rookiepy库)
-
-        Args:
-            browser: 浏览器类型 ('chrome', 'edge', 'firefox')
-
-        Returns:
-            Cookie字典
-        """
-        try:
-            import rookiepy
-
-            return eval(f"rookiepy.{browser}(['douyin.com'])[0]")
-        except ImportError:
-            logger.error("需要安装rookiepy库: pip install rookiepy")
-            return {}
-        except Exception as e:
-            logger.error(f"从浏览器获取Cookie失败: {e}")
-            return {}
+    # 浏览器 Cookie 获取功能已移除
+    # 原因：不同浏览器适配复杂，建议手动从浏览器复制 Cookie
 
 
 # 全局Cookie管理器实例
@@ -298,10 +279,8 @@ def _get_cookie_manager():
     return _cookie_manager
 
 
-# 兼容性接口 - 保持向后兼容
-def get_browser_cookie(browser="chrome") -> Dict[str, str]:
-    """从浏览器获取Cookie (兼容接口)"""
-    return CookieManager.get_browser_cookie(browser)
+# 浏览器 Cookie 获取功能已移除
+# 原因：不同浏览器适配复杂，建议手动从浏览器复制 Cookie
 
 
 def get_cookie_dict(cookie="") -> Dict[str, str]:
@@ -309,7 +288,7 @@ def get_cookie_dict(cookie="") -> Dict[str, str]:
     获取Cookie字典 (兼容旧接口)
 
     Args:
-        cookie: Cookie字符串或浏览器名称
+        cookie: Cookie字符串
 
     Returns:
         Cookie字典
@@ -317,12 +296,8 @@ def get_cookie_dict(cookie="") -> Dict[str, str]:
     manager = _get_cookie_manager()
 
     if cookie:
-        # 如果是浏览器名称，从浏览器获取
-        if cookie in ["edge", "chrome", "firefox"]:
-            return get_browser_cookie(cookie)
-        else:
-            # 否则作为Cookie字符串处理
-            return manager.cookies_str_to_dict(cookie)
+        # 作为Cookie字符串处理
+        return manager.cookies_str_to_dict(cookie)
     else:
         logger.warning("未提供Cookie，返回空字典")
         return {}

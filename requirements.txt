@@ -3,7 +3,6 @@ loguru
 ujson
 requests
 PyExecJS
-rookiepy
 pywebview
 psutil
 pyperclip

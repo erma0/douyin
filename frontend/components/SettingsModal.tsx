@@ -93,7 +93,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     aria2Secret: APP_DEFAULTS.ARIA2_SECRET
   });
   const [isSaving, setIsSaving] = useState(false);
-  const [isGettingCookie, setIsGettingCookie] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof AppSettings, string>>>({});
 
   useEffect(() => {
@@ -138,37 +137,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-  
-  const handleGetBrowserCookie = async () => {
-    setIsGettingCookie(true);
-    try {
-      logger.info('正在从浏览器获取Cookie...');
-      const result = await bridge.getBrowserCookie('chrome');
-      
-      if (result.success) {
-        setSettings(prev => ({ ...prev, cookie: result.cookie }));
-        // 清除cookie错误
-        if (errors.cookie) {
-          setErrors(prev => {
-            const newErrors = { ...prev };
-            delete newErrors.cookie;
-            return newErrors;
-          });
-        }
-        logger.success('✓ 成功从浏览器获取Cookie');
-        toast.success('成功从浏览器获取Cookie');
-      } else {
-        logger.error(`✗ 获取Cookie失败: ${result.error}`);
-        toast.error(`获取Cookie失败: ${result.error}`);
-      }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      logger.error(`✗ 获取浏览器Cookie失败: ${errorMsg}`);
-      toast.error(`获取浏览器Cookie失败: ${errorMsg}`);
-    } finally {
-      setIsGettingCookie(false);
-    }
   };
 
   const handleSave = async () => {
@@ -250,22 +218,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </label>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={handleGetBrowserCookie}
-                  disabled={isGettingCookie}
-                  className="text-xs bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
-                  title="从浏览器自动获取Cookie"
+                  disabled={true}
+                  className="text-xs bg-gray-400 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-not-allowed opacity-60"
+                  title="自动获取功能已禁用"
                 >
-                  {isGettingCookie ? (
-                    <>
-                      <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                      获取中...
-                    </>
-                  ) : (
-                    <>
-                      <Download size={12} />
-                      自动获取
-                    </>
-                  )}
+                  <Download size={12} />
+                  自动获取
                 </button>
                 <button
                   onClick={() => bridge.openExternal('https://github.com/erma0/douyin?tab=readme-ov-file#%E8%8E%B7%E5%8F%96cookie')}
