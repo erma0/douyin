@@ -18,7 +18,7 @@
 
 ```powershell
 # Windows PowerShell
-.\download_aria2.ps1
+.\scripts\setup\aria2.ps1
 ```
 
 ## ⚠️ 注意事项

@@ -1,5 +1,5 @@
 ﻿# 开发环境构建脚本
-# 使用: .\build.ps1 [-Clean]
+# 使用: .\scripts\dev.ps1 [-Clean]
 
 param([switch]$Clean)
 $ErrorActionPreference = "Stop"
@@ -18,11 +18,20 @@ try {
     # 1. 检查依赖
     Write-Step "检查依赖"
     
+    # 检查 Python
     if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
         Write-Err "未找到 Python"
         exit 1
     }
     Write-OK "Python 已安装"
+    
+    # 检查包管理器（用于安装依赖）
+    $useUvPip = Get-Command uv -ErrorAction SilentlyContinue
+    if ($useUvPip) {
+        Write-OK "使用 uv pip 安装依赖（更快）"
+    } else {
+        Write-OK "使用 pip 安装依赖"
+    }
     
     $pm = if (Get-Command pnpm -ErrorAction SilentlyContinue) { "pnpm" } else { "npm" }
     if ($pm -eq "npm" -and -not (Get-Command npm -ErrorAction SilentlyContinue)) {
@@ -44,7 +53,23 @@ try {
     
     # 3. 安装Python依赖
     Write-Step "安装 Python 依赖"
-    pip install -r requirements.txt -q
+    
+    # 确保虚拟环境存在
+    if (-not (Test-Path ".venv")) {
+        Write-Info "创建虚拟环境..."
+        if ($useUvPip) {
+            uv venv
+        } else {
+            python -m venv .venv
+        }
+    }
+    
+    # 安装依赖
+    if ($useUvPip) {
+        uv pip install -r requirements.txt
+    } else {
+        python -m pip install -r requirements.txt
+    }
     Write-OK "Python 依赖已安装"
     
     # 4. 构建前端
@@ -85,13 +110,13 @@ try {
     Write-Host "运行应用: " -NoNewline
     Write-Host "python main.py" -ForegroundColor Yellow
     Write-Host "打包应用: " -NoNewline
-    Write-Host ".\build-all.ps1" -ForegroundColor Yellow
+    Write-Host ".\scripts\build\pyinstaller.ps1" -ForegroundColor Yellow
     Write-Host "`n⚠ 首次使用请在设置中配置 Cookie`n" -ForegroundColor Yellow
 } catch {
     Write-Host "`n╔════════════════════════════════════════╗" -ForegroundColor Red
     Write-Host "║              构建失败！              ║" -ForegroundColor Red
     Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Red
     Write-Err "错误: $_"
-    Write-Host "`n尝试: .\build.ps1 -Clean`n" -ForegroundColor Yellow
+    Write-Host "`n尝试: .\scripts\dev.ps1 -Clean`n" -ForegroundColor Yellow
     exit 1
 }

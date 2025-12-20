@@ -18,7 +18,7 @@
 
 ```powershell
 # 方式1：使用项目脚本（推荐）
-.\download_aria2.ps1
+.\scripts\setup\aria2.ps1
 
 # 方式2：手动安装
 # 1. 下载 https://github.com/aria2/aria2/releases
@@ -286,7 +286,7 @@ config/
 **解决方法：**
 ```powershell
 # 方法1：使用构建脚本（推荐）
-.\build.ps1 -Clean
+.\scripts\dev.ps1 -Clean
 
 # 方法2：手动重新安装
 pip install -r requirements.txt
@@ -370,7 +370,7 @@ python main.py
    ```
 
 **解决方案**：
-- 如果未安装：运行 `.\download_aria2.ps1` 或手动下载
+- 如果未安装：运行 `.\scripts\setup\aria2.ps1` 或手动下载
 - 如果端口被占用：在设置中更改Aria2端口
 - 如果启动失败：查看 `config/app.log` 了解详情
 
@@ -482,7 +482,7 @@ python main.py
 
 ```powershell
 # 使用构建脚本清理（推荐）
-.\build.ps1 -Clean
+.\scripts\dev.ps1 -Clean
 
 # 或手动清理
 cd frontend

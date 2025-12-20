@@ -1,5 +1,5 @@
 ﻿# 完整打包脚本（前端+后端）
-# 使用: .\build-all.ps1 [-Mode dir|onefile] [-Clean]
+# 使用: .\scripts\build\pyinstaller.ps1 [-Mode dir|onefile] [-Clean]
 
 param(
     [ValidateSet("dir", "onefile")]
@@ -12,43 +12,73 @@ $ErrorActionPreference = "Stop"
 function Write-Step { Write-Host "`n━━━ $args ━━━`n" -ForegroundColor Cyan }
 function Write-OK { Write-Host "✓ $args" -ForegroundColor Green }
 function Write-Err { Write-Host "✗ $args" -ForegroundColor Red }
+function Write-Info { Write-Host "ℹ $args" -ForegroundColor Blue }
 
 try {
     Write-Host "`n╔════════════════════════════════════════╗" -ForegroundColor Magenta
     Write-Host "║      DouyinCrawler - 完整打包工具      ║" -ForegroundColor Magenta
     Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Magenta
     
-    # 0. 检查虚拟环境（可选但推荐）
-    if ($env:VIRTUAL_ENV) {
-        Write-Step "检测到虚拟环境"
-        Write-OK "虚拟环境: $env:VIRTUAL_ENV"
-    } else {
-        Write-Host "ℹ 提示: 建议在虚拟环境中打包" -ForegroundColor Yellow
-        Write-Host "  创建: python -m venv .venv" -ForegroundColor Gray
-        Write-Host "  激活: .\.venv\Scripts\activate`n" -ForegroundColor Gray
+    # 0. 检查 Python 环境
+    Write-Step "检查环境"
+    
+    # 检查 Python
+    if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
+        Write-Err "未找到 Python"
+        exit 1
     }
     
-    # 1. 清理
+    # 检查包管理器（用于安装依赖）
+    $useUvPip = Get-Command uv -ErrorAction SilentlyContinue
+    if ($useUvPip) {
+        Write-OK "使用 uv pip 安装依赖（更快）"
+    } else {
+        Write-OK "使用 pip 安装依赖"
+    }
+    
+    # 确保虚拟环境存在
+    if (-not (Test-Path ".venv")) {
+        Write-Info "创建虚拟环境..."
+        if ($useUvPip) {
+            uv venv
+        } else {
+            python -m venv .venv
+        }
+    }
+    Write-OK "虚拟环境: .venv"
+    
+    # 1. 清理（可选）
     if ($Clean) {
         Write-Step "清理旧文件"
-        @("frontend/dist", "build", "dist", "release") | ForEach-Object {
+        @("frontend/dist", "build", "dist") | ForEach-Object {
             if (Test-Path $_) {
                 Remove-Item -Recurse -Force $_
                 Write-OK "已清理 $_"
             }
         }
+    } else {
+        Write-Step "增量构建"
+        Write-Info "使用 PyInstaller --clean 清理缓存"
+        Write-Info "如需完全重新构建，请使用: -Clean 参数"
     }
     
     # 2. 安装Python依赖
     Write-Step "安装 Python 依赖"
     
-    # 直接安装所有依赖（包括 PyInstaller）
     Write-Host "ℹ 安装 PyInstaller..." -ForegroundColor Blue
-    pip install pyinstaller --upgrade
+    if ($useUvPip) {
+        uv pip install pyinstaller --upgrade
+    } else {
+        python -m pip install pyinstaller --upgrade
+    }
     if ($LASTEXITCODE -ne 0) { throw "PyInstaller 安装失败" }
     
     Write-Host "ℹ 安装项目依赖..." -ForegroundColor Blue
-    pip install -r requirements.txt
+    if ($useUvPip) {
+        uv pip install -r requirements.txt
+    } else {
+        python -m pip install -r requirements.txt
+    }
     if ($LASTEXITCODE -ne 0) { throw "依赖安装失败" }
     
     Write-OK "Python 依赖已就绪"
@@ -94,13 +124,17 @@ try {
     # 4. 打包后端
     Write-Step "打包后端 ($Mode 模式)"
     
-    $specFile = if ($Mode -eq "onefile") { "build.spec" } else { "build-dir.spec" }
+    $specFile = if ($Mode -eq "onefile") { "scripts/build/pyinstaller-onefile.spec" } else { "scripts/build/pyinstaller-dir.spec" }
     Write-Host "ℹ 打包中（需要几分钟）..." -ForegroundColor Blue
     
-    # 使用 python -m 确保使用虚拟环境中的 PyInstaller
-    python -m PyInstaller $specFile --clean --noconfirm
+    # 确保在项目根目录执行（spec 文件中的路径都是相对于根目录的）
+    $rootDir = Get-Location
+    
+    # 使用 Python 调用 PyInstaller（uv 和 pip 都会自动使用虚拟环境）
+    python -m PyInstaller $specFile --clean --noconfirm --workpath "$rootDir\build" --distpath "$rootDir\dist"
+    
     if ($LASTEXITCODE -ne 0) { 
-        Write-Host "`n提示: 如果是虚拟环境问题，请确保已激活虚拟环境" -ForegroundColor Yellow
+        Write-Host "`n提示: 如果打包失败，请检查依赖是否完整安装" -ForegroundColor Yellow
         throw "PyInstaller 打包失败"
     }
     
@@ -114,6 +148,7 @@ try {
     Write-Step "创建发布包"
     
     $releaseDir = "release"
+    
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
     $releaseName = "DouyinCrawler_${Mode}_${timestamp}"
     $releaseTarget = Join-Path $releaseDir $releaseName
@@ -178,6 +213,6 @@ try {
     Write-Host "║               打包失败！               ║" -ForegroundColor Red
     Write-Host "╚════════════════════════════════════════╝`n" -ForegroundColor Red
     Write-Err "错误: $_"
-    Write-Host "`n尝试: .\build-all.ps1 -Clean`n" -ForegroundColor Yellow
+    Write-Host "`n尝试: .\scripts\build\pyinstaller.ps1 -Clean`n" -ForegroundColor Yellow
     exit 1
 }

@@ -213,7 +213,7 @@ class Aria2Manager:
         # 查找aria2可执行文件
         aria2_cmd = self._find_aria2_executable()
         if not aria2_cmd:
-            logger.error("✗ 未找到Aria2程序，请运行: .\\download_aria2.ps1")
+            logger.error("✗ 未找到Aria2程序，请运行: .\\scripts\\setup\\aria2.ps1")
             return
 
         # 准备配置目录和文件
