@@ -736,7 +736,7 @@ export const App: React.FC = () => {
 
                       <button
                         onClick={handleSearch}
-                        disabled={isLoading || !inputVal.trim()}
+                        disabled={isLoading || (activeTab !== TaskType.USER_FAVORITE && !inputVal.trim())}
                         className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3.5 rounded-xl font-medium shadow-lg shadow-blue-500/30 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none flex items-center gap-2 z-20"
                       >
                         {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
