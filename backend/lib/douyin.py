@@ -19,7 +19,7 @@ from loguru import logger
 
 from .download import download
 from .request import Request
-from .util import quit, save_json, str_to_path, url_redirect
+from .utils import quit, save_json, sanitize_filename, url_redirect
 
 
 class Douyin(object):
@@ -74,7 +74,7 @@ class Douyin(object):
         else:  # 其他情况
             quit(f"获取目标类型错误, type: {self.type}")
 
-    def __get_target_id(self):
+    def get_target_id(self):
         if self.target:  # 根据输入目标自动判断部分类型
             target = self.target.strip()
             hostname = urlparse(target).hostname
@@ -101,7 +101,8 @@ class Douyin(object):
                             self.url = f"https://www.douyin.com/note/{id}"
                     elif _type == "search":
                         id = unquote(id)
-                        search_type = parse_qs(urlparse(target).query).get("type")
+                        search_type = parse_qs(
+                            urlparse(target).query).get("type")
                         if search_type is None or search_type[0] in [
                             "video",
                             "general",
@@ -120,7 +121,8 @@ class Douyin(object):
                     #     self.url = f'{self.url}?type={self.type}'
                 # 数字ID: 单个作品id 音乐id 合集id
                 elif (
-                    self.type in ["video", "note", "music", "hashtag", "collection"]
+                    self.type in ["video", "note",
+                                  "music", "hashtag", "collection"]
                     and id.isdigit()
                 ):
                     if self.type in ["video", "note"]:
@@ -143,7 +145,7 @@ class Douyin(object):
         self.id = id
 
     def __get_target_info(self):
-        self.__get_target_id()
+        self.get_target_id()
 
         # 目标信息
         if self.type in ["search", "user", "live"]:
@@ -168,7 +170,8 @@ class Douyin(object):
             )
             render_data: str = re.findall(pattern, text)
             if render_data:
-                render_data = render_data[-1].replace('\\"', '"').replace("\\\\", "\\")
+                render_data = render_data[-1].replace(
+                    '\\"', '"').replace("\\\\", "\\")
                 self.render_data = json.loads(render_data)
                 if self.type in ["search", "user", "live"]:
                     # self.info = self.render_data['app']['defaultSearchParams']
@@ -194,7 +197,7 @@ class Douyin(object):
             else:
                 quit(f"提取目标信息失败，可能是cookie无效。url: {self.url}")
         self.down_path = os.path.join(
-            self.down_path, str_to_path(f"{self.type}_{self.title}")
+            self.down_path, sanitize_filename(f"{self.type}_{self.title}")
         )
         self.aria2_conf = f"{self.down_path}.txt"
         # 增量采集，先取回旧数据
@@ -240,12 +243,14 @@ class Douyin(object):
             "sec_user_id": self.id,
             "personal_center_strategy": 1,
         }
-        resp = self.request.getJSON("/aweme/v1/web/user/profile/other/", params)
+        resp = self.request.getJSON(
+            "/aweme/v1/web/user/profile/other/", params)
         if resp:
             self.info = resp.get("user", {})
             # 下载路径
             self.down_path = os.path.join(
-                self.down_path, str_to_path(f"{self.info['nickname']}_{self.id}")
+                self.down_path, sanitize_filename(
+                    f"{self.info['nickname']}_{self.id}")
             )
             self.aria2_conf = f"{self.down_path}.txt"
             if os.path.exists(f"{self.down_path}.json") and not self.results_old:
@@ -262,7 +267,8 @@ class Douyin(object):
             self.info = resp["user_info"]
             # 下载路径
             self.down_path = os.path.join(
-                self.down_path, str_to_path(f"{self.info['nickname']}_{self.id}")
+                self.down_path, sanitize_filename(
+                    f"{self.info['nickname']}_{self.id}")
             )
             self.aria2_conf = f"{self.down_path}.txt"
             if os.path.exists(f"{self.down_path}.json") and not self.results_old:
@@ -296,11 +302,13 @@ class Douyin(object):
                 elif self.type == "like":
                     uri = "/aweme/v1/web/aweme/favorite/"
                     params = {
-                        "publish_video_strategy_type": 2,
+                        "sec_user_id": self.id,
                         "max_cursor": max_cursor,
+                        "min_cursor": 0,
+                        "whale_cut_token": "",
                         "cut_version": 1,
                         "count": 18,
-                        "sec_user_id": self.id,
+                        "publish_video_strategy_type": 2,
                     }
                 elif self.type == "favorite":
                     uri = "/aweme/v1/web/aweme/listcollection/"
@@ -308,7 +316,8 @@ class Douyin(object):
                     data = {"cursor": max_cursor, "count": 18}
                 elif self.type == "music":
                     uri = "/aweme/v1/web/music/aweme/"
-                    params = {"cursor": max_cursor, "count": 18, "music_id": self.id}
+                    params = {"cursor": max_cursor,
+                              "count": 18, "music_id": self.id}
                 elif self.type == "hashtag":
                     uri = "/aweme/v1/web/challenge/aweme/"
                     params = {
@@ -319,7 +328,8 @@ class Douyin(object):
                     }
                 elif self.type == "collection":
                     uri = "/aweme/v1/web/mix/aweme/"
-                    params = {"cursor": max_cursor, "count": 18, "mix_id": self.id}
+                    params = {"cursor": max_cursor,
+                              "count": 18, "mix_id": self.id}
                 elif self.type == "search":
                     uri = "/aweme/v1/web/search/item/"  # 视频
                     params = {
@@ -467,6 +477,7 @@ class Douyin(object):
                             if self.has_more:
                                 self.has_more = False
                             logger.success(f"增量采集完成，上次运行结果：{old}")
+                            self.results = self.results_old
                             return
                     # =====保存结果=====
                     # _type = item.get('media_type', item.get('media_type'))  # 2 图集 4 视频
@@ -515,14 +526,15 @@ class Douyin(object):
                     aweme["id"] = item.get("aweme_id", item.get("awemeId"))
                     aweme["time"] = _time
                     aweme["type"] = _type
-                    desc = str_to_path(item.get("desc"))
+                    desc = sanitize_filename(item.get("desc"))
                     aweme["desc"] = desc
                     aweme["duration"] = item.get(
                         "duration", item["video"].get("duration")
                     )
                     music: dict = item.get("music")
                     if music:
-                        aweme["music_title"] = str_to_path(music["title"])
+                        aweme["music_title"] = sanitize_filename(
+                            music["title"])
                         aweme["music_url"] = music.get(
                             "play_url", music.get("playUrl")
                         )["uri"]
@@ -532,7 +544,7 @@ class Douyin(object):
                     else:
                         aweme["cover"] = (
                             f"https:{
-                            item['video']['dynamicCover']}"
+                                item['video']['dynamicCover']}"
                         )
                     author = item.get("author", item.get("authorInfo"))
                     if author:
@@ -552,7 +564,8 @@ class Douyin(object):
                         aweme["author_short_id"] = author.get(
                             "short_id", author.get("shortId")
                         )
-                        aweme["author_signature"] = str_to_path(author.get("signature"))
+                        aweme["author_signature"] = sanitize_filename(
+                            author.get("signature"))
                     text_extra = item.get("text_extra", item.get("textExtra"))
                     if text_extra:
                         aweme["text_extra"] = [
@@ -592,8 +605,9 @@ class Douyin(object):
                         logger.info(f"已达到限制采集数量： {len(self.results)}")
                         return
                     user_info = {}
-                    user_info["nickname"] = str_to_path(item["nickname"])
-                    user_info["signature"] = str_to_path(item["signature"])
+                    user_info["nickname"] = sanitize_filename(item["nickname"])
+                    user_info["signature"] = sanitize_filename(
+                        item["signature"])
                     user_info["avatar"] = item["avatar_thumb"]["url_list"][0]
                     for i in [
                         "sec_uid",
@@ -663,13 +677,15 @@ class Douyin(object):
                             filename = f"第{line['no']}集_{filename}"
                         if type(line["download_addr"]) is list:
                             if self.type == "video":
-                                down_path = self.down_path.replace(line["id"], filename)
+                                down_path = self.down_path.replace(
+                                    line["id"], filename)
                             else:
-                                down_path = os.path.join(self.down_path, filename)
+                                down_path = os.path.join(
+                                    self.down_path, filename)
                             for index, addr in enumerate(line["download_addr"]):
                                 _.append(
                                     f'{addr}\n dir={down_path}\n out={
-                                    line["id"]}_{index + 1}.jpeg\n'
+                                        line["id"]}_{index + 1}.jpeg\n'
                                 )
 
                         elif type(line["download_addr"]) is str:
@@ -688,7 +704,7 @@ class Douyin(object):
                             # 正常下载
                             _.append(
                                 f'{line["download_addr"]}\n dir={
-                                     self.down_path}\n out={filename}.mp4\n'
+                                    self.down_path}\n out={filename}.mp4\n'
                             )
                         else:
                             logger.error("下载地址错误")
