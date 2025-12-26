@@ -267,6 +267,12 @@ export const App: React.FC = () => {
    * @returns 验证是否通过
    */
   const validateInput = (): boolean => {
+    // 【用户收藏】面板不需要输入，直接通过验证
+    if (activeTab === TaskType.USER_FAVORITE) {
+      setInputError(null);
+      return true;
+    }
+    
     // 清理输入：去除前后空格、去除前后斜杠
     const trimmedVal = inputVal.trim().replace(/^\/+|\/+$/g, '');
 
@@ -395,7 +401,8 @@ export const App: React.FC = () => {
 
     try {
       // 调用后端API开始采集任务（不传递回调函数，后端通过 evaluate_js 调用全局函数）
-      await bridge.startTask(activeTab, inputVal, maxCount);
+      // 【用户收藏】面板不需要输入值，传递空字符串即可
+      await bridge.startTask(activeTab, activeTab === TaskType.USER_FAVORITE ? '' : inputVal, maxCount);
 
       // 任务已启动，等待回调处理结果
       logger.info("采集任务已启动，正在后台执行...");
@@ -485,7 +492,7 @@ export const App: React.FC = () => {
       case TaskType.USER_LIKE:
         return '支持：长链接、短链接、SecUid、抖音号（需要Cookie）';
       case TaskType.USER_FAVORITE:
-        return '支持：长链接、短链接、SecUid、抖音号（需要Cookie）';
+        return '只能获取当前登录账号的收藏列表（无需输入）';
       default:
         return '请输入目标链接';
     }
@@ -551,39 +558,64 @@ export const App: React.FC = () => {
                               }`} />
                           </div>
                           <input
-                            type="text"
-                            className="block flex-1 px-4 py-3.5 leading-5 bg-transparent placeholder-gray-400 focus:outline-none"
-                            placeholder={getPlaceholder()}
-                            value={resultsTaskType === activeTab ? savedInputVal : inputVal}
-                            onChange={(e) => {
-                              // 自动清理输入：去除多余空格
-                              const cleanedValue = e.target.value.replace(/\s+/g, ' ');
-                              setInputVal(cleanedValue);
+                              type="text"
+                              className={`block flex-1 px-4 py-3.5 leading-5 bg-transparent placeholder-gray-400 focus:outline-none ${activeTab === TaskType.USER_FAVORITE ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              placeholder={getPlaceholder()}
+                              value={activeTab === TaskType.USER_FAVORITE ? '' : (resultsTaskType === activeTab ? savedInputVal : inputVal)}
+                              onChange={(e) => {
+                                // 【用户收藏】面板禁用输入
+                                if (activeTab === TaskType.USER_FAVORITE) {
+                                  return;
+                                }
+                                // 自动清理输入：去除多余空格
+                                const cleanedValue = e.target.value.replace(/\s+/g, ' ');
+                                setInputVal(cleanedValue);
+                                // 当用户开始输入新内容时，解绑resultsTaskType与activeTab，显示当前输入值
+                                if (resultsTaskType === activeTab) {
+                                  setResultsTaskType(null);
+                                }
 
-                              // 清除输入错误
-                              if (inputError) {
-                                setInputError(null);
-                              }
-                            }}
-                            onPaste={(e) => {
-                              // 粘贴时自动清理：去除所有空格和前后斜杠
-                              e.preventDefault();
-                              const pastedText = e.clipboardData.getData('text');
-                              const cleanedText = pastedText.trim().replace(/\s+/g, '').replace(/^\/+|\/+$/g, '');
-                              setInputVal(cleanedText);
+                                // 清除输入错误
+                                if (inputError) {
+                                  setInputError(null);
+                                }
+                              }}
+                              onPaste={(e) => {
+                                // 【用户收藏】面板禁用粘贴
+                                if (activeTab === TaskType.USER_FAVORITE) {
+                                  return;
+                                }
+                                // 粘贴时自动清理：去除所有空格和前后斜杠
+                                e.preventDefault();
+                                const pastedText = e.clipboardData.getData('text');
+                                const cleanedText = pastedText.trim().replace(/\s+/g, '').replace(/^\/+|\/+$/g, '');
+                                setInputVal(cleanedText);
+                                // 当用户粘贴新内容时，解绑resultsTaskType与activeTab，显示当前输入值
+                                if (resultsTaskType === activeTab) {
+                                  setResultsTaskType(null);
+                                }
 
-                              // 清除输入错误
-                              if (inputError) {
-                                setInputError(null);
-                              }
-                            }}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                          />
+                                // 清除输入错误
+                                if (inputError) {
+                                  setInputError(null);
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (activeTab !== TaskType.USER_FAVORITE && e.key === 'Enter') {
+                                  handleSearch();
+                                }
+                              }}
+                              disabled={activeTab === TaskType.USER_FAVORITE}
+                            />
 
                           {/* 粘贴按钮 - 通过后端读取剪贴板，无需浏览器权限 */}
                           <button
                             onClick={async () => {
                               try {
+                                // 【用户收藏】面板禁用粘贴
+                                if (activeTab === TaskType.USER_FAVORITE) {
+                                  return;
+                                }
                                 // 通过后端读取剪贴板（无需浏览器权限）
                                 const text = await bridge.getClipboardText();
 
@@ -595,6 +627,10 @@ export const App: React.FC = () => {
                                 // 清理文本：去除空格和斜杠
                                 const cleanedText = text.trim().replace(/\s+/g, '').replace(/^\/+|\/+$/g, '');
                                 setInputVal(cleanedText);
+                                // 当用户点击粘贴按钮时，解绑resultsTaskType与activeTab，显示当前输入值
+                                if (resultsTaskType === activeTab) {
+                                  setResultsTaskType(null);
+                                }
 
                                 if (inputError) {
                                   setInputError(null);
@@ -606,8 +642,9 @@ export const App: React.FC = () => {
                                 toast.error('粘贴失败，请手动输入');
                               }
                             }}
-                            className="px-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors rounded-lg"
+                            className={`px-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors rounded-lg ${activeTab === TaskType.USER_FAVORITE ? 'opacity-50 cursor-not-allowed' : ''}`}
                             title="一键粘贴剪贴板内容"
+                            disabled={activeTab === TaskType.USER_FAVORITE}
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />

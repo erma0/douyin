@@ -88,6 +88,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     downloadPath: APP_DEFAULTS.DOWNLOAD_PATH,
     maxRetries: APP_DEFAULTS.MAX_RETRIES,
     maxConcurrency: APP_DEFAULTS.MAX_CONCURRENCY,
+    enableIncrementalFetch: APP_DEFAULTS.ENABLE_INCREMENTAL_FETCH,
     aria2Host: APP_DEFAULTS.ARIA2_HOST,
     aria2Port: APP_DEFAULTS.ARIA2_PORT,
     aria2Secret: APP_DEFAULTS.ARIA2_SECRET
@@ -349,6 +350,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <p className="mt-1.5 text-xs text-red-500">{errors.maxConcurrency}</p>
               )}
             </div>
+          </div>
+
+          {/* 增量采集开关 */}
+          <div>
+            <label className="flex items-center justify-between cursor-pointer group">
+              <div>
+                <div className="text-sm font-semibold text-gray-700 mb-1">增量采集</div>
+                <p className="text-xs text-gray-400">
+                  仅采集新作品，自动跳过已采集内容（仅用户主页）
+                </p>
+              </div>
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={settings.enableIncrementalFetch}
+                  onChange={(e) => setSettings({ ...settings, enableIncrementalFetch: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </div>
+            </label>
           </div>
         </div>
 

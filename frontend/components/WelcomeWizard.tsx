@@ -29,6 +29,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
     downloadPath: APP_DEFAULTS.DOWNLOAD_PATH,
     maxRetries: APP_DEFAULTS.MAX_RETRIES,
     maxConcurrency: APP_DEFAULTS.MAX_CONCURRENCY,
+    enableIncrementalFetch: APP_DEFAULTS.ENABLE_INCREMENTAL_FETCH,
     aria2Host: APP_DEFAULTS.ARIA2_HOST,
     aria2Port: APP_DEFAULTS.ARIA2_PORT,
     aria2Secret: APP_DEFAULTS.ARIA2_SECRET

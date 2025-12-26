@@ -109,6 +109,7 @@ class API:
             "maxConcurrency": DOWNLOAD_DEFAULTS["MAX_CONCURRENCY"],
             "windowWidth": 1200,
             "windowHeight": 800,
+            "enableIncrementalFetch": True,  # 默认启用增量采集
             "aria2Host": ARIA2_DEFAULTS["HOST"],
             "aria2Port": ARIA2_DEFAULTS["PORT"],
             "aria2Secret": ARIA2_DEFAULTS["SECRET"],
@@ -145,6 +146,11 @@ class API:
                 "type": int,
                 "validator": lambda x: isinstance(x, int) and 600 <= x <= 2160,
                 "error_msg": "窗口高度必须是600-2160之间的整数",
+            },
+            "enableIncrementalFetch": {
+                "type": bool,
+                "validator": lambda x: isinstance(x, bool),
+                "error_msg": "增量采集开关必须是布尔值",
             },
             "aria2Host": {
                 "type": str,

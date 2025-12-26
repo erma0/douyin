@@ -57,6 +57,7 @@ export interface AppSettings {
   downloadPath: string;
   maxRetries: number;
   maxConcurrency: number;
+  enableIncrementalFetch: boolean;
   aria2Host: string;
   aria2Port: number;
   aria2Secret: string;
