@@ -14,7 +14,7 @@ def gen_random_str(length: int = 16, lower: bool = False) -> str:
     chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
     if lower:
         chars = chars.lower()
-    return ''.join(random.choice(chars) for _ in range(length))
+    return "".join(random.choice(chars) for _ in range(length))
 
 
 def get_timestamp(type: str = "ms") -> int:
@@ -37,7 +37,7 @@ def extract_valid_urls(input_data: Union[str, list]) -> Union[str, list, None]:
     Returns:
         提取的URL或URL列表
     """
-    url_pattern = re.compile(r'https?://[^\s]+')
+    url_pattern = re.compile(r"https?://[^\s]+")
 
     if isinstance(input_data, str):
         match = url_pattern.search(input_data)
@@ -47,7 +47,9 @@ def extract_valid_urls(input_data: Union[str, list]) -> Union[str, list, None]:
     return None
 
 
-def sanitize_filename(text: str, max_bytes: int = 100, add_ellipsis: bool = True) -> str:
+def sanitize_filename(
+    text: str, max_bytes: int = 100, add_ellipsis: bool = True
+) -> str:
     """
     生成安全的文件名
 
@@ -70,20 +72,20 @@ def sanitize_filename(text: str, max_bytes: int = 100, add_ellipsis: bool = True
     # Windows 文件名禁止字符: < > : " / \ | ? *
     # 同时移除控制字符
     # illegal_chars = ["\r", "\n", "\\", "/", ":", "*", "?", '"', "<", ">", "|"]
-    safe_text = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '', text)
+    safe_text = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "", text)
 
     # 替换多个空格为单个空格
-    safe_text = re.sub(r'\s+', ' ', safe_text).strip()
+    safe_text = re.sub(r"\s+", " ", safe_text).strip()
 
     if not safe_text:
         return "无标题"
 
     # 按字节限制长度（考虑中文字符）
-    if len(safe_text.encode('utf-8')) > max_bytes:
+    if len(safe_text.encode("utf-8")) > max_bytes:
         # 按字节截断，避免截断中文字符
-        safe_text_bytes = safe_text.encode('utf-8')[:max_bytes]
+        safe_text_bytes = safe_text.encode("utf-8")[:max_bytes]
         # 解码时忽略不完整的字符
-        safe_text = safe_text_bytes.decode('utf-8', errors='ignore').strip()
+        safe_text = safe_text_bytes.decode("utf-8", errors="ignore").strip()
         # 添加省略号标识
         if safe_text and add_ellipsis:
             safe_text = safe_text + "..."
@@ -110,9 +112,8 @@ def url_redirect(url: str) -> str:
     Returns:
         最终重定向的URL
     """
-    r = requests.head(url, allow_redirects=False)
-    u = r.headers.get("Location", url)
-    return u
+    r = requests.head(url, allow_redirects=True)
+    return r.url
 
 
 def save_json(filename: str, data: dict) -> None:
