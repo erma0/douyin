@@ -41,13 +41,6 @@ declare global {
         subscribe_to_logs: (callback: (log: any) => void) => Promise<void>;
         unsubscribe_from_logs: (callback: (log: any) => void) => void;
 
-        // Cookie相关
-        get_browser_cookie: (browser: string) => Promise<{
-          success: boolean;
-          cookie: string;
-          error?: string;
-        }>;
-
         // 其他API方法
         is_first_run_check: () => Promise<boolean>;
         start_aria2_after_loaded: () => Promise<void>;

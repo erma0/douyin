@@ -206,7 +206,9 @@ class CookieManager:
 
             try:
                 key, value = cookie.split("=", 1)
-                cookie_dict[key.strip()] = value.strip()
+                # 去除值末尾的分号
+                value = value.strip().rstrip(';')
+                cookie_dict[key.strip()] = value
             except ValueError:
                 continue
 

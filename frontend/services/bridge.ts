@@ -242,25 +242,6 @@ export const bridge = {
   },
 
   /**
-   * 从浏览器获取Cookie
-   */
-  getBrowserCookie: async (browser: string = 'chrome'): Promise<{
-    success: boolean;
-    cookie: string;
-    error?: string;
-  }> => {
-    try {
-      const result = await window.pywebview.api.get_browser_cookie(browser);
-      return result;
-    } catch (error) {
-      handleError(error, { browser }, {
-        customMessage: '获取浏览器Cookie失败'
-      });
-      throw error;
-    }
-  },
-
-  /**
    * 获取aria2配置文件路径
    */
   getAria2ConfigPath: async (taskId?: string): Promise<string> => {
