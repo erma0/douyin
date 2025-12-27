@@ -101,7 +101,7 @@ const Row = ({ index, style, data }: { index: number; style: React.CSSProperties
   // 计算每列的宽度以实现响应式布局
   // 容器左右padding为p-8（32px * 2 = 64px）
   const availableWidth = width - 64;
-  const gap = 24; // 列间距
+  const gap = 12; // 进一步减小列间距
   const itemWidth = (availableWidth - (gap * (columnCount - 1))) / columnCount;
 
   // 获取当前行的作品列表
@@ -114,7 +114,7 @@ const Row = ({ index, style, data }: { index: number; style: React.CSSProperties
   }
 
   return (
-    <div style={style} className="flex gap-6 px-8 box-border">
+    <div style={style} className="flex gap-3 px-8 box-border">
       {rowItems.map((work: DouyinWork) => (
         <div key={work.id} style={{ width: itemWidth }}>
           <WorkCard
@@ -847,8 +847,8 @@ export const App: React.FC = () => {
                     {({ height, width }) => {
                       const columnCount = getColumnCount(width);
                       const rowCount = Math.ceil(results.length / columnCount);
-                      // Approx height of Card (Image aspect 3/4 + info section)
-                      const itemHeight = 450;
+                      // 调整行高，增加行间距
+                      const itemHeight = 296;
 
                       // Create item data bundle (memoized)
                       const itemData = createItemData(

@@ -37,6 +37,7 @@ export interface DouyinWork {
     share_count: number;
   };
   create_time: string;
+  duration?: number; // 视频时长（毫秒）
 }
 
 export interface DownloadProgress {

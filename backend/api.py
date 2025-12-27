@@ -948,6 +948,10 @@ class API:
                     ),
                 }
 
+                # 添加视频时长（毫秒）
+                if not is_image and item.get("duration"):
+                    work["duration"] = item.get("duration")
+
                 # 添加下载地址
                 download_addr = item.get("download_addr")
                 if isinstance(download_addr, list):
