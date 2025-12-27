@@ -20,12 +20,21 @@ from .execjs_fix import execjs
 
 
 class Request(object):
+    """
+    抖音请求处理类
+    
+    用于处理抖音网页端的HTTP请求，包括签名生成、参数构建等功能
+    """
 
     HOST = "https://www.douyin.com"
+    # 基础请求参数
     PARAMS = {
         "device_platform": "webapp",
         "aid": "6383",
         "channel": "channel_pc_web",
+    }
+    # 单个作品详情需要的额外参数，其他类型不需要
+    PARAMS2 = {
         "update_version_code": "170400",
         "pc_client_type": "1",  # Windows
         "version_code": "190500",
@@ -52,58 +61,94 @@ class Request(object):
         # 'verifyFp': '',   # from cookie s_v_web_id
         # 'fp': '', # from cookie s_v_web_id
         # 'msToken': '',  # from cookie msToken
-        # 'a_bogus': '' # sign
+        # 'a_bogus': '' # 通过sign方法生成
     }
+    # 请求头配置，模拟浏览器环境
     HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-        "sec-fetch-site": "same-origin",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-dest": "empty",
-        "sec-ch-ua-platform": "Windows",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua": '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
-        "referer": "https://www.douyin.com/?recommend=1",
-        "priority": "u=1, i",
-        "pragma": "no-cache",
-        "cache-control": "no-cache",
-        "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
         "accept": "application/json, text/plain, */*",
-        "dnt": "1",
+        "accept-language": "zh-CN,zh;q=0.9",
+        "priority": "u=1, i",
+        "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
+        "referer": "https://www.douyin.com/",
     }
+    # 加载JS签名脚本
     filepath = os.path.dirname(__file__)
     SIGN = execjs.compile(
         open(os.path.join(filepath, "js/douyin.js"), "r", encoding="utf-8").read()
     )
+    # Web ID缓存
     WEBID = ""
 
     def __init__(self, cookie="", UA=""):
+        """
+        初始化请求对象
+        
+        Args:
+            cookie: Cookie字符串，用于身份验证
+            UA: User-Agent字符串，如果需要访问搜索页面等内容需要提供与cookie对应的UA
+        """
         self.COOKIES = get_cookie_dict(cookie)
-        if UA:  # 如果需要访问搜索页面源码等内容，需要提供cookie对应的UA
+        # 如果提供了UA，更新请求头和参数以匹配浏览器版本
+        if UA:
+            # 从UA中提取Chrome版本号
             version = UA.split(" Chrome/")[1].split(" ")[0]
             _version = version.split(".")[0]
+            # 更新请求头中的UA和版本信息
             self.HEADERS.update(
                 {
-                    "User-Agent": UA,  # 主要是这个
+                    "User-Agent": UA,
                     "sec-ch-ua": f'"Chromium";v="{_version}", "Not(A:Brand";v="24", "Google Chrome";v="{_version}"',
                 }
             )
+            # 更新参数中的浏览器和引擎版本
             self.PARAMS.update(
                 {
                     "browser_version": version,
-                    "engine_version": version,  # 主要是这个
+                    "engine_version": version,
                 }
             )
 
     def get_sign(self, uri: str, params: dict) -> dict:
+        """
+        生成请求签名(a_bogus)
+        
+        Args:
+            uri: 请求的URI路径
+            params: 请求参数字典
+            
+        Returns:
+            str: 生成的a_bogus签名
+        """
+        # 构建查询字符串
         query = "&".join([f"{k}={quote(str(v))}" for k, v in params.items()])
+        # 根据URI类型选择不同的签名方法
         call_name = "sign_datail"
         if "reply" in uri:
             call_name = "sign_reply"
+        # 调用JS脚本生成签名
         a_bogus = self.SIGN.call(call_name, query, self.HEADERS.get("User-Agent"))
         return a_bogus
 
     def get_params(self, params: dict) -> dict:
-        params.update(self.PARAMS)
+        """
+        构建完整的请求参数
+        
+        从Cookie中提取必要的参数并添加到请求参数中
+        主要用于单个作品详情请求，其他类型不需要
+        
+        Args:
+            params: 基础参数字典
+            
+        Returns:
+            dict: 完整的请求参数字典
+        """
+        # 从Cookie中提取设备和浏览器信息
         params["msToken"] = self.get_ms_token()
         params["screen_width"] = self.COOKIES.get("dy_swidth", 2560)
         params["screen_height"] = self.COOKIES.get("dy_sheight", 1440)
@@ -115,6 +160,12 @@ class Request(object):
         return params
 
     def get_webid(self):
+        """
+        获取或生成Web ID
+        
+        Returns:
+            str: 19位随机数字字符串
+        """
         if not self.WEBID:
             # 生成一个随机的webid，避免循环调用
             self.WEBID = str(random.randint(1000000000000000000, 9999999999999999999))
@@ -122,10 +173,17 @@ class Request(object):
 
     def get_ms_token(self, randomlength=120):
         """
-        返回cookie中的msToken或随机字符串
+        获取或生成msToken
+        
+        Args:
+            randomlength: 随机字符串长度，默认120
+            
+        Returns:
+            str: Cookie中的msToken或随机生成的字符串
         """
         ms_token = self.COOKIES.get("msToken", None)
         if not ms_token:
+            # 生成随机msToken
             ms_token = ""
             base_str = "ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789="
             length = len(base_str) - 1
@@ -134,7 +192,17 @@ class Request(object):
         return ms_token
 
     def getHTML(self, url) -> str:
+        """
+        获取网页HTML内容
+        
+        Args:
+            url: 目标URL
+            
+        Returns:
+            str: HTML内容，失败返回空字符串
+        """
         headers = self.HEADERS.copy()
+        # 修改fetch目标为document类型
         headers["sec-fetch-dest"] = "document"
         response = requests.get(url, headers=headers, cookies=self.COOKIES)
         if response.status_code != 200 or response.text == "":
@@ -143,9 +211,24 @@ class Request(object):
         return response.text
 
     def getJSON(self, uri: str, params: dict, data: dict = None):
+        """
+        发送JSON API请求
+        
+        Args:
+            uri: API路径
+            params: 请求参数
+            data: POST请求的数据，如果提供则使用POST方法，否则使用GET
+            
+        Returns:
+            dict: 响应的JSON数据，失败返回空字典
+        """
         url = f"{self.HOST}{uri}"
-        params = self.get_params(params)
-        params["a_bogus"] = self.get_sign(uri, params)
+        # 合并基础参数
+        params.update(self.PARAMS)
+        # 注意：单个作品详情需要额外参数和签名，但此处不处理，由上游调用方负责
+        # params = self.get_params(params)
+        # params["a_bogus"] = self.get_sign(uri, params)
+        # 根据是否有data决定使用POST还是GET
         if data:
             response = requests.post(
                 url,
@@ -159,6 +242,7 @@ class Request(object):
                 url, params=params, headers=self.HEADERS, cookies=self.COOKIES
             )
 
+        # 检查响应状态
         if (
             response.status_code != 200
             or response.text == ""
@@ -167,7 +251,6 @@ class Request(object):
             logger.error(
                 f"JSON请求失败：url: {url},  params: {params}, code: {response.status_code}, body: {response.text}"
             )
-            # cookie.json 已废弃，无需删除
             return {}
 
         return response.json()

@@ -263,7 +263,7 @@ class Aria2Manager:
             "timeout": "60",  # 下载超时（秒）
             "connect-timeout": "30",  # 连接超时（秒）
             # === HTTP 配置 ===
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
             "referer": "https://www.douyin.com/?recommend=1",
             "check-certificate": "false",  # 不检查SSL证书
             # === 性能优化 ===
