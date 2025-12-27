@@ -1,3 +1,11 @@
 {
-    "typescript.autoClosingTags": true
+    "typescript.autoClosingTags": true,
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+        "backend/test"
+    ],
+    "python.analysis.extraPaths": [
+        "backend"
+    ]
 }
