@@ -17,86 +17,52 @@ try:
     from ..constants import PATHS
 except ImportError:
     # 命令行模式下的导入
-    import sys
     import os
+    import sys
+
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from constants import PATHS
 
 
 class CookieManager:
     """
-    Cookie管理器
+    Cookie管理器（工具类）
 
-    负责Cookie的统一管理，包括加载、保存、验证、清除和浏览器获取。
-    支持从多个位置读取Cookie，并提供优先级机制。
-
-    Attributes:
-        config_dir: 配置文件目录
-        cookie_txt_path: cookie.txt文件路径
-        cookie_json_path: cookie.json文件路径
+    提供Cookie的加载、格式转换和验证功能。
+    所有方法都是静态方法，不需要实例化。
     """
 
-    def __init__(self, config_dir: str):
+    @staticmethod
+    def load_from_settings(settings_file: str) -> str:
         """
-        初始化Cookie管理器
+        从配置文件加载Cookie
 
         Args:
-            config_dir: 配置文件目录路径
-
-        Note:
-            会自动创建配置目录（如果不存在）
-        """
-        self.config_dir = config_dir
-        self.cookie_txt_path = os.path.join(config_dir, PATHS["COOKIE_FILE"])
-        self.cookie_json_path = os.path.join(config_dir, "cookie.json")
-
-        # 确保配置目录存在
-        os.makedirs(config_dir, exist_ok=True)
-
-    def load_cookie(self, settings_cookie: str = "") -> str:
-        """
-        加载Cookie
-
-        直接从settings中读取Cookie。
-
-        Args:
-            settings_cookie: 设置中的cookie字符串
+            settings_file: settings.json 文件路径
 
         Returns:
-            Cookie字符串，如果为空则返回空字符串
-
-        Note:
-            - Cookie统一保存在settings.json中
-            - 返回的Cookie已去除首尾空白
+            Cookie字符串，如果未找到或加载失败则返回空字符串
         """
-        # 使用settings中的cookie
-        if settings_cookie and settings_cookie.strip():
-            logger.debug("从配置中加载Cookie")
-            return settings_cookie.strip()
+        if not os.path.exists(settings_file):
+            logger.debug(f"配置文件不存在: {settings_file}")
+            return ""
 
-        logger.debug("未配置Cookie")
-        return ""
+        try:
+            with open(settings_file, "r", encoding="utf-8") as f:
+                settings = json.load(f)
+                cookie = settings.get("cookie", "").strip()
+                if cookie:
+                    logger.debug("从配置文件加载Cookie成功")
+                    return cookie
+                else:
+                    logger.debug("配置文件中未设置Cookie")
+                    return ""
+        except Exception as e:
+            logger.warning(f"读取配置文件失败: {e}")
+            return ""
 
-    def save_cookie(self, cookie: str) -> bool:
-        """
-        保存Cookie（已废弃）
-
-        Cookie现在统一保存在settings.json中，此方法保留仅用于兼容性。
-
-        Args:
-            cookie: Cookie字符串
-
-        Returns:
-            True: 始终返回True（实际不执行保存）
-
-        Note:
-            - Cookie由API模块统一保存到settings.json
-            - 此方法不再执行实际保存操作
-        """
-        logger.debug("Cookie由settings.json统一管理，无需单独保存")
-        return True
-
-    def validate_cookie(self, cookie: str) -> bool:
+    @staticmethod
+    def validate_cookie(cookie: str) -> bool:
         """
         验证Cookie是否有效
 
@@ -120,6 +86,7 @@ class CookieManager:
             - 字段名不区分大小写
         """
         if not cookie or not cookie.strip():
+            logger.debug("Cookie为空")
             return False
 
         # 基本验证：检查是否包含必要的字段
@@ -138,48 +105,10 @@ class CookieManager:
 
         # 检查Cookie格式（必须包含键值对）
         if "=" not in cookie:
-            logger.warning("Cookie格式不正确")
+            logger.warning("Cookie格式不正确，缺少键值对分隔符")
             return False
 
         return True
-
-    def clear_cookie(self) -> bool:
-        """
-        清除所有Cookie文件
-
-        删除所有Cookie相关文件，用于重置Cookie或退出登录。
-
-        Returns:
-            True: 所有文件清除成功
-            False: 至少有一个文件清除失败
-
-        Note:
-            - 会尝试删除所有Cookie文件
-            - 即使某个文件删除失败，也会继续删除其他文件
-            - 文件不存在不算失败
-            - 删除失败会记录错误日志
-        """
-        success = True
-
-        # 删除cookie.txt
-        if os.path.exists(self.cookie_txt_path):
-            try:
-                os.remove(self.cookie_txt_path)
-                logger.info("已删除cookie.txt")
-            except Exception as e:
-                logger.error(f"删除cookie.txt失败: {e}")
-                success = False
-
-        # 删除cookie.json
-        if os.path.exists(self.cookie_json_path):
-            try:
-                os.remove(self.cookie_json_path)
-                logger.info("已删除cookie.json")
-            except Exception as e:
-                logger.error(f"删除cookie.json失败: {e}")
-                success = False
-
-        return success
 
     @staticmethod
     def cookies_str_to_dict(cookie_string: str) -> Dict[str, str]:
@@ -190,26 +119,34 @@ class CookieManager:
             cookie_string: Cookie字符串，格式如 "key1=value1; key2=value2"
 
         Returns:
-            Cookie字典
+            Cookie字典，如果输入为空或格式错误则返回空字典
         """
         if not cookie_string or not cookie_string.strip():
             return {}
 
-        cookies = cookie_string.strip().split("; ")
+        # 支持多种分隔符："; " 或 ";"
+        cookies = cookie_string.strip().replace("; ", ";").split(";")
         cookie_dict = {}
 
         for cookie in cookies:
+            cookie = cookie.strip()
+            # 跳过空字符串和域名标识
             if not cookie or cookie == "douyin.com":
                 continue
             if "=" not in cookie:
+                logger.debug(f"跳过无效的Cookie片段: {cookie}")
                 continue
 
             try:
                 key, value = cookie.split("=", 1)
-                # 去除值末尾的分号
-                value = value.strip().rstrip(';')
-                cookie_dict[key.strip()] = value
-            except ValueError:
+                key = key.strip()
+                value = value.strip().rstrip(";")
+                
+                # 跳过空键或空值
+                if key and value:
+                    cookie_dict[key] = value
+            except ValueError as e:
+                logger.debug(f"解析Cookie片段失败: {cookie}, 错误: {e}")
                 continue
 
         return cookie_dict
@@ -223,14 +160,17 @@ class CookieManager:
             cookie_dict: Cookie字典
 
         Returns:
-            Cookie字符串
+            Cookie字符串，格式为 "key1=value1; key2=value2"
         """
         if not cookie_dict:
             return ""
 
-        return "; ".join([f"{key}={value}" for key, value in cookie_dict.items()])
+        # 过滤掉空键或空值
+        valid_items = [(k, v) for k, v in cookie_dict.items() if k and v]
+        return "; ".join([f"{key}={value}" for key, value in valid_items])
 
-    def test_cookie_validity(self, cookie: str) -> bool:
+    @staticmethod
+    def test_cookie_validity(cookie: str) -> bool:
         """
         通过API测试Cookie是否真正有效
 
@@ -241,14 +181,25 @@ class CookieManager:
             True: Cookie有效且已登录
             False: Cookie无效或未登录
         """
-        if not cookie:
+        if not cookie or not cookie.strip():
+            logger.debug("Cookie为空，无法验证")
             return False
 
         try:
             url = "https://sso.douyin.com/check_login/"
-            cookie_dict = self.cookies_str_to_dict(cookie)
+            cookie_dict = CookieManager.cookies_str_to_dict(cookie)
+            
+            if not cookie_dict:
+                logger.warning("Cookie解析失败，无法验证")
+                return False
 
             response = requests.get(url, cookies=cookie_dict, timeout=10)
+            
+            # 检查HTTP状态码
+            if response.status_code != 200:
+                logger.warning(f"Cookie验证请求失败，状态码: {response.status_code}")
+                return False
+            
             result = response.json()
 
             if result.get("has_login") is True:
@@ -258,81 +209,18 @@ class CookieManager:
                 logger.warning("Cookie验证失败，用户未登录")
                 return False
 
+        except requests.exceptions.Timeout:
+            logger.error("Cookie验证请求超时")
+            return False
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Cookie验证网络请求失败: {e}")
+            return False
+        except ValueError as e:
+            logger.error(f"Cookie验证响应解析失败: {e}")
+            return False
         except Exception as e:
-            logger.error(f"Cookie验证请求失败: {e}")
+            logger.error(f"Cookie验证失败，未知错误: {e}")
             return False
 
     # 浏览器 Cookie 获取功能已移除
     # 原因：不同浏览器适配复杂，建议手动从浏览器复制 Cookie
-
-
-# 全局Cookie管理器实例
-_cookie_manager = None
-
-
-def _get_cookie_manager():
-    """获取Cookie管理器实例"""
-    global _cookie_manager
-    if _cookie_manager is None:
-        config_dir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "config"
-        )
-        _cookie_manager = CookieManager(config_dir)
-    return _cookie_manager
-
-
-# 浏览器 Cookie 获取功能已移除
-# 原因：不同浏览器适配复杂，建议手动从浏览器复制 Cookie
-
-
-def get_cookie_dict(cookie="") -> Dict[str, str]:
-    """
-    获取Cookie字典 (兼容旧接口)
-
-    Args:
-        cookie: Cookie字符串
-
-    Returns:
-        Cookie字典
-    """
-    manager = _get_cookie_manager()
-
-    if cookie:
-        # 作为Cookie字符串处理
-        return manager.cookies_str_to_dict(cookie)
-    else:
-        logger.warning("未提供Cookie，返回空字典")
-        return {}
-
-
-def test_cookie(cookie) -> bool:
-    """
-    测试Cookie有效性 (兼容旧接口)
-
-    Args:
-        cookie: Cookie字符串或字典
-
-    Returns:
-        True: Cookie有效
-        False: Cookie无效
-    """
-    manager = _get_cookie_manager()
-
-    if isinstance(cookie, dict):
-        cookie_str = manager.cookies_dict_to_str(cookie)
-    elif isinstance(cookie, str):
-        cookie_str = cookie
-    else:
-        return False
-
-    return manager.test_cookie_validity(cookie_str)
-
-
-def cookies_str_to_dict(cookie_string: str) -> Dict[str, str]:
-    """Cookie字符串转字典 (兼容旧接口)"""
-    return CookieManager.cookies_str_to_dict(cookie_string)
-
-
-def cookies_dict_to_str(cookie_dict: Dict[str, str]) -> str:
-    """Cookie字典转字符串 (兼容旧接口)"""
-    return CookieManager.cookies_dict_to_str(cookie_dict)

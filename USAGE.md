@@ -162,7 +162,6 @@ Cookie是访问抖音数据的必要凭证，有效期约为60天。
 ```
 config/
 ├── settings.json    # 主配置文件（所有设置）
-├── cookie.txt       # Cookie备份（自动同步）
 └── app.log          # 应用日志
 ```
 
@@ -170,14 +169,12 @@ config/
 
 **优先级顺序**：
 1. `settings.json` 中的配置（最高优先级）
-2. `cookie.txt` 文本格式备份
 3. 默认配置值
 
 **自动处理**：
 - 配置文件不存在 → 使用默认值并创建文件
 - 配置文件损坏 → 使用默认值并记录错误
 - 配置项缺失 → 自动补充默认值
-- Cookie更新 → 自动同步到 `cookie.txt`
 
 ### 配置验证
 
@@ -470,7 +467,6 @@ python main.py debug
 ```powershell
 # 删除配置文件
 Remove-Item config/settings.json
-Remove-Item config/cookie.txt
 
 # 重新启动应用程序
 python main.py

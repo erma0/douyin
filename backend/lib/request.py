@@ -15,7 +15,7 @@ from urllib.parse import quote
 import requests
 from loguru import logger
 
-from .cookies import get_cookie_dict
+from .cookies import CookieManager
 from .execjs_fix import execjs
 
 
@@ -93,7 +93,7 @@ class Request(object):
             cookie: Cookie字符串，用于身份验证
             UA: User-Agent字符串，如果需要访问搜索页面等内容需要提供与cookie对应的UA
         """
-        self.COOKIES = get_cookie_dict(cookie)
+        self.COOKIES = CookieManager.cookies_str_to_dict(cookie) if cookie else {}
         # 如果提供了UA，更新请求头和参数以匹配浏览器版本
         if UA:
             # 从UA中提取Chrome版本号

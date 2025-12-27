@@ -41,6 +41,5 @@ export const PATHS = {
   CONFIG_DIR: 'config',
   DOWNLOAD_DIR: 'download',
   SETTINGS_FILE: 'settings.json',
-  COOKIE_FILE: 'cookie.txt',
   ARIA2_CONF: 'aria2.conf',
 } as const;

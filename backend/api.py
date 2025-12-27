@@ -22,7 +22,7 @@ from loguru import logger
 
 from .aria2_manager import Aria2Manager
 from .lib.cookies import CookieManager
-from .constants import ARIA2_DEFAULTS, DOWNLOAD_DEFAULTS, PATHS
+from .constants import ARIA2_DEFAULTS, DOWNLOAD_DEFAULTS, PATHS, DEFAULT_SETTINGS
 
 # 设置类型别名，提高代码可读性
 SettingsDict = Dict[str, Any]  # 设置字典类型
@@ -100,20 +100,7 @@ class API:
             logger.info("🎉 检测到首次运行，正在初始化配置...")
 
         # 定义默认配置
-        self.default_settings = {
-            "cookie": "",  # Cookie 保存在 settings.json 中
-            "downloadPath": os.path.join(
-                self.project_root, PATHS["DOWNLOAD_DIR"]
-            ),  # 使用程序所在目录下的 download 文件夹
-            "maxRetries": DOWNLOAD_DEFAULTS["MAX_RETRIES"],
-            "maxConcurrency": DOWNLOAD_DEFAULTS["MAX_CONCURRENCY"],
-            "windowWidth": 1200,
-            "windowHeight": 800,
-            "enableIncrementalFetch": True,  # 默认启用增量采集
-            "aria2Host": ARIA2_DEFAULTS["HOST"],
-            "aria2Port": ARIA2_DEFAULTS["PORT"],
-            "aria2Secret": ARIA2_DEFAULTS["SECRET"],
-        }
+        self.default_settings = DEFAULT_SETTINGS.copy()
 
         # 配置验证规则：定义每个配置项的类型、范围和验证函数
         self.config_validators = {
@@ -172,8 +159,7 @@ class API:
         self.settings: SettingsDict = {}
         self.load_settings()
 
-        # 初始化Cookie管理器（私有属性，避免序列化）
-        self._cookie_manager = CookieManager(self.config_dir)
+        # 初始化Cookie管理器（无需实例化，使用静态方法）
 
         # 日志回调列表，用于存储前端日志回调函数（私有属性，避免序列化JavaScript函数）
         self._log_callbacks: List[Callable[[LogMessage], None]] = []
@@ -657,12 +643,13 @@ class API:
                 from .lib.douyin import Douyin
 
                 # 获取cookie
-                cookie = self._cookie_manager.load_cookie(
-                    self.settings.get("cookie", "")
-                )
+                cookie = CookieManager.load_from_settings(self.settings_file)
+                if not cookie:
+                    # 如果配置文件中没有，尝试从 settings 字典获取
+                    cookie = self.settings.get("cookie", "").strip()
 
                 # 验证cookie
-                if not self._cookie_manager.validate_cookie(cookie):
+                if not CookieManager.validate_cookie(cookie):
                     logger.error("✗ Cookie验证失败")
                     raise Exception("Cookie无效或已过期，请在设置中更新Cookie")
 
