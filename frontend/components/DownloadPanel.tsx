@@ -213,6 +213,7 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
 
           {/* 标签页和批量操作 */}
           <div className="flex items-center justify-between gap-4">
+            {/* 左侧：标签页 */}
             <div className="flex gap-2">
               <button
                 onClick={() => setActiveTab('active')}
@@ -245,75 +246,80 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
               </button>
             </div>
 
-            {/* 批量操作按钮 - 始终显示，根据状态启用/禁用 */}
-            <div className="flex gap-2">
-              {/* 暂停按钮 */}
-              <button
-                onClick={pauseAll}
-                disabled={!activeTasks.some(t => t.status === 'active')}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm ${activeTasks.some(t => t.status === 'active')
-                    ? 'text-orange-700 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 hover:from-orange-100 hover:to-amber-100 hover:border-orange-300'
-                    : 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
-                  }`}
-                title={activeTasks.some(t => t.status === 'active') ? "暂停全部活动任务" : "没有正在下载的任务"}
-              >
-                <PauseCircle size={16} />
-                暂停全部
-              </button>
+            {/* 右侧：批量操作按钮（根据标签页动态显示） */}
+            <div className="flex gap-1.5">
+              {/* 活动中/等待中标签：显示暂停、恢复、取消 */}
+              {(activeTab === 'active' || activeTab === 'waiting') && (
+                <>
+                  <button
+                    onClick={pauseAll}
+                    disabled={!activeTasks.some(t => t.status === 'active')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${activeTasks.some(t => t.status === 'active')
+                        ? 'text-orange-700 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 hover:from-orange-100 hover:to-amber-100'
+                        : 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
+                      }`}
+                    title={activeTasks.some(t => t.status === 'active') ? "暂停全部活动任务" : "没有正在下载的任务"}
+                  >
+                    <PauseCircle size={14} />
+                    暂停全部
+                  </button>
 
-              {/* 恢复按钮 */}
-              <button
-                onClick={resumeAll}
-                disabled={!activeTasks.some(t => t.status === 'paused') && !waitingTasks.some(t => t.status === 'paused')}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm ${activeTasks.some(t => t.status === 'paused') || waitingTasks.some(t => t.status === 'paused')
-                    ? 'text-green-700 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 hover:from-green-100 hover:to-emerald-100 hover:border-green-300'
-                    : 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
-                  }`}
-                title={activeTasks.some(t => t.status === 'paused') || waitingTasks.some(t => t.status === 'paused') ? "恢复全部暂停任务" : "没有暂停的任务"}
-              >
-                <PlayCircle size={16} />
-                恢复全部
-              </button>
+                  <button
+                    onClick={resumeAll}
+                    disabled={!activeTasks.some(t => t.status === 'paused') && !waitingTasks.some(t => t.status === 'paused')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${activeTasks.some(t => t.status === 'paused') || waitingTasks.some(t => t.status === 'paused')
+                        ? 'text-green-700 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 hover:from-green-100 hover:to-emerald-100'
+                        : 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
+                      }`}
+                    title={activeTasks.some(t => t.status === 'paused') || waitingTasks.some(t => t.status === 'paused') ? "恢复全部暂停任务" : "没有暂停的任务"}
+                  >
+                    <PlayCircle size={14} />
+                    恢复全部
+                  </button>
 
-              {/* 取消按钮 */}
-              <button
-                onClick={cancelAll}
-                disabled={totalActive === 0 && totalWaiting === 0}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm ${totalActive > 0 || totalWaiting > 0
-                    ? 'text-red-700 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 hover:from-red-100 hover:to-rose-100 hover:border-red-300'
-                    : 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
-                  }`}
-                title={totalActive > 0 || totalWaiting > 0 ? "取消全部任务" : "没有可取消的任务"}
-              >
-                <XCircle size={16} />
-                取消全部
-              </button>
-
-              {/* 重试全部失败按钮 - 仅在已停止标签且有失败任务时显示 */}
-              {activeTab === 'stopped' && errorCount > 0 && (
-                <button
-                  onClick={handleRetryAllFailed}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm text-blue-700 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 hover:from-blue-100 hover:to-cyan-100 hover:border-blue-300"
-                  title={`重试 ${errorCount} 个失败任务`}
-                >
-                  <AlertCircle size={16} />
-                  重试失败 ({errorCount})
-                </button>
+                  <button
+                    onClick={cancelAll}
+                    disabled={totalActive === 0 && totalWaiting === 0}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${totalActive > 0 || totalWaiting > 0
+                        ? 'text-red-700 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 hover:from-red-100 hover:to-rose-100'
+                        : 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
+                      }`}
+                    title={totalActive > 0 || totalWaiting > 0 ? "取消全部任务" : "没有可取消的任务"}
+                  >
+                    <XCircle size={14} />
+                    取消全部
+                  </button>
+                </>
               )}
 
-              {/* 清空记录按钮 */}
-              <button
-                onClick={() => setShowPurgeConfirm(true)}
-                disabled={totalStopped === 0}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-sm ${totalStopped > 0
-                    ? 'text-gray-700 bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 hover:from-gray-100 hover:to-slate-100 hover:border-gray-300'
-                    : 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
-                  }`}
-                title={totalStopped > 0 ? "清空所有已停止任务记录" : "没有已停止的任务"}
-              >
-                <Trash2 size={16} />
-                清空记录
-              </button>
+              {/* 已停止标签：显示重试失败、清空记录 */}
+              {activeTab === 'stopped' && (
+                <>
+                  {errorCount > 0 && (
+                    <button
+                      onClick={handleRetryAllFailed}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all text-blue-700 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 hover:from-blue-100 hover:to-cyan-100"
+                      title={`重试 ${errorCount} 个失败任务`}
+                    >
+                      <AlertCircle size={14} />
+                      重试失败({errorCount})
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => setShowPurgeConfirm(true)}
+                    disabled={totalStopped === 0}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${totalStopped > 0
+                        ? 'text-gray-700 bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 hover:from-gray-100 hover:to-slate-100'
+                        : 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
+                      }`}
+                    title={totalStopped > 0 ? "清空所有已停止任务记录" : "没有已停止的任务"}
+                  >
+                    <Trash2 size={14} />
+                    清空记录
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
