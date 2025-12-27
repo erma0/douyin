@@ -18,7 +18,7 @@ declare global {
           type: TaskType,
           target: string,
           limit: number,
-          callback?: (message: any) => void
+          filters?: Record<string, string> | null
         ) => Promise<{ task_id: string; status: string }>;
 
         // 系统功能

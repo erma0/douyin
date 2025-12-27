@@ -59,25 +59,28 @@ export const bridge = {
    * @param type 任务类型
    * @param target 目标链接或关键词
    * @param limit 采集数量限制
+   * @param filters 筛选参数（可选）
    */
   startTask: async (
     type: TaskType,
     target: string,
-    limit: number = 0
+    limit: number = 0,
+    filters?: Record<string, string>
   ): Promise<{ task_id: string; status: string }> => {
     try {
       if (!window.pywebview) {
         throw new Error('Backend not available');
       }
 
-      logger.api.request('开始采集任务', { type, target, limit });
+      logger.api.request('开始采集任务', { type, target, limit, filters });
 
-      const result = await window.pywebview.api.start_task(type, target, limit);
+      // 如果filters为undefined，传递null给后端
+      const result = await window.pywebview.api.start_task(type, target, limit, filters || null);
 
       logger.api.response('采集任务启动成功', { taskId: result.task_id, status: result.status });
       return result as { task_id: string; status: string };
     } catch (error) {
-      handleError(error, { type, target, limit }, {
+      handleError(error, { type, target, limit, filters }, {
         customMessage: '采集任务启动失败'
       });
       throw error;

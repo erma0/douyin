@@ -31,6 +31,7 @@ class Douyin(object):
         type: str = "post",
         down_path: str = "下载",
         cookie: str = "",
+        filters: dict = None,
     ):
         """
         初始化信息
@@ -38,6 +39,7 @@ class Douyin(object):
         self.target = target
         self.limit = limit
         self.type = type
+        self.filters = filters or {}
 
         self.down_path = os.path.join(".", down_path)
         if not os.path.exists(self.down_path):
@@ -339,11 +341,11 @@ class Douyin(object):
                         "list_type": "single",
                         "need_filter_settings": 1,
                         "offset": max_cursor,
-                        "sort_type": 1,  # 排序 综合 1最多点赞 2最新
+                        "sort_type": int(self.filters.get("sort_type", "0")),  # 排序 0综合 1最多点赞 2最新
                         "enable_history": 1,
-                        "search_range": 0,  # 搜索范围  不限
-                        "publish_time": 0,  # 发布时间  不限
-                        "filter_duration": "",  # 时长 不限 0-1  1-5  5-10000
+                        "search_range": int(self.filters.get("search_range", "0")),  # 搜索范围 0不限 3关注的人 1最近看过 2还未看过
+                        "publish_time": int(self.filters.get("publish_time", "0")),  # 发布时间 0不限 1一天内 7一周内 180半年内
+                        "filter_duration": self.filters.get("filter_duration", ""),  # 时长 ""不限 "0-1"一分钟以下 "1-5"1-5分钟 "5-10000"5分钟以上
                         "count": 18,
                         "keyword": unquote(self.id),
                     }

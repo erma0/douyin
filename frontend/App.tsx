@@ -4,6 +4,7 @@ import { DetailModal } from './components/DetailModal';
 import { DownloadPanel } from './components/DownloadPanel';
 import { ErrorBoundary, LightErrorBoundary } from './components/ErrorBoundary';
 import { LogPanel } from './components/LogPanel';
+import { SearchFilter, FilterSettings } from './components/SearchFilter';
 import { SettingsModal } from './components/SettingsModal';
 import { Sidebar } from './components/Sidebar';
 import { ToastContainer, toast } from './components/Toast';
@@ -152,6 +153,14 @@ export const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);  // 设置模态框是否打开
   const [showLogs, setShowLogs] = useState(false);  // 日志面板是否显示
   const [showWelcomeWizard, setShowWelcomeWizard] = useState(false);  // 欢迎向导是否显示
+
+  // --- 筛选相关状态 ---
+  const [filters, setFilters] = useState<FilterSettings>({
+    sort_type: '0',      // 默认综合排序
+    publish_time: '0',   // 默认不限时间
+    filter_duration: '', // 默认不限时长
+    search_range: '0',   // 默认不限范围
+  });
 
   // --- 下载管理 ---
   // 使用Aria2下载Hook，前端直接管理下载任务
@@ -402,7 +411,14 @@ export const App: React.FC = () => {
     try {
       // 调用后端API开始采集任务（不传递回调函数，后端通过 evaluate_js 调用全局函数）
       // 【用户收藏】面板不需要输入值，传递空字符串即可
-      await bridge.startTask(activeTab, activeTab === TaskType.USER_FAVORITE ? '' : inputVal, maxCount);
+      // 搜索任务传递筛选参数
+      const taskFilters = activeTab === TaskType.SEARCH ? filters : undefined;
+      await bridge.startTask(
+        activeTab, 
+        activeTab === TaskType.USER_FAVORITE ? '' : inputVal, 
+        maxCount,
+        taskFilters
+      );
 
       // 任务已启动，等待回调处理结果
       logger.info("采集任务已启动，正在后台执行...");
@@ -653,42 +669,43 @@ export const App: React.FC = () => {
 
                           {/* Max Count Dropdown Trigger - 仅在非单个作品采集时显示 */}
                           {activeTab !== TaskType.POST && (
-                            <div className="relative border-l border-gray-100" ref={limitMenuRef}>
-                              <button
-                                onClick={() => setShowLimitMenu(!showLimitMenu)}
-                                className="h-full px-4 flex items-center gap-2 hover:bg-gray-50 transition-colors text-sm font-medium text-gray-600 outline-none"
-                              >
-                                <span className="text-xs text-gray-400">数量</span>
-                                <span className={`flex items-center gap-1 ${maxCount === 0 ? 'text-indigo-600 font-bold' : 'text-gray-700'}`}>
-                                  {maxCount === 0 ? <InfinityIcon size={16} /> : maxCount}
-                                </span>
-                                <ChevronDown size={14} className={`text-gray-400 transition-transform ${showLimitMenu ? 'rotate-180' : ''}`} />
-                              </button>
+                            <>
+                              <div className="relative border-l border-gray-100" ref={limitMenuRef}>
+                                <button
+                                  onClick={() => setShowLimitMenu(!showLimitMenu)}
+                                  className="h-full px-4 flex items-center gap-2 hover:bg-gray-50 transition-colors text-sm font-medium text-gray-600 outline-none"
+                                >
+                                  <span className="text-xs text-gray-400">数量</span>
+                                  <span className={`flex items-center gap-1 ${maxCount === 0 ? 'text-indigo-600 font-bold' : 'text-gray-700'}`}>
+                                    {maxCount === 0 ? <InfinityIcon size={16} /> : maxCount}
+                                  </span>
+                                  <ChevronDown size={14} className={`text-gray-400 transition-transform ${showLimitMenu ? 'rotate-180' : ''}`} />
+                                </button>
 
                               {/* Dropdown Menu */}
                               {showLimitMenu && (
-                                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 z-20 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 z-20 px-4 py-3.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                  <h4 className="text-xs font-medium text-gray-500 mb-2.5 flex items-center gap-2">
                                     <Layers size={12} /> 采集数量限制
                                   </h4>
 
-                                  <div className="grid grid-cols-2 gap-2 mb-4">
+                                  <div className="grid grid-cols-2 gap-2 mb-3">
                                     <button
                                       onClick={() => { setMaxCount(0); setShowLimitMenu(false); }}
-                                      className={`flex items-center justify-center gap-2 py-2 rounded-lg text-sm border transition-all ${maxCount === 0
+                                      className={`flex items-center justify-center gap-2 py-1.5 rounded-lg text-xs border transition-all ${maxCount === 0
                                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-semibold'
-                                        : 'border-gray-100 text-gray-600 hover:bg-gray-50'
+                                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                                         }`}
                                     >
-                                      <InfinityIcon size={14} /> 全部
+                                      <InfinityIcon size={12} /> 全部
                                     </button>
                                     {[20, 50, 100].map(num => (
                                       <button
                                         key={num}
                                         onClick={() => { setMaxCount(num); setShowLimitMenu(false); }}
-                                        className={`py-2 rounded-lg text-sm border transition-all ${maxCount === num
+                                        className={`py-1.5 rounded-lg text-xs border transition-all ${maxCount === num
                                           ? 'bg-blue-50 border-blue-200 text-blue-700 font-semibold'
-                                          : 'border-gray-100 text-gray-600 hover:bg-gray-50'
+                                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                                           }`}
                                       >
                                         {num} 条
@@ -707,7 +724,7 @@ export const App: React.FC = () => {
                                         setMaxCount(isNaN(val) ? 0 : val);
                                       }}
                                       placeholder="输入数量"
-                                      className="w-full pl-14 pr-8 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      className="w-full pl-14 pr-8 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
                                     <div className="absolute right-1 top-1 bottom-1 flex flex-col w-5 border-l border-gray-200">
                                       <button
@@ -726,7 +743,16 @@ export const App: React.FC = () => {
                                   </div>
                                 </div>
                               )}
-                            </div>
+                              </div>
+
+                              {/* 搜索筛选按钮 - 仅在搜索模式下显示 */}
+                              {activeTab === TaskType.SEARCH && (
+                                <SearchFilter
+                                  filters={filters}
+                                  onFilterChange={setFilters}
+                                />
+                              )}
+                            </>
                           )}
                         </div>
                         {inputError && (

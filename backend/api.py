@@ -562,7 +562,7 @@ class API:
         self._save_settings_file()
 
     def start_task(
-        self, type: TaskType, target: TargetType, limit: LimitType
+        self, type: TaskType, target: TargetType, limit: LimitType, filters: Optional[Dict[str, str]] = None
     ) -> Dict[str, Any]:
         """
         开始采集任务（支持流式返回）
@@ -626,6 +626,7 @@ class API:
             "backend_type": backend_type,
             "target": target,
             "limit": limit,
+            "filters": filters or {},
             "status": "running",
             "progress": 0,
             "result_count": 0,
@@ -645,6 +646,8 @@ class API:
             logger.info(f"  后端类型: {backend_type}")
         logger.info(f"  目标: {target}")
         logger.info(f"  数量限制: {'不限' if limit == 0 else f'{limit}条'}")
+        if filters:
+            logger.info(f"  筛选条件: {filters}")
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
         # 在后台线程中执行采集任务
@@ -674,6 +677,7 @@ class API:
                         "downloadPath", os.path.join(self.project_root, PATHS["DOWNLOAD_DIR"])
                     ),
                     cookie=cookie,
+                    filters=filters or {},
                 )
 
                 # 初始化aria2_config_paths字典，但不保存路径
