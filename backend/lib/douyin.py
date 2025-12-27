@@ -341,11 +341,19 @@ class Douyin(object):
                         "list_type": "single",
                         "need_filter_settings": 1,
                         "offset": max_cursor,
-                        "sort_type": int(self.filters.get("sort_type", "0")),  # 排序 0综合 1最多点赞 2最新
+                        "sort_type": int(
+                            self.filters.get("sort_type", "0")
+                        ),  # 排序 0综合 1最多点赞 2最新
                         "enable_history": 1,
-                        "search_range": int(self.filters.get("search_range", "0")),  # 搜索范围 0不限 3关注的人 1最近看过 2还未看过
-                        "publish_time": int(self.filters.get("publish_time", "0")),  # 发布时间 0不限 1一天内 7一周内 180半年内
-                        "filter_duration": self.filters.get("filter_duration", ""),  # 时长 ""不限 "0-1"一分钟以下 "1-5"1-5分钟 "5-10000"5分钟以上
+                        "search_range": int(
+                            self.filters.get("search_range", "0")
+                        ),  # 搜索范围 0不限 3关注的人 1最近看过 2还未看过
+                        "publish_time": int(
+                            self.filters.get("publish_time", "0")
+                        ),  # 发布时间 0不限 1一天内 7一周内 180半年内
+                        "filter_duration": self.filters.get(
+                            "filter_duration", ""
+                        ),  # 时长 ""不限 "0-1"一分钟以下 "1-5"1-5分钟 "5-10000"5分钟以上
                         "count": 18,
                         "keyword": unquote(self.id),
                     }
@@ -449,7 +457,15 @@ class Douyin(object):
                 pass
         self.save()
 
-    def __append_awemes(self, awemes_list: List[dict]):
+    def __append_awemes(self, awemes_list: List[dict]) -> List[dict]:
+        """
+        处理并添加作品数据
+        
+        Returns:
+            本次新增的作品列表（已处理好的数据）
+        """
+        new_items = []  # 存储本次新增的作品
+        
         with self.lock:  # 加锁避免意外冲突
             if self.limit == 0 or len(self.results) < self.limit:
                 for item in awemes_list:
@@ -460,7 +476,7 @@ class Douyin(object):
                     if self.limit > 0 and len(self.results) >= self.limit:
                         self.has_more = False
                         logger.info(f"已达到限制采集数量： {len(self.results)}")
-                        return
+                        return new_items
                     # =====增量采集=====
                     _time = item.get("create_time", item.get("createTime"))
                     if self.results_old:
@@ -476,8 +492,8 @@ class Douyin(object):
                             if self.has_more:
                                 self.has_more = False
                             logger.success(f"增量采集完成，上次运行结果：{old}")
-                            self.results = self.results_old
-                            return
+                            self.results.extend(self.results_old)
+                            return new_items  # 返回已处理的新增数据
                     # =====保存结果=====
                     # _type = item.get('media_type', item.get('media_type'))  # 2 图集 4 视频
                     _type = item.get("aweme_type", item.get("awemeType"))
@@ -584,12 +600,16 @@ class Douyin(object):
 
                     if self.type == "collection":
                         aweme["no"] = item["mix_info"]["statis"]["current_episode"]
+                    
                     self.results.append(aweme)  # 用于保存信息
+                    new_items.append(aweme)  # 记录本次新增
 
                 logger.info(f"采集中，已采集到 {len(self.results)} 条结果")
             else:
                 self.has_more = False
                 logger.info(f"已达到限制采集数量： {len(self.results)}")
+        
+        return new_items  # 返回本次新增的数据
 
     def __append_users(self, user_list: List[dict]):
         with self.lock:  # 加锁避免意外冲突
@@ -709,7 +729,6 @@ class Douyin(object):
             if self.type == "post":
                 # 保存所有数据到文件，包括旧数据
                 self.results.sort(key=lambda item: item["id"], reverse=True)
-                self.results.extend(self.results_old)
             save_json(self.down_path, self.results)
 
         else:

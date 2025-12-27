@@ -688,62 +688,46 @@ class API:
                 original_append = douyin._Douyin__append_awemes
 
                 def append_with_callback(awemes_list):
-                    # 调用原始方法
-                    original_append(awemes_list)
-
-                    # 如果有新结果，实时返回给前端
-                    if douyin.results and self._window:
-                        # 只返回新增的结果
-                        new_results = douyin.results[len(self.task_results[task_id]) :]
-                        if new_results:
-                            logger.debug(
-                                f"检测到 {len(new_results)} 条新结果，开始转换..."
-                            )
-
-                            # 转换格式
-                            works = self._convert_douyin_results(
-                                new_results, douyin.type
-                            )
-                            logger.debug(f"转换完成，得到 {len(works)} 条作品")
-
-                            if not works:
-                                logger.warning(
-                                    f"转换后没有有效数据！原始数据: {len(new_results)} 条"
-                                )
-                                return
-
-                            # 更新缓存
-                            self.task_results[task_id].extend(new_results)
-
-                            # 更新任务状态
-                            self.task_status[task_id]["result_count"] = len(
-                                self.task_results[task_id]
-                            )
-                            self.task_status[task_id]["updated_at"] = time.time()
-
-                            # 回调前端
-                            try:
-                                logger.info(
-                                    f"回调前端: {len(works)} 条新结果，累计 {len(self.task_results[task_id])} 条"
-                                )
-
-                                callback_data = {
-                                    "type": "result",
-                                    "task_id": task_id,
-                                    "data": works,
-                                    "total": len(self.task_results[task_id]),
-                                }
-
-                                callback_json = json.dumps(
-                                    callback_data, ensure_ascii=False
-                                )
-                                js_code = f"window.__kiro_douyin && window.__kiro_douyin.taskCallback && window.__kiro_douyin.taskCallback({callback_json})"
-                                self._window.evaluate_js(js_code)
-                            except Exception as e:
-                                logger.error(f"回调前端失败: {e}")
-                                import traceback
-
-                                traceback.print_exc()
+                    # 调用原始方法，获取本次新增的数据
+                    new_items = original_append(awemes_list)
+                    
+                    # 如果有新增数据，实时回调前端
+                    if new_items and self._window:
+                        logger.debug(f"检测到 {len(new_items)} 条新结果，开始转换...")
+                        
+                        # 转换格式
+                        works = self._convert_douyin_results(new_items, douyin.type)
+                        logger.debug(f"转换完成，得到 {len(works)} 条作品")
+                        
+                        if not works:
+                            logger.warning(f"转换后没有有效数据！原始数据: {len(new_items)} 条")
+                            return
+                        
+                        # 更新缓存
+                        self.task_results[task_id].extend(new_items)
+                        
+                        # 更新任务状态
+                        self.task_status[task_id]["result_count"] = len(self.task_results[task_id])
+                        self.task_status[task_id]["updated_at"] = time.time()
+                        
+                        # 回调前端
+                        try:
+                            logger.info(f"回调前端: {len(works)} 条新结果，累计 {len(self.task_results[task_id])} 条")
+                            
+                            callback_data = {
+                                "type": "result",
+                                "task_id": task_id,
+                                "data": works,
+                                "total": len(self.task_results[task_id]),
+                            }
+                            
+                            callback_json = json.dumps(callback_data, ensure_ascii=False)
+                            js_code = f"window.__kiro_douyin && window.__kiro_douyin.taskCallback && window.__kiro_douyin.taskCallback({callback_json})"
+                            self._window.evaluate_js(js_code)
+                        except Exception as e:
+                            logger.error(f"回调前端失败: {e}")
+                            import traceback
+                            traceback.print_exc()
 
                 # 替换方法
                 douyin._Douyin__append_awemes = append_with_callback
@@ -762,13 +746,20 @@ class API:
                 self.task_status[task_id]["aria2_conf"] = douyin.aria2_conf
 
                 # 采集完成后，检查是否有未回调的结果（如单个作品采集）
+                # 注意：增量采集时results可能包含旧数据，需要排除
                 logger.debug(
                     f"采集结果数: {len(douyin.results)}, 已回调数: {len(self.task_results[task_id])}"
                 )
 
-                if douyin.results and len(douyin.results) > len(
-                    self.task_results[task_id]
-                ):
+                # 只有当results中有新数据且未回调时才处理
+                # 增量采集时，如果results等于results_old，说明没有新数据
+                has_new_results = (
+                    douyin.results 
+                    and len(douyin.results) > len(self.task_results[task_id])
+                    and douyin.results != douyin.results_old  # 排除增量采集返回旧数据的情况
+                )
+
+                if has_new_results:
                     new_results = douyin.results[len(self.task_results[task_id]) :]
                     logger.info(f"发现 {len(new_results)} 条未回调的结果，正在转换...")
                     works = self._convert_douyin_results(new_results, douyin.type)
