@@ -103,8 +103,7 @@ class Douyin(object):
                             self.url = f"https://www.douyin.com/note/{id}"
                     elif _type == "search":
                         id = unquote(id)
-                        search_type = parse_qs(
-                            urlparse(target).query).get("type")
+                        search_type = parse_qs(urlparse(target).query).get("type")
                         if search_type is None or search_type[0] in [
                             "video",
                             "general",
@@ -123,8 +122,7 @@ class Douyin(object):
                     #     self.url = f'{self.url}?type={self.type}'
                 # 数字ID: 单个作品id 音乐id 合集id
                 elif (
-                    self.type in ["video", "note",
-                                  "music", "hashtag", "collection"]
+                    self.type in ["video", "note", "music", "hashtag", "collection"]
                     and id.isdigit()
                 ):
                     if self.type in ["video", "note"]:
@@ -172,8 +170,7 @@ class Douyin(object):
             )
             render_data: str = re.findall(pattern, text)
             if render_data:
-                render_data = render_data[-1].replace(
-                    '\\"', '"').replace("\\\\", "\\")
+                render_data = render_data[-1].replace('\\"', '"').replace("\\\\", "\\")
                 self.render_data = json.loads(render_data)
                 if self.type in ["search", "user", "live"]:
                     # self.info = self.render_data['app']['defaultSearchParams']
@@ -250,14 +247,12 @@ class Douyin(object):
             "sec_user_id": self.id,
             "personal_center_strategy": 1,
         }
-        resp = self.request.getJSON(
-            "/aweme/v1/web/user/profile/other/", params)
+        resp = self.request.getJSON("/aweme/v1/web/user/profile/other/", params)
         if resp:
             self.info = resp.get("user", {})
             # 下载路径
             self.down_path = os.path.join(
-                self.down_path, sanitize_filename(
-                    f"{self.info['nickname']}_{self.id}")
+                self.down_path, sanitize_filename(f"{self.info['nickname']}_{self.id}")
             )
             self.aria2_conf = f"{self.down_path}.txt"
             if os.path.exists(f"{self.down_path}.json") and not self.results_old:
@@ -274,8 +269,7 @@ class Douyin(object):
             self.info = resp["user_info"]
             # 下载路径
             self.down_path = os.path.join(
-                self.down_path, sanitize_filename(
-                    f"{self.info['nickname']}_{self.id}")
+                self.down_path, sanitize_filename(f"{self.info['nickname']}_{self.id}")
             )
             self.aria2_conf = f"{self.down_path}.txt"
             if os.path.exists(f"{self.down_path}.json") and not self.results_old:
@@ -326,8 +320,7 @@ class Douyin(object):
                     data = {"cursor": max_cursor, "count": 18}
                 elif self.type == "music":
                     uri = "/aweme/v1/web/music/aweme/"
-                    params = {"cursor": max_cursor,
-                              "count": 18, "music_id": self.id}
+                    params = {"cursor": max_cursor, "count": 18, "music_id": self.id}
                 elif self.type == "hashtag":
                     uri = "/aweme/v1/web/challenge/aweme/"
                     params = {
@@ -338,8 +331,7 @@ class Douyin(object):
                     }
                 elif self.type == "collection":
                     uri = "/aweme/v1/web/mix/aweme/"
-                    params = {"cursor": max_cursor,
-                              "count": 18, "mix_id": self.id}
+                    params = {"cursor": max_cursor, "count": 18, "mix_id": self.id}
                 elif self.type == "search":
                     uri = "/aweme/v1/web/search/item/"  # 视频
                     params = {
@@ -559,8 +551,7 @@ class Douyin(object):
                     )
                     music: dict = item.get("music")
                     if music:
-                        aweme["music_title"] = sanitize_filename(
-                            music["title"])
+                        aweme["music_title"] = sanitize_filename(music["title"])
                         aweme["music_url"] = music.get(
                             "play_url", music.get("playUrl")
                         )["uri"]
@@ -637,8 +628,7 @@ class Douyin(object):
                         return
                     user_info = {}
                     user_info["nickname"] = sanitize_filename(item["nickname"])
-                    user_info["signature"] = sanitize_filename(
-                        item["signature"])
+                    user_info["signature"] = sanitize_filename(item["signature"])
                     user_info["avatar"] = item["avatar_thumb"]["url_list"][0]
                     for i in [
                         "sec_uid",
@@ -708,11 +698,9 @@ class Douyin(object):
                             filename = f"第{line['no']}集_{filename}"
                         if type(line["download_addr"]) is list:
                             if self.type == "video":
-                                down_path = self.down_path.replace(
-                                    line["id"], filename)
+                                down_path = self.down_path.replace(line["id"], filename)
                             else:
-                                down_path = os.path.join(
-                                    self.down_path, filename)
+                                down_path = os.path.join(self.down_path, filename)
                             for index, addr in enumerate(line["download_addr"]):
                                 _.append(
                                     f'{addr}\n dir={down_path}\n out={
