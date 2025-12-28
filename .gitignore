@@ -13,8 +13,17 @@ download/
 config/*
 !config/.gitkeep
 
-# 测试目录
-test/
+# 测试目录（根目录）
+test/*
+
+# 前端测试目录
+frontend/test/
+
+# 后端测试目录
+backend/test/*
+!backend/test/test_douyin.py
+!backend/test/test_request.py
+!backend/test/conftest.py
 
 # Aria2 可执行文件（内置到项目，但不提交到git）
 aria2c
