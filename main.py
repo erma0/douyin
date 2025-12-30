@@ -5,6 +5,7 @@ import webview
 from loguru import logger
 
 from backend.api import API
+from backend.constants import PROJECT_ROOT, RESOURCE_ROOT
 
 # 判断是否为打包环境
 IS_PACKAGED = getattr(sys, "frozen", False)
@@ -24,9 +25,8 @@ if not IS_PACKAGED:
 
 
 def get_entrypoint():
-    """获取前端入口文件路径"""
-    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-    index_path = os.path.join(base_path, "frontend", "dist", "index.html")
+    """获取前端入口文件路径（从资源目录读取）"""
+    index_path = os.path.join(RESOURCE_ROOT, "frontend", "dist", "index.html")
 
     if os.path.exists(index_path):
         logger.info(f"🔄 加载前端: {index_path}")
@@ -38,16 +38,15 @@ def get_entrypoint():
 
 
 def get_icon_path():
-    """获取应用图标路径"""
-    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    """获取应用图标路径（从资源目录读取）"""
 
     # 优先使用构建后的图标
-    dist_icon = os.path.join(base_path, "frontend", "dist", "favicon.ico")
+    dist_icon = os.path.join(RESOURCE_ROOT, "frontend", "dist", "favicon.ico")
     if os.path.exists(dist_icon):
         return dist_icon
 
     # 备用：开发环境的图标
-    public_icon = os.path.join(base_path, "frontend", "public", "favicon.ico")
+    public_icon = os.path.join(RESOURCE_ROOT, "frontend", "public", "favicon.ico")
     if os.path.exists(public_icon):
         return public_icon
 
@@ -58,6 +57,14 @@ if __name__ == "__main__":
     logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     logger.info("🎉 DouyinCrawler客户端启动中...")
     logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    
+    # 调试信息：打印关键路径
+    logger.info(f"📍 运行环境信息:")
+    # logger.info(f"  - sys.frozen: {getattr(sys, 'frozen', False)}")
+    # logger.info(f"  - sys.executable: {sys.executable}")
+    # logger.info(f"  - sys.argv[0]: {sys.argv[0] if sys.argv else 'N/A'}")
+    logger.info(f"  - 应用根目录: {PROJECT_ROOT}")
+    logger.info(f"  - 资源根目录: {RESOURCE_ROOT}")
 
     try:
         entry = get_entrypoint()

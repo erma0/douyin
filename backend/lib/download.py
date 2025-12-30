@@ -14,26 +14,24 @@ def download(path, aria2_conf):
         # 查找aria2c可执行文件
         import platform
         import shutil
-        import sys
 
         # 优先查找系统中的 aria2c
         aria2_path = shutil.which("aria2c")
 
         if not aria2_path:
             # 如果系统中没有，使用项目内置的
-            if getattr(sys, "frozen", False):
-                # 打包后：使用exe所在目录
-                project_root = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
-            else:
-                # 开发环境：backend/lib/download.py -> backend/lib -> backend -> 项目根目录
-                project_root = os.path.dirname(
-                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                )
+            try:
+                from ..constants import RESOURCE_ROOT
+            except ImportError:
+                # 命令行模式下的导入
+                import sys
+                sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                from constants import RESOURCE_ROOT
 
             if platform.system() == "Windows":
-                aria2_path = os.path.join(project_root, "aria2", "aria2c.exe")
+                aria2_path = os.path.join(RESOURCE_ROOT, "aria2", "aria2c.exe")
             else:
-                aria2_path = os.path.join(project_root, "aria2", "aria2c")
+                aria2_path = os.path.join(RESOURCE_ROOT, "aria2", "aria2c")
 
             if not os.path.exists(aria2_path):
                 logger.error(f"未找到 aria2c 可执行文件: {aria2_path}")

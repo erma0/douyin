@@ -4,7 +4,8 @@
 param(
     [ValidateSet("dir", "onefile")]
     [string]$Mode = "dir",
-    [switch]$Clean
+    [switch]$Clean,
+    [switch]$Debug
 )
 
 $ErrorActionPreference = "Stop"
@@ -121,7 +122,7 @@ try {
 
     # 3. 开始打包
     Write-Step "开始打包 ($Mode 模式)"
-    Write-Host "⚠️  Nuitka 编译需要 10-20 分钟，请耐心等待..." -ForegroundColor Yellow
+    Write-Host "⚠️  Nuitka 编译需要 3-5 分钟，请耐心等待..." -ForegroundColor Yellow
     Write-Host ""
 
     # 确保输出目录存在
@@ -145,17 +146,27 @@ try {
     if ($Mode -eq "onefile") {
         $nuitkaArgs += "--onefile"
         $nuitkaArgs += "--output-filename=DouyinCrawler.exe"
+        
+        # 单文件模式确保临时目录可写
+        $nuitkaArgs += "--onefile-tempdir-spec={TEMP}/DouyinCrawler"
     }
     
     # 通用配置
     $nuitkaArgs += @(
         # 包含数据目录
         "--include-data-dir=frontend/dist=frontend/dist",
-        "--include-data-dir=aria2=aria2",
         "--include-data-dir=backend/lib/js=backend/lib/js",
         
+        # 明确包含 aria2 可执行文件和配置
+        "--include-data-files=aria2/aria2c.exe=aria2/aria2c.exe",
+        
+        # 排除配置文件和下载目录（用户数据不应打包）
+        "--nofollow-import-to=backend.test",
+        "--nofollow-import-to=pytest",
+        "--nofollow-import-to=unittest",
+        "--nofollow-import-to=test",
+        
         # Windows 配置
-        "--windows-console-mode=disable",
         "--windows-icon-from-ico=frontend/dist/favicon.ico",
         
         # 稳定性配置
@@ -167,6 +178,11 @@ try {
         # 入口文件
         "main.py"
     )
+    
+    # 调试模式：启用控制台
+    if (-not $Debug) {
+        $nuitkaArgs += "--windows-console-mode=disable"
+    }
 
     # 执行打包
     Write-Info "执行打包..."
@@ -225,12 +241,20 @@ try {
 3. 开始使用
 
 ## 文件说明
-- config/ - 配置文件（自动创建）
-- download/ - 下载目录（自动创建）
-- config/app.log - 日志文件
+程序运行后会在 exe 所在目录自动创建以下文件夹：
+- config/ - 配置文件目录
+  - settings.json - 应用配置（包含 Cookie、下载路径等）
+  - aria2.conf - Aria2 下载器配置
+  - app.log - 应用日志
+- download/ - 默认下载目录（可在设置中修改）
+
+注意：
+- 首次运行会自动创建默认配置
+- 配置文件不会被打包，每次运行都使用 exe 所在目录的配置
+- 可以安全删除 config 目录来重置所有设置
 
 ## 获取 Cookie
-1. 浏览器登录抖音网页版
+1. 浏览器登录抖音网页版 (https://www.douyin.com)
 2. F12 打开开发者工具 → Network
 3. 刷新页面，找到任意请求
 4. 复制请求头中的 Cookie

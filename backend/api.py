@@ -14,15 +14,20 @@ import sys
 import threading
 import time
 import webbrowser
-from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import ujson as json
 from loguru import logger
 
 from .aria2_manager import Aria2Manager
+from .constants import (
+    ARIA2_DEFAULTS,
+    DEFAULT_SETTINGS,
+    DOWNLOAD_DEFAULTS,
+    PATHS,
+    PROJECT_ROOT,
+)
 from .lib.cookies import CookieManager
-from .constants import ARIA2_DEFAULTS, DOWNLOAD_DEFAULTS, PATHS, DEFAULT_SETTINGS
 
 # 设置类型别名，提高代码可读性
 SettingsDict = Dict[str, Any]  # 设置字典类型
@@ -73,15 +78,8 @@ class API:
         self._ready = False
         self._init_error = None
 
-        # 获取可执行文件所在目录（打包后使用exe所在目录，开发时使用项目根目录）
-        # 注意：不能使用 sys._MEIPASS，那是临时解压目录
-        if getattr(sys, 'frozen', False):
-            # 打包后：使用exe所在目录
-            self.project_root = os.path.dirname(sys.executable)
-        else:
-            # 开发环境：使用项目根目录
-            self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        
+        # 使用统一的路径管理
+        self.project_root = PROJECT_ROOT
         self.config_dir = os.path.join(self.project_root, PATHS["CONFIG_DIR"])
 
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -90,12 +88,12 @@ class API:
 
         # 自动创建配置目录
         os.makedirs(self.config_dir, exist_ok=True)
-        
+
         self.settings_file = os.path.join(self.config_dir, PATHS["SETTINGS_FILE"])
-        
+
         # 检测是否首次运行（settings.json 文件不存在）
         self.is_first_run = not os.path.exists(self.settings_file)
-        
+
         if self.is_first_run:
             logger.info("🎉 检测到首次运行，正在初始化配置...")
 
@@ -194,7 +192,9 @@ class API:
             download_dir=self.settings.get(
                 "downloadPath", os.path.join(self.project_root, PATHS["DOWNLOAD_DIR"])
             ),
-            max_retries=self.settings.get("maxRetries", DOWNLOAD_DEFAULTS["MAX_RETRIES"]),  # 从配置面板获取重试次数
+            max_retries=self.settings.get(
+                "maxRetries", DOWNLOAD_DEFAULTS["MAX_RETRIES"]
+            ),  # 从配置面板获取重试次数
             max_concurrency=self.settings.get(
                 "maxConcurrency", DOWNLOAD_DEFAULTS["MAX_CONCURRENCY"]
             ),  # 从配置面板获取并发数
@@ -274,6 +274,7 @@ class API:
             logger.info("✓ 准备关闭日志系统...")
             # 给一点时间让最后的日志写入
             import time
+
             time.sleep(0.1)
             # 移除所有handler，释放文件句柄
             logger.remove()
@@ -314,7 +315,7 @@ class API:
         )
 
         # 添加控制台输出（仅开发环境）
-        if not getattr(sys, 'frozen', False):
+        if not getattr(sys, "frozen", False):
             logger.add(
                 sys.stderr,
                 level="INFO",
@@ -481,7 +482,7 @@ class API:
     def load_settings(self) -> None:
         """
         加载应用设置
-        
+
         从 settings.json 加载配置，自动处理文件不存在、损坏等情况
         """
         try:
@@ -497,7 +498,9 @@ class API:
                         for error in errors:
                             config_key = error.split(":")[0].strip()
                             if config_key in self.default_settings:
-                                loaded_settings[config_key] = self.default_settings[config_key]
+                                loaded_settings[config_key] = self.default_settings[
+                                    config_key
+                                ]
                                 logger.warning(f"  - 已修复 {config_key}")
 
                     # 补充缺失的配置项（支持版本升级）
@@ -509,7 +512,7 @@ class API:
                             logger.info(f"  - 新增配置项 {key}")
 
                     self.settings = loaded_settings
-                    
+
                     # 如果有修复或更新，保存回文件
                     if not is_valid or updated:
                         self._save_settings_file()
@@ -519,19 +522,19 @@ class API:
                 self.settings = self.default_settings.copy()
                 self._save_settings_file()
                 logger.info("✓ 默认配置已创建")
-                
+
         except json.JSONDecodeError:
             logger.error("✗ 配置文件损坏，使用默认配置并备份旧文件")
             self._backup_and_reset_settings()
         except Exception as e:
             logger.error(f"✗ 加载配置失败: {e}，使用默认配置")
             self.settings = self.default_settings.copy()
-    
+
     def _save_settings_file(self) -> None:
         """内部方法：保存配置到文件"""
         with open(self.settings_file, "w", encoding="utf-8") as f:
             json.dump(self.settings, f, ensure_ascii=False, indent=2)
-    
+
     def _backup_and_reset_settings(self) -> None:
         """内部方法：备份损坏的配置文件并重置"""
         try:
@@ -542,13 +545,17 @@ class API:
                 logger.info(f"  - 已备份到: {backup_file}")
         except Exception as e:
             logger.warning(f"  - 备份失败: {e}")
-        
+
         # 使用默认配置
         self.settings = self.default_settings.copy()
         self._save_settings_file()
 
     def start_task(
-        self, type: TaskType, target: TargetType, limit: LimitType, filters: Optional[Dict[str, str]] = None
+        self,
+        type: TaskType,
+        target: TargetType,
+        limit: LimitType,
+        filters: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """
         开始采集任务（支持流式返回）
@@ -661,7 +668,8 @@ class API:
                     limit=int(limit) if limit > 0 else 0,
                     type=backend_type,
                     down_path=self.settings.get(
-                        "downloadPath", os.path.join(self.project_root, PATHS["DOWNLOAD_DIR"])
+                        "downloadPath",
+                        os.path.join(self.project_root, PATHS["DOWNLOAD_DIR"]),
                     ),
                     cookie=cookie,
                     filters=filters or {},
@@ -677,43 +685,52 @@ class API:
                 def append_with_callback(awemes_list):
                     # 调用原始方法，获取本次新增的数据
                     new_items = original_append(awemes_list)
-                    
+
                     # 如果有新增数据，实时回调前端
                     if new_items and self._window:
                         logger.debug(f"检测到 {len(new_items)} 条新结果，开始转换...")
-                        
+
                         # 转换格式
                         works = self._convert_douyin_results(new_items, douyin.type)
                         logger.debug(f"转换完成，得到 {len(works)} 条作品")
-                        
+
                         if not works:
-                            logger.warning(f"转换后没有有效数据！原始数据: {len(new_items)} 条")
+                            logger.warning(
+                                f"转换后没有有效数据！原始数据: {len(new_items)} 条"
+                            )
                             return
-                        
+
                         # 更新缓存
                         self.task_results[task_id].extend(new_items)
-                        
+
                         # 更新任务状态
-                        self.task_status[task_id]["result_count"] = len(self.task_results[task_id])
+                        self.task_status[task_id]["result_count"] = len(
+                            self.task_results[task_id]
+                        )
                         self.task_status[task_id]["updated_at"] = time.time()
-                        
+
                         # 回调前端
                         try:
-                            logger.info(f"回调前端: {len(works)} 条新结果，累计 {len(self.task_results[task_id])} 条")
-                            
+                            logger.info(
+                                f"回调前端: {len(works)} 条新结果，累计 {len(self.task_results[task_id])} 条"
+                            )
+
                             callback_data = {
                                 "type": "result",
                                 "task_id": task_id,
                                 "data": works,
                                 "total": len(self.task_results[task_id]),
                             }
-                            
-                            callback_json = json.dumps(callback_data, ensure_ascii=False)
+
+                            callback_json = json.dumps(
+                                callback_data, ensure_ascii=False
+                            )
                             js_code = f"window.__kiro_douyin && window.__kiro_douyin.taskCallback && window.__kiro_douyin.taskCallback({callback_json})"
                             self._window.evaluate_js(js_code)
                         except Exception as e:
                             logger.error(f"回调前端失败: {e}")
                             import traceback
+
                             traceback.print_exc()
 
                 # 替换方法
@@ -741,9 +758,10 @@ class API:
                 # 只有当results中有新数据且未回调时才处理
                 # 增量采集时，如果results等于results_old，说明没有新数据
                 has_new_results = (
-                    douyin.results 
+                    douyin.results
                     and len(douyin.results) > len(self.task_results[task_id])
-                    and douyin.results != douyin.results_old  # 排除增量采集返回旧数据的情况
+                    and douyin.results
+                    != douyin.results_old  # 排除增量采集返回旧数据的情况
                 )
 
                 if has_new_results:
@@ -988,9 +1006,7 @@ class API:
         """
         # 如果用户没有设置密钥，使用默认密钥
         user_secret = self.settings.get("aria2Secret", ARIA2_DEFAULTS["SECRET"])
-        default_secret = (
-            ARIA2_DEFAULTS["SECRET"] if not user_secret else user_secret
-        )
+        default_secret = ARIA2_DEFAULTS["SECRET"] if not user_secret else user_secret
 
         return {
             "host": self.settings.get("aria2Host", ARIA2_DEFAULTS["HOST"]),
@@ -1113,10 +1129,10 @@ class API:
     def save_settings(self, settings: SettingsDict) -> Optional[None]:
         """
         保存设置（支持部分更新）
-        
+
         Args:
             settings: 要保存的设置字典，可以是部分更新
-            
+
         Raises:
             ValueError: 设置验证失败
         """
@@ -1135,7 +1151,7 @@ class API:
         try:
             # 更新内存配置
             self.settings.update(settings)
-            
+
             # 保存到文件
             self._save_settings_file()
 
@@ -1336,44 +1352,44 @@ class API:
             - Linux: 使用 xdg-open
         """
         logger.info(f"打开文件夹: {folder_path}")
-        
+
         try:
             import platform
             import subprocess
-            
+
             # 确保路径存在
             if not os.path.exists(folder_path):
                 logger.error(f"文件夹不存在: {folder_path}")
                 return False
-            
+
             # 如果是文件路径，获取其所在目录
             if os.path.isfile(folder_path):
                 folder_path = os.path.dirname(folder_path)
-            
+
             system = platform.system()
-            
+
             # Windows 下隐藏控制台窗口
             startupinfo = None
             if system == "Windows":
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 startupinfo.wShowWindow = subprocess.SW_HIDE
-            
+
             if system == "Windows":
                 # Windows: 使用 explorer，需要规范化路径
-                normalized_path = os.path.abspath(folder_path).replace('/', '\\')
+                normalized_path = os.path.abspath(folder_path).replace("/", "\\")
                 # 使用 os.startfile 更可靠
                 os.startfile(normalized_path)
             elif system == "Darwin":
                 # macOS: 使用 open
-                subprocess.Popen(['open', folder_path])
+                subprocess.Popen(["open", folder_path])
             else:
                 # Linux: 使用 xdg-open
-                subprocess.Popen(['xdg-open', folder_path])
-            
+                subprocess.Popen(["xdg-open", folder_path])
+
             logger.info(f"✓ 已打开文件夹: {folder_path}")
             return True
-            
+
         except Exception as e:
             logger.error(f"✗ 打开文件夹失败: {e}")
             return False
@@ -1389,11 +1405,11 @@ class API:
             aria2配置文件路径
         """
         logger.info(f"获取aria2配置文件路径，task_id: {task_id}")
-        
+
         # 如果没有指定task_id，使用最新的任务
         if task_id is None:
             logger.info("未指定task_id，查找最新任务")
-            
+
             if hasattr(self, "_aria2_config_paths") and self._aria2_config_paths:
                 logger.info(f"找到 {len(self._aria2_config_paths)} 个缓存的配置路径")
                 # 获取最新的配置文件路径
@@ -1404,37 +1420,43 @@ class API:
                 # 检查配置文件是否存在
                 if not os.path.exists(config_path):
                     logger.error(f"配置文件不存在: {config_path}")
-                    raise ValueError(f"配置文件不存在: {config_path}，请确保采集任务已完成并生成了下载配置")
+                    raise ValueError(
+                        f"配置文件不存在: {config_path}，请确保采集任务已完成并生成了下载配置"
+                    )
 
                 logger.info(f"返回配置文件路径: {config_path}")
                 return config_path
             else:
                 # 检查任务状态中是否有已完成的任务
                 completed_tasks = [
-                    task_id for task_id, task_info in self.task_status.items()
-                    if task_info.get("status") == "completed" and "aria2_conf" in task_info
+                    task_id
+                    for task_id, task_info in self.task_status.items()
+                    if task_info.get("status") == "completed"
+                    and "aria2_conf" in task_info
                 ]
-                
+
                 if completed_tasks:
                     logger.info(f"从任务状态中找到 {len(completed_tasks)} 个已完成任务")
                     latest_task_id = max(completed_tasks)
                     config_path = self.task_status[latest_task_id]["aria2_conf"]
                     logger.info(f"使用任务 {latest_task_id} 的配置文件: {config_path}")
-                    
+
                     # 检查配置文件是否存在
                     if not os.path.exists(config_path):
                         logger.error(f"配置文件不存在: {config_path}")
                         raise ValueError(f"配置文件不存在: {config_path}")
-                    
+
                     # 缓存到内存中
                     if not hasattr(self, "_aria2_config_paths"):
                         self._aria2_config_paths = {}
                     self._aria2_config_paths[latest_task_id] = config_path
-                    
+
                     return config_path
                 else:
                     logger.error("没有找到已完成的采集任务")
-                    raise ValueError("没有已完成的采集任务，请先完成一次采集后再使用批量下载功能")
+                    raise ValueError(
+                        "没有已完成的采集任务，请先完成一次采集后再使用批量下载功能"
+                    )
 
         # 从保存的路径中获取aria2_conf
         if hasattr(self, "_aria2_config_paths") and task_id in self._aria2_config_paths:
@@ -1480,20 +1502,20 @@ class API:
         """
         try:
             logger.info(f"开始读取配置文件: {file_path}")
-            
+
             # 安全检查：确保文件路径在下载目录内
             download_dir = os.path.abspath(
                 self.settings.get("downloadPath", PATHS["DOWNLOAD_DIR"])
             )
             abs_path = os.path.abspath(file_path)
-            
+
             logger.info(f"下载目录: {download_dir}")
             logger.info(f"绝对路径: {abs_path}")
 
             if not abs_path.startswith(download_dir) or not abs_path.endswith(".txt"):
                 logger.error(f"文件路径不安全: {abs_path}")
                 raise ValueError("文件路径不安全")
-            
+
             if not os.path.exists(abs_path):
                 logger.error(f"配置文件不存在: {abs_path}")
                 raise ValueError(f"配置文件不存在: {abs_path}")

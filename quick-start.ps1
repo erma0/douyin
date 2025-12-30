@@ -34,6 +34,10 @@ function Show-Menu {
     Write-Host " (单文件模式)" -ForegroundColor Gray
     Write-Host ""
     
+    Write-Host "【工具】" -ForegroundColor Yellow
+    Write-Host "  9. 清理打包缓存" -ForegroundColor White -NoNewline
+    Write-Host ""
+    
     Write-Host "  0. 退出" -ForegroundColor DarkGray
     Write-Host ""
 }
@@ -95,9 +99,83 @@ while ($true) {
             }
             "8" {
                 Write-Host "`n━━━ Nuitka 打包（单文件模式）━━━`n" -ForegroundColor Cyan
-                Write-Host "说明: 编译为单个 exe，耗时较长（15-30分钟）" -ForegroundColor Gray
+                Write-Host "说明: 编译为单个 exe，耗时较长（3-5分钟）" -ForegroundColor Gray
                 Write-Host "执行: .\scripts\build\nuitka.ps1 -Mode onefile`n" -ForegroundColor Yellow
                 & ".\scripts\build\nuitka.ps1" -Mode onefile
+                Read-Host "`n按回车键继续"
+            }
+            "9" {
+                Write-Host "`n━━━ 清理打包缓存 ━━━`n" -ForegroundColor Cyan
+                Write-Host "说明: 清理所有打包相关的缓存和临时文件" -ForegroundColor Gray
+                Write-Host "      适用于打包出错或需要完全重新打包时使用`n" -ForegroundColor Gray
+                
+                $cleanDirs = @("frontend/dist", "build", "dist", "release")
+                $totalSize = 0
+                
+                Write-Host "将清理以下目录:" -ForegroundColor Yellow
+                foreach ($dir in $cleanDirs) {
+                    if (Test-Path $dir) {
+                        $size = (Get-ChildItem $dir -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+                        if ($size) {
+                            $sizeMB = [math]::Round($size / 1MB, 2)
+                            $totalSize += $size
+                            Write-Host "  - $dir ($sizeMB MB)" -ForegroundColor White
+                        } else {
+                            Write-Host "  - $dir (空)" -ForegroundColor DarkGray
+                        }
+                    } else {
+                        Write-Host "  - $dir (不存在)" -ForegroundColor DarkGray
+                    }
+                }
+                
+                # 统计 __pycache__ 目录
+                $pycacheDirs = Get-ChildItem -Path . -Recurse -Directory -Filter "__pycache__" -ErrorAction SilentlyContinue
+                $pycacheSize = 0
+                $pycacheCount = 0
+                foreach ($dir in $pycacheDirs) {
+                    $size = (Get-ChildItem $dir.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+                    if ($size) {
+                        $pycacheSize += $size
+                        $pycacheCount++
+                    }
+                }
+                if ($pycacheCount -gt 0) {
+                    $pycacheSizeMB = [math]::Round($pycacheSize / 1MB, 2)
+                    Write-Host "  - __pycache__ ($pycacheCount 个目录, $pycacheSizeMB MB)" -ForegroundColor White
+                    $totalSize += $pycacheSize
+                }
+                
+                if ($totalSize -gt 0) {
+                    $totalSizeMB = [math]::Round($totalSize / 1MB, 2)
+                    Write-Host "`n总计: $totalSizeMB MB`n" -ForegroundColor Cyan
+                    
+                    $confirm = Read-Host "确认清理？(y/N)"
+                    if ($confirm -eq "y" -or $confirm -eq "Y") {
+                        Write-Host ""
+                        foreach ($dir in $cleanDirs) {
+                            if (Test-Path $dir) {
+                                Remove-Item -Recurse -Force $dir -ErrorAction SilentlyContinue
+                                Write-Host "✓ 已清理 $dir" -ForegroundColor Green
+                            }
+                        }
+                        
+                        # 清理 __pycache__
+                        if ($pycacheCount -gt 0) {
+                            $pycacheDirs = Get-ChildItem -Path . -Recurse -Directory -Filter "__pycache__" -ErrorAction SilentlyContinue
+                            foreach ($dir in $pycacheDirs) {
+                                Remove-Item -Recurse -Force $dir.FullName -ErrorAction SilentlyContinue
+                            }
+                            Write-Host "✓ 已清理 $pycacheCount 个 __pycache__ 目录" -ForegroundColor Green
+                        }
+                        
+                        Write-Host "`n✓ 清理完成！" -ForegroundColor Green
+                    } else {
+                        Write-Host "`n已取消" -ForegroundColor Yellow
+                    }
+                } else {
+                    Write-Host "`n没有需要清理的文件" -ForegroundColor Yellow
+                }
+                
                 Read-Host "`n按回车键继续"
             }
             "0" {

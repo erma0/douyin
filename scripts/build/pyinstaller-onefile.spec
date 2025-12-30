@@ -30,7 +30,11 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=[
+        'backend.test',  # 排除测试文件
+        'pytest',
+        'unittest',
+    ],
     noarchive=False,
     optimize=0,
 )

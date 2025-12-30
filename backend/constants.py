@@ -5,15 +5,13 @@
 """
 
 import os
-import sys
 
-# 获取项目根目录
-if getattr(sys, 'frozen', False):
-    # 打包后：使用exe所在目录
-    PROJECT_ROOT = os.path.dirname(sys.executable)
-else:
-    # 开发环境：使用项目根目录
-    PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from .utils.paths import get_app_root, get_resource_root
+
+# 项目根目录（应用目录）
+PROJECT_ROOT = get_app_root()
+# 资源根目录（包含前端静态文件）
+RESOURCE_ROOT = get_resource_root()
 
 # Aria2 默认配置
 ARIA2_DEFAULTS = {
@@ -28,7 +26,7 @@ DOWNLOAD_DEFAULTS = {
     "MAX_CONCURRENCY": 5,
 }
 
-# 路径相关常量
+# 路径相关配置默认值
 PATHS = {
     "CONFIG_DIR": "config",
     "DOWNLOAD_DIR": "download",

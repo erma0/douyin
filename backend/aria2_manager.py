@@ -17,12 +17,18 @@ Aria2管理模块 - 简化版
 
 import os
 import subprocess
-import sys
 import time
 from typing import Optional
 
 from loguru import logger
-from .constants import ARIA2_DEFAULTS, DOWNLOAD_DEFAULTS, PATHS
+
+from .constants import (
+    ARIA2_DEFAULTS,
+    DOWNLOAD_DEFAULTS,
+    PATHS,
+    PROJECT_ROOT,
+    RESOURCE_ROOT,
+)
 
 
 class Aria2Manager:
@@ -156,18 +162,11 @@ class Aria2Manager:
         import shutil
 
         # 1. 检查项目内置的aria2（最快，直接文件检查）
-        # 获取正确的项目根目录（打包后使用exe所在目录）
-        if getattr(sys, 'frozen', False):
-            # 打包后：先检查_MEIPASS临时目录（打包进去的资源）
-            project_root = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
-        else:
-            # 开发环境：使用项目根目录
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+        # 使用资源根目录（打包后是临时解压目录）
         if platform.system() == "Windows":
-            bundled_aria2 = os.path.join(project_root, "aria2", "aria2c.exe")
+            bundled_aria2 = os.path.join(RESOURCE_ROOT, "aria2", "aria2c.exe")
         else:
-            bundled_aria2 = os.path.join(project_root, "aria2", "aria2c")
+            bundled_aria2 = os.path.join(RESOURCE_ROOT, "aria2", "aria2c")
 
         if os.path.exists(bundled_aria2):
             logger.info(f"✓ 找到内置Aria2")
@@ -221,22 +220,13 @@ class Aria2Manager:
         if self.download_dir:
             download_dir = self.download_dir
         else:
-            # 默认使用程序根目录下的 download 文件夹
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            download_dir = os.path.join(project_root, PATHS["DOWNLOAD_DIR"])
+            # 默认使用应用根目录下的 download 文件夹
+            download_dir = os.path.join(PROJECT_ROOT, PATHS["DOWNLOAD_DIR"])
 
         os.makedirs(download_dir, exist_ok=True)
 
-        # 配置目录：程序所在目录下的 config 文件夹
-        # 获取可执行文件所在目录（打包后使用exe所在目录，开发时使用项目根目录）
-        if getattr(sys, 'frozen', False):
-            # 打包后：使用exe所在目录
-            project_root = os.path.dirname(sys.executable)
-        else:
-            # 开发环境：使用项目根目录
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        
-        config_dir = os.path.join(project_root, PATHS["CONFIG_DIR"])
+        # 配置目录：应用根目录下的 config 文件夹
+        config_dir = os.path.join(PROJECT_ROOT, PATHS["CONFIG_DIR"])
         os.makedirs(config_dir, exist_ok=True)
 
         # 创建Aria2配置文件（优化：只在不存在或需要更新时创建）
