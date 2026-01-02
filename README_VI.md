@@ -29,7 +29,7 @@
 - ✅ Tác phẩm người dùng yêu thích (yêu cầu mục tiêu mở quyền)
 - ✅ Tác phẩm theo chủ đề thử thách
 - ✅ Tác phẩm trong bộ sưu tập
-- ⚠️ Tác phẩm nhạc gốc (chức năng bất thường)
+- ✅ Tác phẩm nhạc gốc
 - ✅ Tìm kiếm tác phẩm theo từ khóa
 
 ### 🎯 Tính năng ứng dụng
@@ -52,10 +52,6 @@
 
 
 Hướng dẫn sử dụng chi tiết vui lòng xem [USAGE_VI.md](USAGE_VI.md)
-
-## ⚠️ Vấn đề đã biết
-
-1. **Chức năng âm nhạc bất thường** - Thu thập tác phẩm nhạc gốc có thể thất bại
 
 ## 🔨 Xây dựng và Đóng gói
 

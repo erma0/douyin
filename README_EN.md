@@ -29,7 +29,7 @@
 - ✅ User favorite works (requires target open permission)
 - ✅ Challenge topic works
 - ✅ Collection works
-- ⚠️ Music original works (function abnormal)
+- ✅ Music original works
 - ✅ Keyword search works
 
 ### 🎯 Application Features
@@ -52,10 +52,6 @@
 
 
 Detailed usage instructions please view [USAGE_EN.md](USAGE_EN.md)
-
-## ⚠️ Known Issues
-
-1. **Music Function Abnormal** - Collection of music original works may fail
 
 ## 🔨 Build and Package
 

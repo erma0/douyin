@@ -229,10 +229,6 @@ class Douyin(object):
         params = {"aweme_id": self.id}
         uri = "/aweme/v1/web/aweme/detail/"
 
-        params.update(self.request.PARAMS2)
-        params = self.request.get_params(params)
-        params["a_bogus"] = self.request.get_sign(uri, params)
-
         resp = self.request.getJSON(uri, params)
         aweme_detail = resp.get("aweme_detail", {})
         if aweme_detail:

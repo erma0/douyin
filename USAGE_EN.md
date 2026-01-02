@@ -85,7 +85,7 @@ If the Cookie is missing these fields, it may not work properly.
 | **User Favorites** | Get user favorited works | User homepage link | ✅ Normal |
 | **Challenge Topic** | Get works under topic | `https://www.douyin.com/hashtag/xxx` | ✅ Normal |
 | **Collection** | Get works in collection | Collection link | ✅ Normal |
-| **Music Original** | Get works using this music | `https://www.douyin.com/music/7xxx` | ⚠️ Abnormal |
+| **Music Original** | Get works using this music | `https://www.douyin.com/music/7xxx` | ✅ Normal |
 | **Keyword Search** | Search related works | `Scenery` | ✅ Normal |
 
 ### Collection Quantity Limit
