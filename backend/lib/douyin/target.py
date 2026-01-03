@@ -67,7 +67,7 @@ class TargetHandler:
 
         # 确保路径至少有两个部分
         if len(path_parts) < 2:
-            self.type = "post"
+            self.type = "aweme"
             self.id = path_parts[-1] if path_parts else ""
             self.url = target
         else:
@@ -75,11 +75,14 @@ class TargetHandler:
             self.id = path_parts[-1]
             self.url = target
 
-            # 自动识别：单个作品、搜索、音乐、合集
-            if _type in ["video", "note", "music", "hashtag", "collection"]:
+            # 自动识别：单个作品、搜索、音乐、合集、话题
+            if _type in ["video", "note"]:
+                self.type = "aweme"
+                self.url = f"{DouyinURL.AWEME}/{self.id}"
+            elif _type in ["music", "hashtag"]:
                 self.type = _type
-                if self.type in ["video", "note"]:
-                    self.url = f"{DouyinURL.NOTE}/{self.id}"
+            elif _type == "collection":
+                self.type = "mix"
             elif _type == "search":
                 self.id = unquote(self.id)
                 search_type = parse_qs(urlparse(target).query).get("type")
@@ -92,22 +95,21 @@ class TargetHandler:
         """解析非URL类型的目标"""
         self.id = target
 
-        if self.type in ["search", "user", "live"]:
+        if self.type in ["search"]:
             self.url = f"{DouyinURL.SEARCH}/{quote(self.id)}"
-        elif (
-            self.type in ["video", "note", "music", "hashtag", "collection"]
-            and self.id.isdigit()
-        ):
-            if self.type in ["video", "note"]:
-                self.url = f"{DouyinURL.NOTE}/{self.id}"
+        elif self.type in ["aweme", "music", "hashtag", "mix"] and self.id.isdigit():
+            if self.type == "aweme":
+                self.url = f"{DouyinURL.AWEME}/{self.id}"
+            elif self.type == "mix":
+                self.url = f"{DouyinURL.MIX}/{self.id}"
             else:
                 self.url = f"{DouyinURL.BASE}/{self.type}/{self.id}"
         elif self.type in [
             "post",
-            "like",
             "favorite",
-            "follow",
-            "fans",
+            "collection",
+            "following",
+            "follower",
         ] and self.id.startswith(USER_ID_PREFIX):
             self.url = f"{DouyinURL.USER}/{self.id}"
         else:
@@ -135,9 +137,9 @@ class TargetHandler:
             tuple: (title, aria2_conf_path)
         """
         # 目标信息
-        if self.type in ["search", "user", "live"]:
+        if self.type == "search":
             self.title = self.id
-        elif self.type in ["video", "note"]:
+        elif self.type == "aweme":
             # 通过API获取，暂时使用ID作为标题
             self.title = self.id
         else:
@@ -164,7 +166,7 @@ class TargetHandler:
         self.render_data = json.loads(render_data)
 
         # 根据类型提取信息
-        if self.type == "collection":
+        if self.type == "mix":
             self.info = self.render_data["aweme"]["detail"]["mixInfo"]
             self.title = self.info["mixName"]
         elif self.type == "music":
@@ -173,10 +175,10 @@ class TargetHandler:
         elif self.type == "hashtag":
             self.info = self.render_data["topicDetail"]
             self.title = self.info["chaName"]
-        elif self.type in ["video", "note"]:
+        elif self.type == "aweme":
             self.info = self.render_data["aweme"]["detail"]
             self.title = self.id
-        elif self.type in ["post", "like", "favorite", "follow", "fans"]:
+        elif self.type in ["post", "favorite", "collection", "following", "follower"]:
             self.info = self.render_data["user"]["user"]
             self.title = self.info["nickname"]
         else:

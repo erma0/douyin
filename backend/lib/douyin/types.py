@@ -47,7 +47,8 @@ class DouyinURL:
 
     BASE = "https://www.douyin.com"
     USER = f"{BASE}/user"
-    NOTE = f"{BASE}/note"
+    AWEME = f"{BASE}/note"
+    MIX = f"{BASE}/collection"
     SEARCH = f"{BASE}/search"
     USER_SELF = f"{USER}/self"
 

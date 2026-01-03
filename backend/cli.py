@@ -62,23 +62,20 @@ print(banner)
     type=click.Choice(
         [
             "post",
-            "like",
+            "favorite",
             "music",
             "hashtag",
             "search",
-            "follow",
-            "fans",
+            "following",
+            "follower",
             "collection",
-            "favorite",
-            "video",
-            "note",
-            "user",
-            "live",
+            "mix",
+            "aweme",
         ],
         case_sensitive=False,
     ),
     default="post",
-    help="采集类型，默认为post（主页作品）。支持：post/like/music/hashtag/search/follow/fans/collection/favorite/video/note/user/live",
+    help="采集类型，默认为post（主页作品）。支持：post/favorite/music/hashtag/search/following/follower/collection/mix/aweme",
 )
 @click.option(
     "-p",
@@ -221,7 +218,7 @@ def main(
     logger.success("✓ Cookie验证通过")
 
     if not urls:  # 未输入目标
-        if type in ["like", "favorite", "follow", "fans"]:
+        if type in ["favorite", "collection", "following", "follower"]:
             # 直接采集本账号
             logger.info(f"采集本账号的 {type} 数据")
             start("", limit, no_download, type, path, cookie_str, filters)
@@ -312,7 +309,7 @@ def start(url, limit, no_download, type, path, cookie, filters):
         # 判断是否需要下载
         if no_download:
             logger.info("已跳过下载（--no-download）")
-        elif douyin.type in ["user", "follow", "fans", "live"]:
+        elif douyin.type in ["following", "follower"]:
             logger.info("此类型不需要下载文件")
         else:
             # 解耦：在CLI层面调用下载

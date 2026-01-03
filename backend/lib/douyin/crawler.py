@@ -82,19 +82,19 @@ class Douyin:
         self._get_target_info()
 
         # 根据类型执行不同的采集逻辑
-        if self.type in ["user", "follow", "fans"]:
+        if self.type in ["following", "follower"]:
             self.get_awemes_list()
         elif self.type in [
             "post",
-            "like",
             "favorite",
+            "collection",
             "search",
             "music",
             "hashtag",
-            "collection",
+            "mix",
         ]:
             self.get_awemes_list()
-        elif self.type in ["video", "note"]:
+        elif self.type == "aweme":
             self.get_aweme_detail()
         else:
             quit(f"获取目标类型错误, type: {self.type}")
@@ -198,12 +198,12 @@ class Douyin:
                 with self.lock:
                     if self.type in [
                         "post",
-                        "like",
                         "favorite",
+                        "collection",
                         "search",
                         "music",
                         "hashtag",
-                        "collection",
+                        "mix",
                     ]:
                         new_items, self.has_more = DataParser.parse_awemes(
                             items_list,
@@ -217,7 +217,7 @@ class Douyin:
                         # 触发回调
                         if new_items and self.on_new_items:
                             self.on_new_items(new_items, self.type)
-                    elif self.type in ["user", "live", "follow", "fans"]:
+                    elif self.type in ["following", "follower"]:
                         self.has_more = DataParser.parse_users(
                             items_list, self.results, self.limit, self.has_more
                         )
@@ -253,7 +253,7 @@ class Douyin:
         lines = []
 
         # 保存主页链接
-        if self.type in ["user", "follow", "fans", "live"]:
+        if self.type in ["following", "follower"]:
             lines = [
                 f"{DouyinURL.USER}/{line.get(FieldName.SEC_UID, 'None')}\n"
                 for line in self.results
@@ -265,12 +265,12 @@ class Douyin:
                 desc = line.get("desc") or "无标题"
                 filename = f'{line["id"]}_{desc}'
 
-                if self.type == "collection":
+                if self.type == "mix":
                     filename = f"第{line['no']}集_{filename}"
 
                 # 图文作品
                 if isinstance(line["download_addr"], list):
-                    if self.type == "video":
+                    if self.type == "aweme":
                         down_path = self.down_path.replace(line["id"], filename)
                     else:
                         down_path = os.path.join(self.down_path, filename)

@@ -1,13 +1,15 @@
 
 export enum TaskType {
-  POST = 'post', // 指定作品
-  USER_POST = 'user_post', // 用户主页
-  USER_LIKE = 'user_like', // 用户喜欢
-  USER_FAVORITE = 'user_favorite', // 用户收藏
-  MUSIC = 'music', // 音乐原声
-  CHALLENGE = 'challenge', // 挑战话题
-  COLLECTION = 'collection', // 合集
-  SEARCH = 'search', // 关键词搜索
+  AWEME = 'aweme',           // 单个作品
+  POST = 'post',             // 用户主页作品
+  FAVORITE = 'favorite',     // 用户喜欢
+  COLLECTION = 'collection', // 用户收藏
+  MUSIC = 'music',           // 音乐原声
+  HASHTAG = 'hashtag',       // 话题挑战
+  MIX = 'mix',               // 合集
+  SEARCH = 'search',         // 关键词搜索
+  FOLLOWING = 'following',   // 用户关注
+  FOLLOWER = 'follower',     // 用户粉丝
   DOWNLOAD_MANAGER = 'download_manager', // 下载管理
 }
 

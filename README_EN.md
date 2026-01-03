@@ -23,13 +23,13 @@
 ## 🍬 Features
 
 ### 📊 Data Collection
-- ✅ Specified work data
-- ✅ User homepage works
-- ✅ User liked works (requires target open permission)
-- ✅ User favorite works (requires target open permission)
-- ✅ Challenge topic works
-- ✅ Collection works
-- ✅ Music original works
+- ✅ Single work data
+- ✅ User posts works
+- ✅ User favorites works (requires target open permission)
+- ✅ User collections works (requires target open permission)
+- ✅ Hashtag works
+- ✅ Mix works
+- ✅ Music works
 - ✅ Keyword search works
 
 ### 🎯 Application Features

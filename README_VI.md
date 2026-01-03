@@ -23,13 +23,13 @@
 ## 🍬 Tính năng
 
 ### 📊 Thu thập dữ liệu
-- ✅ Dữ liệu tác phẩm được chỉ định
-- ✅ Tác phẩm trang chủ người dùng
-- ✅ Tác phẩm người dùng đã thích (yêu cầu mục tiêu mở quyền)
-- ✅ Tác phẩm người dùng yêu thích (yêu cầu mục tiêu mở quyền)
-- ✅ Tác phẩm theo chủ đề thử thách
-- ✅ Tác phẩm trong bộ sưu tập
-- ✅ Tác phẩm nhạc gốc
+- ✅ Dữ liệu tác phẩm đơn
+- ✅ Bài đăng người dùng
+- ✅ Yêu thích người dùng (yêu cầu mục tiêu mở quyền)
+- ✅ Bộ sưu tập người dùng (yêu cầu mục tiêu mở quyền)
+- ✅ Tác phẩm hashtag
+- ✅ Tác phẩm mix
+- ✅ Tác phẩm nhạc
 - ✅ Tìm kiếm tác phẩm theo từ khóa
 
 ### 🎯 Tính năng ứng dụng

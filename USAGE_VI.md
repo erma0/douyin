@@ -79,13 +79,13 @@ Nếu Cookie thiếu các trường này, nó có thể không hoạt động b�
 
 | Loại | Mô tả | Ví dụ đầu vào | Trạng thái |
 |------|-------|---------------|------------|
-| **Tác phẩm chỉ định** | Lấy thông tin một tác phẩm | `https://www.douyin.com/video/7xxx` | ✅ Bình thường |
-| **Trang chủ người dùng** | Lấy các tác phẩm do người dùng đăng | `https://www.douyin.com/user/MS4wLjABxxx` | ✅ Bình thường |
-| **Người dùng thích** | Lấy các tác phẩm người dùng đã thích | Liên kết trang chủ người dùng | ✅ Bình thường |
-| **Người dùng yêu thích** | Lấy các tác phẩm người dùng đã yêu thích | Liên kết trang chủ người dùng | ✅ Bình thường |
-| **Chủ đề thử thách** | Lấy các tác phẩm theo chủ đề | `https://www.douyin.com/hashtag/xxx` | ✅ Bình thường |
-| **Bộ sưu tập** | Lấy các tác phẩm trong bộ sưu tập | Liên kết bộ sưu tập | ✅ Bình thường |
-| **Nhạc gốc** | Lấy các tác phẩm sử dụng nhạc này | `https://www.douyin.com/music/7xxx` | ✅ Bình thường |
+| **Tác phẩm đơn** | Lấy thông tin một tác phẩm | `https://www.douyin.com/video/7xxx` | ✅ Bình thường |
+| **Bài đăng người dùng** | Lấy các tác phẩm do người dùng đăng | `https://www.douyin.com/user/MS4wLjABxxx` | ✅ Bình thường |
+| **Yêu thích người dùng** | Lấy các tác phẩm người dùng đã thích | Liên kết trang chủ người dùng | ✅ Bình thường |
+| **Bộ sưu tập người dùng** | Lấy các tác phẩm người dùng đã sưu tập | Liên kết trang chủ người dùng | ✅ Bình thường |
+| **Hashtag** | Lấy các tác phẩm theo hashtag | `https://www.douyin.com/hashtag/xxx` | ✅ Bình thường |
+| **Mix** | Lấy các tác phẩm trong mix | Liên kết mix | ✅ Bình thường |
+| **Nhạc** | Lấy các tác phẩm sử dụng nhạc này | `https://www.douyin.com/music/7xxx` | ✅ Bình thường |
 | **Tìm kiếm từ khóa** | Tìm kiếm các tác phẩm liên quan | `Phong cảnh` | ✅ Bình thường |
 
 ### Giới hạn số lượng thu thập

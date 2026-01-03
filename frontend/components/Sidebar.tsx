@@ -32,13 +32,13 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: TaskType.POST, label: '指定作品', icon: Film },
-  { id: TaskType.USER_POST, label: '用户主页', icon: User },
-  { id: TaskType.USER_LIKE, label: '用户喜欢', icon: Heart },
-  { id: TaskType.USER_FAVORITE, label: '用户收藏', icon: Star },
+  { id: TaskType.AWEME, label: '单个作品', icon: Film },
+  { id: TaskType.POST, label: '用户主页', icon: User },
+  { id: TaskType.FAVORITE, label: '用户喜欢', icon: Heart },
+  { id: TaskType.COLLECTION, label: '用户收藏', icon: Star },
   { id: TaskType.MUSIC, label: '音乐原声', icon: Music },
-  { id: TaskType.CHALLENGE, label: '挑战话题', icon: Hash },
-  { id: TaskType.COLLECTION, label: '合集作品', icon: Layers },
+  { id: TaskType.HASHTAG, label: '话题挑战', icon: Hash },
+  { id: TaskType.MIX, label: '合集作品', icon: Layers },
   { id: TaskType.SEARCH, label: '关键词搜索', icon: Search },
 ];
 

@@ -128,7 +128,7 @@ class DouyinClient:
                 "count": APIConfig.DEFAULT_COUNT,
                 "sec_user_id": target_id,
             }
-        elif type == "like":
+        elif type == "favorite":
             uri = APIEndpoint.AWEME_FAVORITE
             params = {
                 "sec_user_id": target_id,
@@ -139,7 +139,7 @@ class DouyinClient:
                 "count": APIConfig.DEFAULT_COUNT,
                 "publish_video_strategy_type": "2",
             }
-        elif type == "favorite":
+        elif type == "collection":
             uri = APIEndpoint.AWEME_COLLECTION
             params = {
                 "sec_user_id": target_id,
@@ -156,7 +156,7 @@ class DouyinClient:
                 "sort_type": 1,  # 0综合 1最热 2最新
                 "ch_id": target_id,
             }
-        elif type == "collection":
+        elif type == "mix":
             uri = APIEndpoint.MIX_AWEME
             params = {**self._build_common_params(max_cursor), "mix_id": target_id}
         elif type == "search":
@@ -179,25 +179,7 @@ class DouyinClient:
                 "count": APIConfig.DEFAULT_COUNT,
                 "keyword": unquote(target_id),
             }
-        elif type == "user":
-            uri = APIEndpoint.DISCOVER_SEARCH
-            params = {
-                "count": APIConfig.USER_SEARCH_COUNT,
-                "from_group_id": "",
-                "is_filter_search": 0,
-                "keyword": quote(target_id),
-                "list_type": "single",
-                "need_filter_settings": 0,
-                "offset": max_cursor,
-                "search_id": logid,
-                "query_correct_type": 1,
-                "search_channel": "aweme_user_web",
-                "search_source": "tab_search",
-            }
-        elif type == "live":
-            uri = APIEndpoint.DISCOVER_SEARCH
-            params = {}
-        elif type == "follow":
+        elif type == "following":
             uri = APIEndpoint.USER_FOLLOWING
             params = {
                 "address_book_access": 0,
@@ -210,7 +192,7 @@ class DouyinClient:
                 "source_type": 1,
                 "sec_user_id": target_id,
             }
-        elif type == "fans":
+        elif type == "follower":
             uri = APIEndpoint.USER_FOLLOWER
             params = {
                 "address_book_access": 0,

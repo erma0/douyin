@@ -18,7 +18,7 @@ def test_init_with_url():
 def test_init_with_id():
     """测试ID初始化"""
     d = Douyin(target="7235055125771898149",
-               type="video")
+               type="aweme")
     d.get_target_id()
     assert d.id == "7235055125771898149"
 
@@ -37,7 +37,7 @@ def test_video_by_url(settings_cookie):
 def test_video_by_id(settings_cookie):
     """测试视频ID采集"""
     d = Douyin(target="7235055125771898149",
-               type="video", cookie=settings_cookie)
+               type="aweme", cookie=settings_cookie)
     d.run()
     assert len(d.results) > 0
 
@@ -58,7 +58,7 @@ def test_user_like(settings_cookie):
     """测试用户喜欢采集"""
 
     d = Douyin(target="https://v.douyin.com/e2BkGS7/",
-               type="like",
+               type="favorite",
                limit=18, cookie=settings_cookie)
     d.run()
     assert len(d.results) > 0
@@ -76,7 +76,7 @@ def test_user_favorite(settings_cookie):
 
 @pytest.mark.network
 @pytest.mark.cookie
-def test_collection(settings_cookie):
+def test_mix(settings_cookie):
     """测试合集采集"""
     d = Douyin(
         target="https://www.douyin.com/collection/7018087406876231711",

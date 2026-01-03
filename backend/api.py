@@ -592,20 +592,8 @@ class API:
             logger.error("Invalid limit: must be a non-negative number")
             raise ValueError("Invalid limit")
 
-        # 前端到后端的类型映射
-        # 前端使用更明确的命名（如 user_post），后端爬虫使用简短命名（如 post）
-        type_mapping = {
-            "user_post": "post",  # 用户主页作品
-            "user_like": "like",  # 用户喜欢
-            "user_favorite": "favorite",  # 用户收藏
-            "challenge": "hashtag",  # 挑战话题
-            "post": "video",  # 单个作品（前端post对应后端video/note）
-        }
-
-        # 转换类型
-        backend_type = type_mapping.get(type, type)
-        if backend_type != type:
-            logger.debug(f"类型映射: {type} -> {backend_type}")
+        # 类型已统一，前后端使用相同命名，无需映射
+        backend_type = type
 
         # 生成唯一的任务ID
         import uuid
@@ -616,7 +604,6 @@ class API:
         self.task_status[task_id] = {
             "id": task_id,
             "type": type,
-            "backend_type": backend_type,
             "target": target,
             "limit": limit,
             "filters": filters or {},
@@ -634,9 +621,7 @@ class API:
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         logger.info(f"📥 开始采集任务")
         logger.info(f"  任务ID: {task_id}")
-        logger.info(f"  前端类型: {type}")
-        if backend_type != type:
-            logger.info(f"  后端类型: {backend_type}")
+        logger.info(f"  类型: {type}")
         logger.info(f"  目标: {target}")
         logger.info(f"  数量限制: {'不限' if limit == 0 else f'{limit}条'}")
         if filters:
@@ -709,11 +694,11 @@ class API:
 
                         traceback.print_exc()
 
-                # 创建爬虫实例（使用转换后的后端类型）
+                # 创建爬虫实例
                 douyin = Douyin(
                     target=target,
                     limit=int(limit) if limit > 0 else 0,
-                    type=backend_type,
+                    type=type,
                     down_path=self.settings.get(
                         "downloadPath",
                         os.path.join(self.project_root, PATHS["DOWNLOAD_DIR"]),
@@ -807,8 +792,6 @@ class API:
                 logger.success(
                     f"✓ 任务完成: 成功采集 {len(self.task_results[task_id])} 条数据"
                 )
-                if detected_type != type:
-                    logger.info(f"  后端识别类型: {detected_type} (前端传入: {type})")
                 logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
                 # 通知前端任务完成

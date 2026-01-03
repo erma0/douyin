@@ -133,7 +133,7 @@ const Row = ({ index, style, data }: { index: number; style: React.CSSProperties
  */
 export const App: React.FC = () => {
   // --- 任务相关状态 ---
-  const [activeTab, setActiveTab] = useState<TaskType>(TaskType.USER_POST);  // 当前选中的任务类型
+  const [activeTab, setActiveTab] = useState<TaskType>(TaskType.POST);  // 当前选中的任务类型
   const [inputVal, setInputVal] = useState('');                              // 输入框的值
   const [inputError, setInputError] = useState<string | null>(null);         // 输入验证错误信息
 
@@ -348,30 +348,12 @@ export const App: React.FC = () => {
           logger.info(`保存任务ID: ${message.task_id}`);
         }
 
-        // 后端类型到前端类型的映射
-        const backendToFrontendTypeMap: Record<string, TaskType> = {
-          'post': TaskType.USER_POST,      // 后端的 post 对应前端的 user_post
-          'video': TaskType.POST,          // 后端的 video 对应前端的 post（单个作品）
-          'note': TaskType.POST,          // 后端的 video 对应前端的 post（单个作品）
-          'user': TaskType.USER_POST,      // 后端的 user 对应前端的 user_post
-          'like': TaskType.USER_LIKE,      // 后端的 like 对应前端的 user_like
-          'favorite': TaskType.USER_FAVORITE, // 后端的 favorite 对应前端的 user_favorite
-          'music': TaskType.MUSIC,         // 后端的 music 对应前端的 music
-          'hashtag': TaskType.CHALLENGE,   // 后端的 hashtag 对应前端的 challenge
-          'collection': TaskType.COLLECTION, // 后端的 collection 对应前端的 collection
-          'search': TaskType.SEARCH,       // 后端的 search 对应前端的 search
-        };
-
-        // 根据后端检测到的类型自动切换面板
-        if (message.detected_type) {
-          const frontendType = backendToFrontendTypeMap[message.detected_type];
-          if (frontendType && frontendType !== activeTab) {
-            setActiveTab(frontendType);
-            setResultsTaskType(frontendType); // 同步更新结果对应的面板类型
-            logger.info(`后端识别类型: ${message.detected_type}（前端传入: ${activeTab}）→ 切换到: ${frontendType}`);
-          } else {
-            logger.info(`后端识别类型: ${message.detected_type}（前端传入: ${activeTab}）`);
-          }
+        // 根据后端检测到的类型自动切换面板（类型已统一，无需映射）
+        if (message.detected_type && message.detected_type !== activeTab) {
+          const detectedType = message.detected_type as TaskType;
+          setActiveTab(detectedType);
+          setResultsTaskType(detectedType);
+          logger.info(`后端识别类型: ${message.detected_type}，自动切换面板`);
         }
 
         if (message.total && message.total > 0) {
@@ -496,19 +478,19 @@ export const App: React.FC = () => {
     switch (activeTab) {
       case TaskType.SEARCH:
         return '输入关键词搜索，例如：美食、旅游、科技...';
-      case TaskType.POST:
+      case TaskType.AWEME:
         return '支持：长链接、短链接、纯数字ID';
-      case TaskType.CHALLENGE:
+      case TaskType.HASHTAG:
         return '支持：长链接、短链接、纯数字ID';
       case TaskType.MUSIC:
         return '支持：长链接、短链接、纯数字ID';
-      case TaskType.COLLECTION:
+      case TaskType.MIX:
         return '支持：长链接、短链接、纯数字ID';
-      case TaskType.USER_POST:
+      case TaskType.POST:
         return '支持：长链接、短链接、SecUid';
-      case TaskType.USER_LIKE:
+      case TaskType.FAVORITE:
         return '支持：长链接、短链接、SecUid';
-      case TaskType.USER_FAVORITE:
+      case TaskType.COLLECTION:
         return '支持：长链接、短链接、SecUid';
       default:
         return '请输入目标链接';
@@ -655,7 +637,7 @@ export const App: React.FC = () => {
                           </button>
 
                           {/* Max Count Dropdown Trigger - 仅在非单个作品采集时显示 */}
-                          {activeTab !== TaskType.POST && (
+                          {activeTab !== TaskType.AWEME && (
                             <>
                               <div className="relative border-l border-gray-100" ref={limitMenuRef}>
                                 <button

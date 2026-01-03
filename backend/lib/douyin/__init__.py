@@ -8,16 +8,16 @@
     Douyin: 爬虫主类，提供统一的采集接口
 
 支持的采集类型：
+    - aweme: 单个作品
     - post: 用户主页作品
-    - like: 用户喜欢
-    - favorite: 用户收藏
-    - video/note: 单个作品
+    - favorite: 用户喜欢
+    - collection: 用户收藏
     - music: 音乐作品
     - hashtag: 话题作品
-    - collection: 合集作品
+    - mix: 合集作品
     - search: 关键词搜索
-    - follow: 关注列表
-    - fans: 粉丝列表
+    - following: 关注列表
+    - follower: 粉丝列表
 
 使用示例：
     from backend.lib.douyin import Douyin

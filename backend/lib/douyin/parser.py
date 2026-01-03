@@ -184,7 +184,7 @@ class DataParser:
             ]
 
         # 合集信息
-        if type == "collection":
+        if type == "mix":
             aweme["no"] = item["mix_info"]["statis"]["current_episode"]
 
         return aweme

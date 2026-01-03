@@ -79,13 +79,13 @@ If the Cookie is missing these fields, it may not work properly.
 
 | Type | Description | Input Example | Status |
 |------|-------------|---------------|--------|
-| **Specified Work** | Get single work info | `https://www.douyin.com/video/7xxx` | ✅ Normal |
-| **User Homepage** | Get user published works | `https://www.douyin.com/user/MS4wLjABxxx` | ✅ Normal |
-| **User Likes** | Get user liked works | User homepage link | ✅ Normal |
-| **User Favorites** | Get user favorited works | User homepage link | ✅ Normal |
-| **Challenge Topic** | Get works under topic | `https://www.douyin.com/hashtag/xxx` | ✅ Normal |
-| **Collection** | Get works in collection | Collection link | ✅ Normal |
-| **Music Original** | Get works using this music | `https://www.douyin.com/music/7xxx` | ✅ Normal |
+| **Single Work** | Get single work info | `https://www.douyin.com/video/7xxx` | ✅ Normal |
+| **User Posts** | Get user published works | `https://www.douyin.com/user/MS4wLjABxxx` | ✅ Normal |
+| **User Favorites** | Get user liked works | User homepage link | ✅ Normal |
+| **User Collections** | Get user collected works | User homepage link | ✅ Normal |
+| **Hashtag** | Get works under hashtag | `https://www.douyin.com/hashtag/xxx` | ✅ Normal |
+| **Mix** | Get works in mix | Mix link | ✅ Normal |
+| **Music** | Get works using this music | `https://www.douyin.com/music/7xxx` | ✅ Normal |
 | **Keyword Search** | Search related works | `Scenery` | ✅ Normal |
 
 ### Collection Quantity Limit
