@@ -227,14 +227,39 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
                   <label htmlFor="wizard-cookie-input" className="block text-sm font-semibold text-gray-700">
                     Cookie 设置（可选）
                   </label>
-                  <button
-                    onClick={() => bridge.openExternal('https://github.com/erma0/douyin')}
-                    className="text-xs text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 transition-colors"
-                    title="查看获取 Cookie 的详细教程"
-                  >
-                    如何获取 Cookie?
-                    <ExternalLink size={12} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          const text = await bridge.getClipboardText();
+                          if (!text) {
+                            alert('剪贴板为空');
+                            return;
+                          }
+                          setSettings({ ...settings, cookie: text.trim() });
+                          console.log('已粘贴Cookie');
+                        } catch (err) {
+                          console.error('粘贴失败:', err);
+                          alert('粘贴失败，请手动输入');
+                        }
+                      }}
+                      className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+                      title="一键粘贴剪贴板内容"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      粘贴
+                    </button>
+                    <button
+                      onClick={() => bridge.openExternal('https://github.com/erma0/douyin/blob/main/USAGE.md#-cookie%E8%8E%B7%E5%8F%96')}
+                      className="text-xs text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 transition-colors"
+                      title="查看获取 Cookie 的详细教程"
+                    >
+                      如何获取 Cookie?
+                      <ExternalLink size={12} />
+                    </button>
+                  </div>
                 </div>
                 <textarea
                   id="wizard-cookie-input"
