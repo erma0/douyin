@@ -315,8 +315,11 @@ def start(url, limit, no_download, type, path, cookie, filters):
         elif douyin.type in ["user", "follow", "fans", "live"]:
             logger.info("此类型不需要下载文件")
         else:
+            # 解耦：在CLI层面调用下载
+            from lib.download import download
+            
             logger.info("开始下载文件...")
-            douyin.download_all()
+            download(douyin.down_path, douyin.aria2_conf)
 
         return True
 

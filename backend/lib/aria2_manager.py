@@ -22,13 +22,14 @@ from typing import Optional
 
 from loguru import logger
 
-from .constants import (
+from ..constants import (
     ARIA2_DEFAULTS,
     DOWNLOAD_DEFAULTS,
     PATHS,
     PROJECT_ROOT,
     RESOURCE_ROOT,
 )
+from .douyin.types import DouyinURL, RequestHeaders
 
 
 class Aria2Manager:
@@ -43,7 +44,6 @@ class Aria2Manager:
         port: Aria2 RPC服务端口
         secret: Aria2 RPC服务密钥
         aria2_process: Aria2进程对象
-        api: 连接状态标记（兼容旧代码）
     """
 
     def __init__(
@@ -253,8 +253,8 @@ class Aria2Manager:
             "timeout": "60",  # 下载超时（秒）
             "connect-timeout": "30",  # 连接超时（秒）
             # === HTTP 配置 ===
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
-            "referer": "https://www.douyin.com/?recommend=1",
+            "User-Agent": RequestHeaders.USER_AGENT,
+            "referer": DouyinURL.BASE,
             "check-certificate": "false",  # 不检查SSL证书
             # === 性能优化 ===
             "disk-cache": "32M",  # 磁盘缓存

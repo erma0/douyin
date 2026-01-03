@@ -141,7 +141,7 @@ class CookieManager:
                 key, value = cookie.split("=", 1)
                 key = key.strip()
                 value = value.strip().rstrip(";")
-                
+
                 # 跳过空键或空值
                 if key and value:
                     cookie_dict[key] = value
@@ -188,18 +188,18 @@ class CookieManager:
         try:
             url = "https://sso.douyin.com/check_login/"
             cookie_dict = CookieManager.cookies_str_to_dict(cookie)
-            
+
             if not cookie_dict:
                 logger.warning("Cookie解析失败，无法验证")
                 return False
 
             response = requests.get(url, cookies=cookie_dict, timeout=10)
-            
+
             # 检查HTTP状态码
             if response.status_code != 200:
                 logger.warning(f"Cookie验证请求失败，状态码: {response.status_code}")
                 return False
-            
+
             result = response.json()
 
             if result.get("has_login") is True:

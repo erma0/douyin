@@ -1,4 +1,4 @@
-from backend.lib.request import Request
+from lib.douyin.request import Request
 import pytest
 
 

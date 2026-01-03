@@ -25,7 +25,10 @@ def download(path, aria2_conf):
             except ImportError:
                 # 命令行模式下的导入
                 import sys
-                sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+                sys.path.insert(
+                    0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                )
                 from constants import RESOURCE_ROOT
 
             if platform.system() == "Windows":

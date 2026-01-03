@@ -13,7 +13,7 @@ spec_root = os.path.abspath(os.path.join(os.path.dirname(SPEC), '..', '..'))
 datas = [
     (os.path.join(spec_root, 'frontend/dist'), 'frontend/dist'),
     (os.path.join(spec_root, 'aria2'), 'aria2'),
-    (os.path.join(spec_root, 'backend/lib/js'), 'backend/lib/js'),
+    (os.path.join(spec_root, 'backend/lib/douyin/js'), 'backend/lib/douyin/js'),
 ]
 
 # 隐藏导入（只保留必要的）

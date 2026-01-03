@@ -9,14 +9,31 @@
 """
 import os
 import random
-import re
+from pathlib import Path
 from urllib.parse import quote
 
 import requests
 from loguru import logger
 
-from .cookies import CookieManager
-from .execjs_fix import execjs
+from ...utils.execjs_fix import execjs
+from ..cookies import CookieManager
+from .types import (
+    APIEndpoint,
+    CookieField,
+    DouyinURL,
+    RequestHeaders,
+    RequestParams,
+    SignMethod,
+    TokenConfig,
+)
+
+
+def _load_sign_script():
+    """加载 JS 签名脚本"""
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    js_file = os.path.join(current_dir, "js", "douyin.js")
+    with open(js_file, "r", encoding="utf-8") as f:
+        return execjs.compile(f.read())
 
 
 class Request(object):
@@ -26,62 +43,15 @@ class Request(object):
     用于处理抖音网页端的HTTP请求，包括签名生成、参数构建等功能
     """
 
-    HOST = "https://www.douyin.com"
+    HOST = DouyinURL.BASE
     # 基础请求参数
-    PARAMS = {
-        "device_platform": "webapp",
-        "aid": "6383",
-        "channel": "channel_pc_web",
-    }
+    PARAMS = RequestParams.BASE
     # 可能有接口需要的额外参数，备用
-    PARAMS2 = {
-        "update_version_code": "170400",
-        "pc_client_type": "1",  # Windows
-        "version_code": "190500",
-        "version_name": "19.5.0",
-        "cookie_enabled": "true",
-        "screen_width": "2560",  # from cookie dy_swidth
-        "screen_height": "1440",  # from cookie dy_sheight
-        "browser_language": "zh-CN",
-        "browser_platform": "Win32",
-        "browser_name": "Chrome",
-        "browser_version": "126.0.0.0",
-        "browser_online": "true",
-        "engine_name": "Blink",
-        "engine_version": "126.0.0.0",
-        "os_name": "Windows",
-        "os_version": "10",
-        "cpu_core_num": "24",  # device_web_cpu_core
-        "device_memory": "8",  # device_web_memory_size
-        "platform": "PC",
-        "downlink": "10",
-        "effective_type": "4g",
-        "round_trip_time": "50",
-        # 'webid': '',   # from doc
-        # 'verifyFp': '',   # from cookie s_v_web_id
-        # 'fp': '', # from cookie s_v_web_id
-        # 'msToken': '',  # from cookie msToken
-        # 'a_bogus': '' # 通过sign方法生成
-    }
+    PARAMS2 = RequestParams.EXTENDED
     # 请求头配置，模拟浏览器环境
-    HEADERS = {
-        "accept": "application/json, text/plain, */*",
-        "accept-language": "zh-CN,zh;q=0.9",
-        "priority": "u=1, i",
-        "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"Windows"',
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-origin",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
-        "referer": "https://www.douyin.com/",
-    }
-    # 加载JS签名脚本
-    filepath = os.path.dirname(__file__)
-    SIGN = execjs.compile(
-        open(os.path.join(filepath, "js/douyin.js"), "r", encoding="utf-8").read()
-    )
+    HEADERS = RequestHeaders.DEFAULT
+    # JS 签名脚本
+    SIGN = _load_sign_script()
     # Web ID缓存
     WEBID = ""
 
@@ -128,9 +98,9 @@ class Request(object):
         # 构建查询字符串
         query = "&".join([f"{k}={quote(str(v))}" for k, v in params.items()])
         # 根据URI类型选择不同的签名方法
-        call_name = "sign_datail"
+        call_name = SignMethod.DETAIL
         if "reply" in uri:
-            call_name = "sign_reply"
+            call_name = SignMethod.REPLY
         # 调用JS脚本生成签名
         a_bogus = self.SIGN.call(call_name, query, self.HEADERS.get("User-Agent"))
         return a_bogus
@@ -149,13 +119,15 @@ class Request(object):
             dict: 完整的请求参数字典
         """
         # 从Cookie中提取设备和浏览器信息
-        params["msToken"] = self.get_ms_token()
-        params["screen_width"] = self.COOKIES.get("dy_swidth", 2560)
-        params["screen_height"] = self.COOKIES.get("dy_sheight", 1440)
-        params["cpu_core_num"] = self.COOKIES.get("device_web_cpu_core", 24)
-        params["device_memory"] = self.COOKIES.get("device_web_memory_size", 8)
-        params["verifyFp"] = self.COOKIES.get("s_v_web_id", None)
-        params["fp"] = self.COOKIES.get("s_v_web_id", None)
+        params[CookieField.MS_TOKEN] = self.get_ms_token()
+        params["screen_width"] = self.COOKIES.get(CookieField.DY_SWIDTH, 2560)
+        params["screen_height"] = self.COOKIES.get(CookieField.DY_SHEIGHT, 1440)
+        params["cpu_core_num"] = self.COOKIES.get(CookieField.DEVICE_WEB_CPU_CORE, 24)
+        params["device_memory"] = self.COOKIES.get(
+            CookieField.DEVICE_WEB_MEMORY_SIZE, 8
+        )
+        params["verifyFp"] = self.COOKIES.get(CookieField.S_V_WEB_ID, None)
+        params["fp"] = self.COOKIES.get(CookieField.S_V_WEB_ID, None)
         params["webid"] = self.get_webid()
         return params
 
@@ -168,24 +140,28 @@ class Request(object):
         """
         if not self.WEBID:
             # 生成一个随机的webid，避免循环调用
-            self.WEBID = str(random.randint(1000000000000000000, 9999999999999999999))
+            self.WEBID = str(
+                random.randint(TokenConfig.WEBID_MIN, TokenConfig.WEBID_MAX)
+            )
         return self.WEBID
 
-    def get_ms_token(self, randomlength=120):
+    def get_ms_token(self, randomlength=None):
         """
         获取或生成msToken
 
         Args:
-            randomlength: 随机字符串长度，默认120
+            randomlength: 随机字符串长度，默认使用TokenConfig.MS_TOKEN_LENGTH
 
         Returns:
             str: Cookie中的msToken或随机生成的字符串
         """
-        ms_token = self.COOKIES.get("msToken", None)
+        ms_token = self.COOKIES.get(CookieField.MS_TOKEN, None)
         if not ms_token:
             # 生成随机msToken
+            if randomlength is None:
+                randomlength = TokenConfig.MS_TOKEN_LENGTH
             ms_token = ""
-            base_str = "ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789="
+            base_str = TokenConfig.MS_TOKEN_CHARS
             length = len(base_str) - 1
             for _ in range(randomlength):
                 ms_token += base_str[random.randint(0, length)]
@@ -226,9 +202,7 @@ class Request(object):
         # 合并基础参数
         params.update(self.PARAMS)
         # 注意：单个作品详情/音乐接口需要签名
-        if uri in ["/aweme/v1/web/aweme/detail/", "/aweme/v1/web/music/aweme/"]:
-            # params.update(self.PARAMS2)
-            # params = self.get_params(params)
+        if uri in [APIEndpoint.AWEME_DETAIL, APIEndpoint.MUSIC_AWEME]:
             params["a_bogus"] = self.get_sign(uri, params)
         # 根据是否有data决定使用POST还是GET
         if data:

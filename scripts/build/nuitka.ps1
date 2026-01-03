@@ -155,7 +155,7 @@ try {
     $nuitkaArgs += @(
         # 包含数据目录
         "--include-data-dir=frontend/dist=frontend/dist",
-        "--include-data-dir=backend/lib/js=backend/lib/js",
+        "--include-data-dir=backend/lib/douyin/js=backend/lib/douyin/js",
         
         # 明确包含 aria2 可执行文件和配置
         "--include-data-files=aria2/aria2c.exe=aria2/aria2c.exe",
