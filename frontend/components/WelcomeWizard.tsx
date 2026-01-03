@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { APP_DEFAULTS } from '../constants';
 import { bridge } from '../services/bridge';
 import { AppSettings } from '../types';
+import { toast } from './Toast';
 
 interface WelcomeWizardProps {
   isOpen: boolean;
@@ -81,7 +82,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
     } catch (e) {
       console.error("Failed to save settings", e);
       const errorMsg = e instanceof Error ? e.message : String(e);
-      alert(`配置保存失败: ${errorMsg}\n\n请稍后在设置中重新配置。`);
+      toast.error(`配置保存失败: ${errorMsg}\n\n请稍后在设置中重新配置。`);
       // 即使保存失败也完成向导，让用户可以使用应用
       onComplete();
     } finally {
@@ -233,14 +234,14 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
                         try {
                           const text = await bridge.getClipboardText();
                           if (!text) {
-                            alert('剪贴板为空');
+                            toast.error('剪贴板为空');
                             return;
                           }
                           setSettings({ ...settings, cookie: text.trim() });
                           console.log('已粘贴Cookie');
                         } catch (err) {
                           console.error('粘贴失败:', err);
-                          alert('粘贴失败，请手动输入');
+                          toast.error('粘贴失败，请手动输入');
                         }
                       }}
                       className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"

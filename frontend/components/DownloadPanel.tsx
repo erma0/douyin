@@ -38,6 +38,7 @@ interface DownloadPanelProps {
 export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs = false }) => {
   const [activeTab, setActiveTab] = useState<'active' | 'waiting' | 'stopped'>('active');
   const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
   const [aria2Connected, setAria2Connected] = useState(false);
 
@@ -309,7 +310,7 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
                   </button>
 
                   <button
-                    onClick={cancelAll}
+                    onClick={() => setShowCancelConfirm(true)}
                     disabled={totalActive === 0 && totalWaiting === 0}
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${totalActive > 0 || totalWaiting > 0
                         ? 'text-red-700 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 hover:from-red-100 hover:to-rose-100'
@@ -396,6 +397,43 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
                 className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors"
               >
                 确定清空
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 取消任务确认对话框 */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md mx-4 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <XCircle size={20} className="text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">取消任务</h3>
+                <p className="text-sm text-gray-500">此操作不可撤销</p>
+              </div>
+            </div>
+            <p className="text-gray-700 mb-6">
+              确定要取消所有活动和等待任务吗？这将取消 {totalActive + totalWaiting} 个任务。
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowCancelConfirm(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={async () => {
+                  await cancelAll();
+                  setShowCancelConfirm(false);
+                }}
+                className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors"
+              >
+                确定取消
               </button>
             </div>
           </div>
