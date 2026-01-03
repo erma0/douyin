@@ -148,6 +148,7 @@ export const App: React.FC = () => {
   const [selectedWorkId, setSelectedWorkId] = useState<string | null>(null);  // 当前查看详情的作品ID
   const [resultsTaskType, setResultsTaskType] = useState<TaskType | null>(null);  // 记录结果对应的任务类型
   const [savedInputVal, setSavedInputVal] = useState('');  // 保存采集时的输入框内容
+  const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);  // 保存当前采集任务的ID
 
   // --- 模态框状态 ---
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);  // 设置模态框是否打开
@@ -318,7 +319,8 @@ export const App: React.FC = () => {
       return;
     }
 
-    // 清空旧结果，记录当前面板和输入内容
+    // 开始新采集时清空旧结果，记录当前面板和输入内容
+    // 这样可以确保下载时使用的是当前采集任务的配置文件
     setResults([]);
     setResultsTaskType(activeTab);
     setSavedInputVal(inputVal);
@@ -339,6 +341,12 @@ export const App: React.FC = () => {
       } else if (message.type === 'complete') {
         // 采集完成
         setIsLoading(false);
+
+        // 保存当前任务ID，用于后续下载
+        if (message.task_id) {
+          setCurrentTaskId(message.task_id);
+          logger.info(`保存任务ID: ${message.task_id}`);
+        }
 
         // 后端类型到前端类型的映射
         const backendToFrontendTypeMap: Record<string, TaskType> = {
@@ -465,8 +473,8 @@ export const App: React.FC = () => {
     try {
       logger.info(`📦 开始一键下载全部 (${results.length} 个作品)`);
 
-      // 直接从后端获取douyin实例的aria2_conf路径
-      const configFilePath = await bridge.getAria2ConfigPath();
+      // 使用当前采集任务的task_id获取配置文件路径
+      const configFilePath = await bridge.getAria2ConfigPath(currentTaskId || undefined);
       logger.info(`使用配置文件: ${configFilePath}`);
 
       // 使用hook方法读取配置文件并批量下载

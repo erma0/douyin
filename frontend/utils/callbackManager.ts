@@ -13,6 +13,7 @@
  */
 export interface TaskCallbackMessage {
   type: 'result' | 'complete' | 'error';
+  task_id?: string;
   data?: any[];
   total?: number;
   detected_type?: string;

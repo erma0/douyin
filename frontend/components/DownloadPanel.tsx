@@ -39,6 +39,7 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
   const [activeTab, setActiveTab] = useState<'active' | 'waiting' | 'stopped'>('active');
   const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
+  const [aria2Connected, setAria2Connected] = useState(false);
 
   const {
     activeTasks,
@@ -50,6 +51,14 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
     cancelAll,
     purgeStoppedTasks,
   } = useAria2Manager(isOpen);
+
+  // 监听Aria2连接状态
+  React.useEffect(() => {
+    const unsubscribe = aria2Service.onConnectionChange((connected) => {
+      setAria2Connected(connected);
+    });
+    return unsubscribe;
+  }, []);
 
   // 重试失败的任务
   const handleRetry = async (task: Aria2Task) => {
@@ -71,6 +80,11 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
 
         await aria2Service.addDownload(url, options);
         console.log(`重试任务: ${task.filename}`);
+        
+        // 重试成功后，如果当前在"仅失败"筛选模式，自动切换回"全部"
+        if (showOnlyErrors) {
+          setShowOnlyErrors(false);
+        }
       } else {
         console.error('无法获取任务的原始URL，请手动重新下载');
       }
@@ -84,6 +98,10 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
     const failedTasks = stoppedTasks.filter(t => t.status === 'error');
     for (const task of failedTasks) {
       await handleRetry(task);
+    }
+    // 重试全部后，自动切换回"全部"视图
+    if (showOnlyErrors) {
+      setShowOnlyErrors(false);
     }
   };
 
@@ -181,7 +199,20 @@ export const DownloadPanel: React.FC<DownloadPanelProps> = ({ isOpen, showLogs =
                 <Download size={20} className="text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-800 tracking-tight">下载管理</h2>
+                <h2 className="text-xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
+                  下载管理
+                  {/* Aria2连接状态指示器 */}
+                  <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                    aria2Connected 
+                      ? 'bg-green-100 text-green-700 border border-green-200' 
+                      : 'bg-red-100 text-red-700 border border-red-200'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      aria2Connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                    }`}></span>
+                    {aria2Connected ? '已连接' : '未连接'}
+                  </span>
+                </h2>
                 <p className="text-sm text-gray-500">共 {totalTasks} 个任务</p>
               </div>
             </div>
