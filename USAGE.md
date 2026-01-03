@@ -235,38 +235,107 @@ python main.py
 
 ## 🎓 高级用法
 
-### 命令行模式（更新滞后，可查看v4分支）
+### 命令行模式
 
-除了GUI界面，还支持命令行操作：
+除了GUI界面，还支持功能完整的命令行操作：
+
+#### 基础用法
 
 ```powershell
 # 查看帮助
 python backend/cli.py -h
 
 # 采集用户主页作品
-python backend/cli.py -u https://v.douyin.com/iybvCom1/
+python backend/cli.py -u https://www.douyin.com/user/MS4wLjABxxx
 
-# 限制数量
-python backend/cli.py -l 5 -u https://v.douyin.com/iybvCom1/
+# 限制采集数量
+python backend/cli.py -u https://www.douyin.com/user/MS4wLjABxxx -l 20
 
-# 指定类型
-python backend/cli.py -t like -u https://v.douyin.com/iybvCom1/
+# 仅采集数据，不下载文件
+python backend/cli.py -u https://www.douyin.com/user/MS4wLjABxxx --no-download
 ```
 
-### 批量采集
+#### 采集类型
 
-创建文本文件，每行一个链接：
+```powershell
+# 用户主页作品（默认）
+python backend/cli.py -u https://www.douyin.com/user/MS4wLjABxxx -t post
+
+# 用户喜欢作品
+python backend/cli.py -u https://www.douyin.com/user/MS4wLjABxxx -t favorite
+
+# 用户收藏作品
+python backend/cli.py -u https://www.douyin.com/user/MS4wLjABxxx -t collection
+
+# 话题作品
+python backend/cli.py -u https://www.douyin.com/hashtag/xxx -t hashtag
+
+# 音乐作品
+python backend/cli.py -u https://www.douyin.com/music/7xxx -t music
+
+# 合集作品
+python backend/cli.py -u 合集链接 -t mix
+
+# 单个作品
+python backend/cli.py -u https://www.douyin.com/video/7xxx -t aweme
+
+# 关键词搜索
+python backend/cli.py -u "美食" -t search
+```
+
+#### 搜索筛选
+
+```powershell
+# 搜索并按最新排序
+python backend/cli.py -u "美食" -t search --sort-type 2
+
+# 搜索一周内的视频
+python backend/cli.py -u "美食" -t search --publish-time 7
+
+# 搜索1-5分钟的视频
+python backend/cli.py -u "美食" -t search --filter-duration "1-5"
+
+# 组合筛选条件
+python backend/cli.py -u "美食" -t search --sort-type 2 --publish-time 7 --filter-duration "1-5"
+```
+
+**筛选参数说明：**
+- `--sort-type`: 0=综合，1=最多点赞，2=最新
+- `--publish-time`: 0=不限，1=一天内，7=一周内，180=半年内
+- `--filter-duration`: 空=不限，0-1=1分钟以下，1-5=1-5分钟，5-10000=5分钟以上
+
+#### Cookie配置
+
+```powershell
+# 方式1：命令行指定
+python backend/cli.py -u 目标链接 -c "your_cookie_string"
+
+# 方式2：配置文件（推荐）
+# 在 config/settings.json 中设置 cookie 字段
+python backend/cli.py -u 目标链接
+```
+
+#### 批量采集
+
+创建文本文件（如 `urls.txt`），每行一个链接：
 
 ```text
 https://www.douyin.com/user/MS4wLjABxxx
 https://www.douyin.com/user/MS4wLjAByyy
-https://www.douyin.com/user/MS4wLjABzzz
+https://www.douyin.com/hashtag/xxx
+https://www.douyin.com/music/7xxx
 ```
 
 然后运行：
 
 ```powershell
-python backend/cli.py -u urls.txt
+python backend/cli.py -u urls.txt -l 50
+```
+
+#### 自定义下载路径
+
+```powershell
+python backend/cli.py -u 目标链接 -p "D:/Downloads/douyin"
 ```
 
 ---

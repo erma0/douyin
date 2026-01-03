@@ -11,18 +11,17 @@
 import os
 import sys
 
-import ujson as json
-
 # 添加backend目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import click
+import ujson as json
 from constants import DEFAULT_SETTINGS, PATHS
 from lib.cookies import CookieManager
 from lib.douyin import Douyin
 from loguru import logger
 
-version = "V4.251228"
+version = "V4.260103"
 banner = rf"""
   ____                    _          ____                    _           
  |  _ \  ___  _   _ _   _(_)_ __    / ___|_ __ __ ___      _| | ___ _ __ 
@@ -312,9 +311,9 @@ def start(url, limit, no_download, type, path, cookie, filters):
         elif douyin.type in ["following", "follower"]:
             logger.info("此类型不需要下载文件")
         else:
-            # 解耦：在CLI层面调用下载
+            # 调用下载模块
             from lib.download import download
-            
+
             logger.info("开始下载文件...")
             download(douyin.down_path, douyin.aria2_conf)
 
