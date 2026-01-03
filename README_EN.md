@@ -38,6 +38,10 @@
 - 🎨 **Visual Interface**: React desktop application, real-time log display
 - 🎉 **First Run Wizard**: Friendly welcome interface, guiding configuration
 
+## 📸 Interface Preview
+
+![Software Interface](./frontend/public/main.png)
+
 ## 🚀 Quick Start
 
 ### Environment Requirements

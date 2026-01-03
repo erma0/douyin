@@ -38,6 +38,10 @@
 - 🎨 **Giao diện trực quan**: Ứng dụng máy tính để bàn React, hiển thị nhật ký thời gian thực
 - 🎉 **Hướng dẫn chạy lần đầu**: Giao diện chào mừng thân thiện, hướng dẫn cấu hình
 
+## 📸 Giao diện
+
+![Giao diện phần mềm](./frontend/public/main.png)
+
 ## 🚀 Bắt đầu nhanh
 
 ### Yêu cầu môi trường
