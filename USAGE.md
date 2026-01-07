@@ -1,5 +1,7 @@
 # 使用指南
 
+**[English](./USAGE_EN.md) | [Tiếng Việt](./USAGE_VI.md) | 简体中文**
+
 ## 📋 目录
 
 - [安装Aria2](#安装aria2)
@@ -60,7 +62,7 @@ Cookie是获取数据的必要凭证。
    - 粘贴Cookie到输入框
    - 点击保存
 
-![示意图](./frontend/public/image.png)
+![示意图](./docs/images/image.png)
 
 ### Cookie验证
 

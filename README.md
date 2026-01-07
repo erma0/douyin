@@ -2,6 +2,8 @@
 
 # ✨DouyinCrawler
 
+**[English](./README_EN.md) | [Tiếng Việt](./README_VI.md) | 简体中文**
+
 > ❤️[开源不易，欢迎star⭐](#star-history)
 
 ## 📢声明
@@ -40,7 +42,7 @@
 
 ## 📸 界面展示
 
-![软件界面](./frontend/public/main.png)
+![软件界面](./docs/images/main.png)
 
 ## 🚀快速开始
 

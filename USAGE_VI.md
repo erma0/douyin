@@ -1,5 +1,7 @@
 # Hướng dẫn sử dụng
 
+**[English](./USAGE_EN.md) | Tiếng Việt | [简体中文](./USAGE.md)**
+
 ## 📋 Mục lục
 
 - [Cài đặt Aria2](#cài-đặt-aria2)
@@ -60,7 +62,7 @@ Cookie là thông tin xác thực cần thiết để lấy dữ liệu.
    - Dán Cookie vào ô nhập liệu
    - Nhấp Lưu
 
-![Sơ đồ minh họa](./frontend/public/image.png)
+![Sơ đồ minh họa](./docs/images/image.png)
 
 ### Xác minh Cookie
 

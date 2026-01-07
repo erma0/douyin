@@ -2,6 +2,8 @@
 
 # ✨DouyinCrawler
 
+**English | [Tiếng Việt](./README_VI.md) | [简体中文](./README.md)**
+
 > ❤️ [Open source is hard, welcome to star ⭐](#star-history)
 
 ## 📢 Disclaimer
@@ -40,7 +42,7 @@
 
 ## 📸 Interface Preview
 
-![Software Interface](./frontend/public/main.png)
+![Software Interface](./docs/images/main.png)
 
 ## 🚀 Quick Start
 

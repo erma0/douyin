@@ -2,6 +2,8 @@
 
 # ✨DouyinCrawler
 
+**[English](./README_EN.md) | Tiếng Việt | [简体中文](./README.md)**
+
 > ❤️ [Mã nguồn mở không dễ dàng, hoan nghênh tặng sao ⭐](#star-history)
 
 ## 📢 Tuyên bố từ chối trách nhiệm
@@ -40,7 +42,7 @@
 
 ## 📸 Giao diện
 
-![Giao diện phần mềm](./frontend/public/main.png)
+![Giao diện phần mềm](./docs/images/main.png)
 
 ## 🚀 Bắt đầu nhanh
 

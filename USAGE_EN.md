@@ -1,5 +1,7 @@
 # User Guide
 
+**English | [Tiếng Việt](./USAGE_VI.md) | [简体中文](./USAGE.md)**
+
 ## 📋 Table of Contents
 
 - [Install Aria2](#install-aria2)
@@ -60,7 +62,7 @@ Cookie is the necessary credential for obtaining data.
    - Paste the Cookie into the input box
    - Click Save
 
-![Schematic Diagram](./frontend/public/image.png)
+![Schematic Diagram](./docs/images/image.png)
 
 ### Cookie Verification
 
