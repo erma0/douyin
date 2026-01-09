@@ -56,6 +56,8 @@
 - 从 [Releases](https://github.com/erma0/douyin/releases) 下载最新版本
 - 解压后双击运行 `DouyinCrawler.exe`
 
+详细使用说明请查看 [USAGE.md](USAGE.md)
+
 ### linux启动
 
 ubuntu为例:
@@ -73,8 +75,6 @@ cd frontend
 pnpm run install && pnpm run build
 
 ```
-
-详细使用说明请查看 [USAGE.md](USAGE.md)
 
 ## 🔨构建和打包
 
