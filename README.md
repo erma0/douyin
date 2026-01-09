@@ -56,6 +56,23 @@
 - 从 [Releases](https://github.com/erma0/douyin/releases) 下载最新版本
 - 解压后双击运行 `DouyinCrawler.exe`
 
+### linux启动
+
+ubuntu为例:
+```bash
+# 如果没有安装python3-dev 需要安装一下，要用到pycairo
+sudo apt install python3-dev
+
+# 安装gtk相关的东西，pywebview需要。
+sudo apt install libcairo2-dev libgirepository1.0-dev
+
+
+# 构建前端，如果没有node需要先自己安装，这里就不演示了
+
+cd frontend
+pnpm run install && pnpm run build
+
+```
 
 详细使用说明请查看 [USAGE.md](USAGE.md)
 
@@ -92,6 +109,7 @@ scripts/
 #### 方式 2：手动执行脚本
 
 详见脚本目录
+
 
 ### 📦 打包说明
 

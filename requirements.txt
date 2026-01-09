@@ -3,6 +3,7 @@ loguru
 ujson
 requests
 PyExecJS
-pywebview
+pywebview; sys_platform != "linux"
+pywebview[gtk]; sys_platform == "linux"
 psutil
 pyperclip
