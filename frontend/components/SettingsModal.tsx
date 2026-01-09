@@ -119,8 +119,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     if (!settings.downloadPath) {
       newErrors.downloadPath = "请选择下载路径";
     } else {
-      // 检查路径是否有效
-      const pathRegex = /^([a-zA-Z]:)?(\\[^<>:"/\\|?*]+)+\\?$/;
+      // 检查路径是否有效（支持 Windows 和 Linux/Unix 风格）
+      // Windows: C:\path, D:\folder\subfolder
+      // Linux: /path, ~/path, folder/subfolder
+      const pathRegex = /^(~|([a-zA-Z]:))?([\\/][^<>:"|?*\n\r]+)+[\\/]?$|^\.?[\\/][^<>:"|?*\n\r]+$/;
       if (!pathRegex.test(settings.downloadPath)) {
         newErrors.downloadPath = "无效的路径格式";
       }
