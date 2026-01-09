@@ -3,7 +3,11 @@ loguru
 ujson
 requests
 PyExecJS
+
+# gtk or qt required on linux, see https://pywebview.flowrl.com/guide/web_engine.html
+# using gtk here
 pywebview; sys_platform != "linux"
 pywebview[gtk]; sys_platform == "linux"
+
 psutil
 pyperclip
