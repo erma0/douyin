@@ -135,9 +135,13 @@ pnpm run install && pnpm run build
 ```
 
 
-## 服务器运行
+## 服务器模式
 
-`python -m backend.server` 启动fastapi服务器，打开 `localhost:8000` 以访问和pywebview相同的界面，但是功能略有些残缺。
+服务器通过fastapi构建。
+
+启动服务器：`python -m backend.server`，或者使用docker:`docker compose up -d`
+
+然后打开 `localhost:8000` 以访问和pywebview相同的界面，但是功能略有些残缺。
 
 命令行参数和环境变量如下，环境变量会覆盖命令行参数，方便容器部署的情况下修改配置。
 
@@ -147,6 +151,7 @@ pnpm run install && pnpm run build
     python -m backend.server --port 9000  # 指定端口
     python -m backend.server --dev        # 开发模式（启用热重载）
     python -m backend.server --cookie "xxx"  # 设置 Cookie
+    python -m backend.server --download-path "/path/to/downloads"  # 设置下载目录
 
 环境变量（前缀 DOUYIN_）:
     DOUYIN_PORT          监听端口（默认: 8000）
@@ -154,6 +159,7 @@ pnpm run install && pnpm run build
     DOUYIN_DEV           开发模式（默认: false）
     DOUYIN_LOG_LEVEL     日志级别（默认: info）
     DOUYIN_COOKIE        抖音 Cookie
+    DOUYIN_DOWNLOAD_PATH 下载目录
 ```
 
 ### 为什么服务器功能是残缺的
