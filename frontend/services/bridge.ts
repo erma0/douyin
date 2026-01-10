@@ -301,22 +301,55 @@ const pywebviewBridge = {
 // ============================================================================
 
 export type Bridge = typeof pywebviewBridge
-/**
- * 检测并返回可用的 bridge
- * 优先级：PyWebView > HTTP
- */
-function detectBridge(): typeof pywebviewBridge {
-  if (pywebviewBridge.isAvailable()) {
-    console.log('[Bridge] 使用 PyWebView 模式');
-    return pywebviewBridge;
-  }
 
-  console.log('[Bridge] 使用 HTTP 模式 (FastAPI)');
-  return httpBridge;
+/**
+ * 动态选择 bridge
+ * 每次调用都检测，优先使用 PyWebView
+ */
+function getBridge(): Bridge {
+  return pywebviewBridge.isAvailable() ? pywebviewBridge : httpBridge;
 }
 
 /**
  * 导出的 bridge 实例
- * 自动检测并选择最合适的后端连接方式
+ * 使用 Proxy 自动转发所有方法调用
  */
-export const bridge = detectBridge();
+export const bridge = new Proxy({} as Bridge, {
+  get(_target, prop) {
+    // waitForReady 特殊处理：并行尝试两种模式，谁先就绪用谁
+    if (prop === 'waitForReady') {
+      return async (timeout: number = 30000) => {
+        // 如果已经检测到 pywebview，直接等待
+        if (pywebviewBridge.isAvailable()) {
+          console.log('[Bridge] 检测到 PyWebView，等待就绪...');
+          return pywebviewBridge.waitForReady(timeout);
+        }
+        
+        // 否则并行尝试：pywebview 和 HTTP
+        console.log('[Bridge] 并行检测 PyWebView 和 HTTP 模式...');
+        const results = await Promise.race([
+          pywebviewBridge.waitForReady(timeout).then(ready => ({ type: 'pywebview', ready })),
+          httpBridge.waitForReady(timeout).then(ready => ({ type: 'http', ready }))
+        ]);
+        
+        if (results.type === 'pywebview' && results.ready) {
+          console.log('[Bridge] 使用 PyWebView 模式');
+        } else {
+          console.log('[Bridge] 使用 HTTP 模式');
+        }
+        
+        return results.ready;
+      };
+    }
+    
+    const selectedBridge = getBridge();
+    const value = selectedBridge[prop as keyof Bridge];
+    
+    // 如果是函数，绑定正确的 this
+    if (typeof value === 'function') {
+      return value.bind(selectedBridge);
+    }
+    
+    return value;
+  }
+});
