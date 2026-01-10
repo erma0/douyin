@@ -1,22 +1,30 @@
+/**
+ * 前后端通信桥接服务
+ *
+ * 动态检测并选择后端连接方式：
+ * - PyWebView 模式：优先使用，通过 window.pywebview.api 调用
+ * - HTTP 模式：回退方案，通过 FastAPI RESTful 接口调用
+ */
 
 import { AppSettings, TaskType } from '../types';
 import { handleError } from '../utils/errorHandler';
 import { logger } from './logger';
+import { httpBridge } from './httpBridge';
 
-/**
- * 前后端通信桥接服务
- */
-export const bridge = {
+// ============================================================================
+// PyWebView Bridge 实现
+// ============================================================================
+
+const pywebviewBridge = {
   /**
-   * 检查后端是否可用
+   * 检查 PyWebView 是否可用
    */
   isAvailable: (): boolean => {
     return typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined';
   },
 
   /**
-   * 等待后端 API 就绪
-   * 使用 pywebviewready 事件确保 API 完全可用
+   * 等待 PyWebView API 就绪
    */
   waitForReady: (timeout: number = 30000): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -51,15 +59,6 @@ export const bridge = {
 
   /**
    * 开始采集任务（支持流式返回）
-   * 
-   * 注意：PyWebView 不支持直接传递 JavaScript 回调函数
-   * 后端会通过 window.evaluate_js 调用前端全局函数 window.__douyinCallback
-   * 前端需要在调用此方法前注册全局回调函数
-   * 
-   * @param type 任务类型
-   * @param target 目标链接或关键词
-   * @param limit 采集数量限制
-   * @param filters 筛选参数（可选）
    */
   startTask: async (
     type: TaskType,
@@ -198,7 +197,6 @@ export const bridge = {
 
   /**
    * 启动 Aria2 服务
-   * 在前端 API 就绪后调用，确保不会过早启动
    */
   startAria2: async (): Promise<void> => {
     if (window.pywebview) {
@@ -217,7 +215,7 @@ export const bridge = {
   },
 
   /**
-   * 获取系统剪贴板内容（无需浏览器权限）
+   * 获取系统剪贴板内容
    */
   getClipboardText: async (): Promise<string> => {
     if (window.pywebview) {
@@ -297,3 +295,28 @@ export const bridge = {
     }
   }
 };
+
+// ============================================================================
+// Bridge 选择逻辑
+// ============================================================================
+
+export type Bridge = typeof pywebviewBridge
+/**
+ * 检测并返回可用的 bridge
+ * 优先级：PyWebView > HTTP
+ */
+function detectBridge(): typeof pywebviewBridge {
+  if (pywebviewBridge.isAvailable()) {
+    console.log('[Bridge] 使用 PyWebView 模式');
+    return pywebviewBridge;
+  }
+
+  console.log('[Bridge] 使用 HTTP 模式 (FastAPI)');
+  return httpBridge;
+}
+
+/**
+ * 导出的 bridge 实例
+ * 自动检测并选择最合适的后端连接方式
+ */
+export const bridge = detectBridge();
