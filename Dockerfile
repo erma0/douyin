@@ -7,7 +7,7 @@ WORKDIR /app
 COPY frontend/ ./
 
 # 安装 pnpm 和依赖
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+RUN npm install -g pnpm && export CI='true' && pnpm install --frozen-lockfile
 
 # 构建前端
 RUN pnpm build
@@ -28,7 +28,7 @@ WORKDIR /app
 COPY . .
 
 # 安装 Python 依赖
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.server.txt
 
 
 # 从 stage 1 复制前端构建产物
