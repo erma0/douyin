@@ -8,12 +8,14 @@ FastAPI Server - 后端 HTTP API 服务
     python -m backend.server              # 使用默认配置
     python -m backend.server --port 9000  # 指定端口
     python -m backend.server --dev        # 开发模式（启用热重载）
+    python -m backend.server --cookie "xxx"  # 设置 Cookie
 
 环境变量（前缀 DOUYIN_）:
     DOUYIN_PORT          监听端口（默认: 8000）
     DOUYIN_HOST          监听地址（默认: 127.0.0.1）
     DOUYIN_DEV           开发模式（默认: false）
     DOUYIN_LOG_LEVEL     日志级别（默认: info）
+    DOUYIN_COOKIE        抖音 Cookie
 """
 
 import argparse
@@ -213,6 +215,7 @@ def get_config() -> Dict[str, Any]:
         "port": 8000,
         "dev": False,
         "log_level": "info",
+        "cookie": None,
     }
 
     # 解析命令行参数
@@ -242,6 +245,12 @@ def get_config() -> Dict[str, Any]:
         choices=["critical", "error", "warning", "info", "debug"],
         help=f"日志级别 (默认: {defaults['log_level']})"
     )
+    parser.add_argument(
+        "--cookie",
+        type=str,
+        default=defaults["cookie"],
+        help="抖音 Cookie (优先级高于环境变量)"
+    )
 
     args = parser.parse_args()
 
@@ -251,6 +260,7 @@ def get_config() -> Dict[str, Any]:
         "port": int(os.getenv("DOUYIN_PORT", str(args.port))),
         "dev": os.getenv("DOUYIN_DEV", "").lower() in ("true", "1", "yes", "on") or args.dev,
         "log_level": os.getenv("DOUYIN_LOG_LEVEL", args.log_level),
+        "cookie": os.getenv("DOUYIN_COOKIE", args.cookie),
     }
 
     return config
@@ -261,17 +271,25 @@ def get_config() -> Dict[str, Any]:
 # ============================================================================
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
+async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     # 启动时执行
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print("🚀 FastAPI Server 启动中...")
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
+    # 获取配置（用于处理 cookie）
+    config = get_config()
+
     # 获取当前运行的事件循环并设置到 fake_window
     loop = asyncio.get_running_loop()
     fake_window.set_event_loop(loop)
     print(f"✓ 事件循环已设置: {loop}")
+
+    # 如果提供了 cookie，保存到设置中
+    if config.get("cookie"):
+        api_instance.save_settings({"cookie": config["cookie"]})
+        print(f"✓ Cookie 已从环境变量/命令行参数加载")
 
     yield
     # 关闭时执行
@@ -639,6 +657,7 @@ def main():
     print(f"  监听端口: {config['port']}")
     print(f"  开发模式: {'启用' if config['dev'] else '禁用'}")
     print(f"  日志级别: {config['log_level']}")
+    print(f"  Cookie: {'已设置' if config.get('cookie') else '未设置'}")
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
 
     uvicorn.run(

@@ -146,12 +146,14 @@ pnpm run install && pnpm run build
     python -m backend.server              # 使用默认配置
     python -m backend.server --port 9000  # 指定端口
     python -m backend.server --dev        # 开发模式（启用热重载）
+    python -m backend.server --cookie "xxx"  # 设置 Cookie
 
 环境变量（前缀 DOUYIN_）:
     DOUYIN_PORT          监听端口（默认: 8000）
     DOUYIN_HOST          监听地址（默认: 127.0.0.1）
     DOUYIN_DEV           开发模式（默认: false）
     DOUYIN_LOG_LEVEL     日志级别（默认: info）
+    DOUYIN_COOKIE        抖音 Cookie
 ```
 
 ### 为什么服务器功能是残缺的
