@@ -56,7 +56,6 @@
 - 从 [Releases](https://github.com/erma0/douyin/releases) 下载最新版本
 - 解压后双击运行 `DouyinCrawler.exe`
 
-
 详细使用说明请查看 [USAGE.md](USAGE.md)
 
 ## 🔨构建和打包
@@ -93,6 +92,7 @@ scripts/
 
 详见脚本目录
 
+
 ### 📦 打包说明
 
 #### PyInstaller（推荐）
@@ -113,6 +113,70 @@ scripts/
 - **单文件模式**：`dist/DouyinCrawler.exe`（便于分发）
 - **发布包**：`release/DouyinCrawler_*.zip`（自动生成）
 
+## 关于linux桌面
+
+linux桌面运行当前项目主要的阻碍在于发行版中未必有开箱即用的webview，需要自己安装。本项目使用pywebview创建窗口，pywebview的官方文档说明了[每个系统如何安装pywebview所需的依赖](https://pywebview.flowrl.com/guide/installation.html#linux)，其中就包括linux。
+
+
+对于ubuntu desktop，你可以参考下面这段不保证一定能工作的命令，原谅此处文档的含糊不清，我也不是非常清楚gtk，cairo这些东西是如何工作的。
+
+```bash
+# 如果没有安装python3-dev 需要安装一下，里面似乎包含pycairo，pywebview会用到。
+sudo apt install build-essential python3-dev
+
+# 同样是pywebview的依赖
+sudo apt install libcairo2-dev libgirepository1.0-dev
+
+
+# 构建前端，如果没有node需要先自己安装，这里就不演示安装node了
+
+cd frontend
+pnpm run install && pnpm run build
+```
+
+
+## 服务器模式
+
+服务器通过fastapi构建。
+
+启动服务器：`python -m backend.server`，或者使用docker:`docker compose up -d`
+
+然后打开 `http://localhost:8000`（docker运行的话打开`http://localhost`） 以访问和pywebview相同的界面，但是功能略有些残缺。
+
+命令行参数和环境变量如下，环境变量会覆盖命令行参数，方便容器部署的情况下修改配置。
+
+```text
+运行方式:
+    python -m backend.server              # 使用默认配置
+    python -m backend.server --port 9000  # 指定端口
+    python -m backend.server --dev        # 开发模式（启用热重载）
+    python -m backend.server --cookie "xxx"  # 设置 Cookie
+    python -m backend.server --download-path "/path/to/downloads"  # 设置下载目录
+
+环境变量（前缀 DOUYIN_）:
+    DOUYIN_PORT          监听端口（默认: 8000）
+    DOUYIN_HOST          监听地址（默认: 127.0.0.1）
+    DOUYIN_DEV           开发模式（默认: false）
+    DOUYIN_LOG_LEVEL     日志级别（默认: info）
+    DOUYIN_COOKIE        抖音 Cookie
+    DOUYIN_DOWNLOAD_PATH 下载目录
+```
+
+### 为什么服务器功能是残缺的
+
+本项目的架构一开始就为webview设计，并且api.py直接依赖pywebview 的 window对象，要实现服务器功能就必须手动在普通的前后端项目中模拟pywebview的通信接口，目前没有完全模拟。
+
+pywebview 通信接口参考：
+1. https://pywebview.flowrl.com/api/#window-pywebview
+2. https://pywebview.flowrl.com/guide/interdomain.html
+
+当前的服务器工作方式是：
+1. fastapi托管前端静态文件
+2. 打开界面时，如果`window.pywebview`不可用，则认为当前运行在浏览器环境而不是pywebview环境，根据不同的环境选择相应的bridge
+3. 对于浏览器环境，实现了一个新的httpBridge，完全与原bridge保持类型一致，新的httpBridge向fastapi发送请求调用后端api
+4. 后端任务完成后需要执行回调向前端发送消息，这部分通过SSE完成，httpBridge与fastapi会建立SSE连接，服务器模块创建了一个FakeWindow并依赖注入`API`，当API执行window.evaluate_js，FakeWindow实际上会通过SSE发送消息给前端，前端的httpBridge执行该jscode。
+
+后续如果需要模拟更多的pywebview接口，在httpBridge和FakeWindow的基础上添加即可。
 
 ## 📊 技术栈
 

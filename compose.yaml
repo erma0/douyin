@@ -1,0 +1,15 @@
+services:
+  douyin:
+    build: 
+      context: .
+      args:
+        # 前端通过该base url访问后端
+        - VITE_API_BASE_URL=http://localhost
+    ports:
+      - "80:8000"
+    container_name: douyin-crawler
+    environment:
+      DOUYIN_HOST: 0.0.0.0
+    # DOUYIN_COOKIE 期望被写在 .env 中
+    env_file:
+      - .env
