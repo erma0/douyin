@@ -1,6 +1,12 @@
 # Stage 1: 构建前端
 FROM node:20-alpine AS frontend-builder
 
+# 接受构建参数
+ARG VITE_API_BASE_URL=http://localhost:8000
+
+# 设置为环境变量，Vite 在构建时可以访问
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
 WORKDIR /app
 
 # 复制源代码
