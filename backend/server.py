@@ -148,6 +148,11 @@ class FakeWindow:
 
     def __init__(self, sse_emitter: SSEEmitter):
         self._sse_emitter = sse_emitter
+        self._event_loop = None  # 延迟初始化，在 FastAPI 启动后设置
+
+    def set_event_loop(self, loop: asyncio.AbstractEventLoop) -> None:
+        """设置事件循环（由 FastAPI lifespan 调用）"""
+        self._event_loop = loop
 
     def evaluate_js(self, js_code: str) -> None:
         """
@@ -159,17 +164,36 @@ class FakeWindow:
         Args:
             js_code: 要执行的 JavaScript 代码
         """
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            # 如果没有运行中的事件循环（在后台线程中），获取主循环
-            loop = asyncio.get_event_loop()
+        if self._event_loop is None:
+            # 如果还没有设置事件循环，尝试获取当前运行的循环
+            try:
+                self._event_loop = asyncio.get_running_loop()
+            except RuntimeError:
+                # 如果没有运行中的循环，说明 FastAPI 还没启动
+                # 这种情况下，记录警告并忽略这次调用
+                print(f"[FakeWindow] 警告: FastAPI 事件循环未就绪，无法发送 evaluate_js")
+                return
 
-        # 在后台线程中异步发送
+        # 使用保存的事件循环引用（从主线程获取的）
+        # 这样即使从后台线程调用，也能正确访问主线程的事件循环
         asyncio.run_coroutine_threadsafe(
             self._sse_emitter.emit(js_code),
-            loop
+            self._event_loop
         )
+
+
+# ============================================================================
+# 应用初始化（需要在 lifespan 之前创建）
+# ============================================================================
+
+# 创建 API 实例
+api_instance = API()
+
+# 注入 FakeWindow 到 API 实例
+# 这使得 API 类在 HTTP 模式下也能使用 evaluate_js
+# 实际上会通过 SSE 将 JS 代码发送到前端执行
+fake_window = FakeWindow(sse_emitter)
+api_instance.set_webview_window(fake_window)
 
 
 # ============================================================================
@@ -243,6 +267,12 @@ async def lifespan(_app: FastAPI):
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print("🚀 FastAPI Server 启动中...")
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+    # 获取当前运行的事件循环并设置到 fake_window
+    loop = asyncio.get_running_loop()
+    fake_window.set_event_loop(loop)
+    print(f"✓ 事件循环已设置: {loop}")
+
     yield
     # 关闭时执行
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -262,15 +292,6 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
-
-# 创建 API 实例
-api_instance = API()
-
-# 注入 FakeWindow 到 API 实例
-# 这使得 API 类在 HTTP 模式下也能使用 evaluate_js
-# 实际上会通过 SSE 将 JS 代码发送到前端执行
-fake_window = FakeWindow(sse_emitter)
-api_instance.set_webview_window(fake_window)
 
 
 # ============================================================================
