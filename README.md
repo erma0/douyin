@@ -141,7 +141,7 @@ pnpm run install && pnpm run build
 
 启动服务器：`python -m backend.server`，或者使用docker:`docker compose up -d`
 
-然后打开 `localhost:8000` 以访问和pywebview相同的界面，但是功能略有些残缺。
+然后打开 `http://localhost:8000`（docker运行的话打开`http://localhost`） 以访问和pywebview相同的界面，但是功能略有些残缺。
 
 命令行参数和环境变量如下，环境变量会覆盖命令行参数，方便容器部署的情况下修改配置。
 
