@@ -1,18 +1,15 @@
-# I don't know what exactly versions on windows, contribution expected.
-click; sys_platform != "linux"
-loguru; sys_platform != "linux"
-ujson; sys_platform != "linux"
-requests; sys_platform != "linux"
-PyExecJS; sys_platform != "linux"
-pywebview; sys_platform != "linux"
-psutil; sys_platform != "linux"
-pyperclip; sys_platform != "linux"
-fastapi; sys_platform != "linux"
-uvicorn; sys_platform != "linux"
+click>=8.3.1
+fastapi>=0.128.0
+loguru>=0.7.3
+psutil>=7.2.1
+pyexecjs>=1.5.1
+pyperclip>=1.11.0
+requests>=2.32.5
+ujson>=5.11.0
+uvicorn>=0.40.0
 
+# Windows requirements
+pywebview>=6.1; sys_platform != "linux"
 
 # linux requirements
--r requirements.server.txt
-# gtk or qt is required for webview on linux, see https://pywebview.flowrl.com/guide/web_engine.html
-# using gtk here
-pywebview[gtk]==6.1; sys_platform == "linux"
+pywebview[gtk]>=6.1; sys_platform == "linux"

@@ -12,10 +12,10 @@ Write-Host "  3. 以管理员身份运行此脚本`n" -ForegroundColor White
 
 try {
     # 检查环境
-    $useUvPip = Get-Command uv -ErrorAction SilentlyContinue
+    $useUv = Get-Command uv -ErrorAction SilentlyContinue
     
-    if ($useUvPip) {
-        Write-Host "✓ 使用 uv pip 安装" -ForegroundColor Green
+    if ($useUv) {
+        Write-Host "✓ 使用 uv 安装" -ForegroundColor Green
     } else {
         Write-Host "✓ 使用 pip 安装" -ForegroundColor Green
     }
@@ -41,8 +41,8 @@ try {
             Write-Host "🔄 第 $retryCount 次重试..." -ForegroundColor Yellow
         }
         
-        if ($useUvPip) {
-            uv pip install pyinstaller
+        if ($useUv) {
+            uv add --dev pyinstaller
         } else {
             python -m pip install pyinstaller
         }

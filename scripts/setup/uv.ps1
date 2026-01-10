@@ -44,7 +44,7 @@ try {
     # 4. 安装依赖
     Write-Step "安装项目依赖"
     Write-Info "使用清华源安装依赖..."
-    uv pip install -r requirements.txt
+    uv sync
     if ($LASTEXITCODE -ne 0) { throw "依赖安装失败" }
     Write-OK "项目依赖已安装"
     
@@ -62,7 +62,7 @@ try {
                 Start-Sleep -Seconds 2
             }
             
-            uv pip install pyinstaller
+            uv add --dev pyinstaller
             
             if ($LASTEXITCODE -eq 0) {
                 $installed = $true
@@ -85,7 +85,7 @@ try {
         Write-Host "`n解决方案：" -ForegroundColor Cyan
         Write-Host "  1. 临时关闭杀毒软件或将项目目录添加到白名单" -ForegroundColor White
         Write-Host "  2. 以管理员身份运行 PowerShell" -ForegroundColor White
-        Write-Host "  3. 手动安装: uv pip install pyinstaller" -ForegroundColor White
+        Write-Host "  3. 手动安装: uv add --dev pyinstaller" -ForegroundColor White
         Write-Host "`n项目依赖已安装，可以继续开发，打包时再安装 PyInstaller`n" -ForegroundColor Green
     }
     

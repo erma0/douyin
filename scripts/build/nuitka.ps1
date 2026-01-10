@@ -59,7 +59,7 @@ try {
     if (-not $nuitkaInstalled) {
         Write-Info "Nuitka 未安装，正在安装..."
         if ($useUv) {
-            uv pip install nuitka ordered-set
+            uv add --dev nuitka ordered-set
         } else {
             python -m pip install nuitka ordered-set
         }

@@ -30,11 +30,14 @@ WORKDIR /app
 #         libglib2.0-dev \
 #         && rm -rf /var/lib/apt/lists/*
 
-# 复制项目
-COPY . .
+# 复制依赖文件
+COPY requirements.txt ./
 
 # 安装 Python 依赖
-RUN pip install --no-cache-dir -r requirements.server.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 复制其余项目文件
+COPY . .
 
 
 # 从 stage 1 复制前端构建产物

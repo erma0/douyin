@@ -28,18 +28,18 @@ try {
         exit 1
     }
     
-    # 检查包管理器（用于安装依赖）
-    $useUvPip = Get-Command uv -ErrorAction SilentlyContinue
-    if ($useUvPip) {
-        Write-OK "使用 uv pip 安装依赖（更快）"
+    # 检查包管理器（优先使用uv）
+    $useUv = Get-Command uv -ErrorAction SilentlyContinue
+    if ($useUv) {
+        Write-OK "使用 uv 管理Python依赖（推荐）"
     } else {
-        Write-OK "使用 pip 安装依赖"
+        Write-OK "使用 pip 管理Python依赖"
     }
     
     # 确保虚拟环境存在
     if (-not (Test-Path ".venv")) {
         Write-Info "创建虚拟环境..."
-        if ($useUvPip) {
+        if ($useUv) {
             uv venv
         } else {
             python -m venv .venv
@@ -66,16 +66,16 @@ try {
     Write-Step "安装 Python 依赖"
     
     Write-Host "ℹ 安装 PyInstaller..." -ForegroundColor Blue
-    if ($useUvPip) {
-        uv pip install pyinstaller --upgrade
+    if ($useUv) {
+        uv add --dev pyinstaller
     } else {
         python -m pip install pyinstaller --upgrade
     }
     if ($LASTEXITCODE -ne 0) { throw "PyInstaller 安装失败" }
     
-    Write-Host "ℹ 安装项目依赖..." -ForegroundColor Blue
-    if ($useUvPip) {
-        uv pip install -r requirements.txt
+    Write-Host "ℹ 同步项目依赖..." -ForegroundColor Blue
+    if ($useUv) {
+        uv sync
     } else {
         python -m pip install -r requirements.txt
     }

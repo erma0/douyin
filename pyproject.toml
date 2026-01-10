@@ -1,0 +1,29 @@
+[project]
+name = "douyin-crawler"
+version = "0.1.0"
+description = "抖音视频下载工具"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.3.1",
+    "fastapi>=0.128.0",
+    "loguru>=0.7.3",
+    "psutil>=7.2.1",
+    "pyexecjs>=1.5.1",
+    "pyperclip>=1.11.0",
+    "pywebview>=6.1 ; sys_platform != 'linux'",
+    "pywebview[gtk]>=6.1 ; sys_platform == 'linux'",
+    "requests>=2.32.5",
+    "ujson>=5.11.0",
+    "uvicorn>=0.40.0",
+]
+
+[dependency-groups]
+dev = [
+    "isort>=7.0.0",
+    "nuitka>=2.8.9",
+    "ordered-set>=4.1.0",
+    "pyinstaller>=6.17.0",
+    "pytest>=9.0.2",
+]
+
