@@ -9,6 +9,7 @@ import { AppSettings, TaskType } from '../types';
 import { handleError } from '../utils/errorHandler';
 import { logger } from './logger';
 import type { Bridge } from './bridge';
+import { sseClient } from './sseClient';
 
 /**
  * FastAPI 服务器配置
@@ -21,7 +22,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000
  */
 async function checkBackendAvailable(): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL}/`, {
+    const response = await fetch(`${API_BASE_URL}/api`, {
       method: 'GET',
       signal: AbortSignal.timeout(1000), // 1秒超时
     });
@@ -80,7 +81,7 @@ export const httpBridge: Bridge = {
 
   /**
    * 等待后端 API 就绪
-   * 通过轮询根路由来确认
+   * 通过轮询根路由来确认，并建立 SSE 连接
    */
   waitForReady: async (timeout: number = 30000): Promise<boolean> => {
     const startTime = Date.now();
@@ -92,7 +93,20 @@ export const httpBridge: Bridge = {
       if (isAvailable) {
         const elapsed = Date.now() - startTime;
         console.log(`[HTTP Bridge] FastAPI 服务已就绪 (${elapsed}ms)`);
-        return true;
+
+        // 立即连接 SSE（这是关键！后端可能随时发送 evaluate_js）
+        sseClient.connect(`${API_BASE_URL}/api/events`);
+
+        // 等待 SSE 连接建立
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        if (sseClient.isConnected()) {
+          console.log('[HTTP Bridge] SSE 连接成功，ready for evaluate_js');
+          return true;
+        } else {
+          console.warn('[HTTP Bridge] SSE 连接失败，evaluate_js 将不可用');
+          return true; // 即使 SSE 失败也返回 true，其他功能仍可用
+        }
       }
 
       await new Promise(resolve => setTimeout(resolve, checkInterval));
@@ -196,7 +210,7 @@ export const httpBridge: Bridge = {
   /**
    * 订阅后端日志
    * HTTP 模式不支持实时日志订阅，返回空函数
-   * 建议：使用 WebSocket 或查看日志文件
+   * 注意：evaluate_js 通过 SSE 实现，但日志订阅仍不可用
    */
   subscribeToLogs: async (_callback: (log: any) => void): Promise<(() => void)> => {
     console.warn('[HTTP Bridge] 日志订阅功能在 HTTP 模式下不可用，请查看日志文件');

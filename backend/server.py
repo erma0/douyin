@@ -17,11 +17,15 @@ FastAPI Server - 后端 HTTP API 服务
 """
 
 import argparse
+import asyncio
+import json
 import os
 from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import uvicorn
 
@@ -72,6 +76,100 @@ class CheckFileExistsRequest(BaseModel):
 class OpenFolderRequest(BaseModel):
     """打开文件夹的请求模型"""
     folder_path: str
+
+
+# ============================================================================
+# SSE 事件发射器
+# ============================================================================
+
+class SSEEmitter:
+    """
+    SSE 事件发射器
+
+    管理所有 SSE 客户端连接，并广播 JavaScript 代码到前端。
+    用于在 HTTP 模式下模拟 PyWebView 的 evaluate_js 功能。
+    """
+
+    def __init__(self):
+        self._queues: List[asyncio.Queue] = []
+
+    async def emit(self, js_code: str) -> None:
+        """
+        发送 JS 代码到所有连接的客户端
+
+        Args:
+            js_code: 要执行的 JavaScript 代码
+        """
+        message = {"type": "evaluate_js", "code": js_code}
+        data = f"data: {json.dumps(message, ensure_ascii=False)}\n\n"
+
+        # 广播到所有客户端
+        for queue in self._queues:
+            await queue.put(data)
+
+    async def create_generator(self):
+        """
+        为每个客户端创建 SSE 生成器
+
+        Yields:
+            SSE 格式的消息字符串
+        """
+        queue: asyncio.Queue = asyncio.Queue()
+        self._queues.append(queue)
+
+        try:
+            # 连接建立时的 ping
+            yield ": ping\n\n"
+            while True:
+                message = await queue.get()
+                yield message
+        finally:
+            # 客户端断开时清理
+            self._queues.remove(queue)
+
+
+# 全局 SSE 发射器
+sse_emitter = SSEEmitter()
+
+
+# ============================================================================
+# Fake Window 对象
+# ============================================================================
+
+class FakeWindow:
+    """
+    模拟 PyWebView 的 window 对象
+
+    提供与 PyWebView window 兼容的接口，
+    但实际上通过 SSE 发送 JS 代码到前端执行。
+
+    这使得 API 类无需修改即可在 HTTP 模式下工作。
+    """
+
+    def __init__(self, sse_emitter: SSEEmitter):
+        self._sse_emitter = sse_emitter
+
+    def evaluate_js(self, js_code: str) -> None:
+        """
+        执行 JavaScript 代码
+
+        在 PyWebView 模式下，这会直接在 WebView 中执行
+        在 HTTP 模式下，我们通过 SSE 发送到前端执行
+
+        Args:
+            js_code: 要执行的 JavaScript 代码
+        """
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # 如果没有运行中的事件循环（在后台线程中），获取主循环
+            loop = asyncio.get_event_loop()
+
+        # 在后台线程中异步发送
+        asyncio.run_coroutine_threadsafe(
+            self._sse_emitter.emit(js_code),
+            loop
+        )
 
 
 # ============================================================================
@@ -167,6 +265,12 @@ app = FastAPI(
 
 # 创建 API 实例
 api_instance = API()
+
+# 注入 FakeWindow 到 API 实例
+# 这使得 API 类在 HTTP 模式下也能使用 evaluate_js
+# 实际上会通过 SSE 将 JS 代码发送到前端执行
+fake_window = FakeWindow(sse_emitter)
+api_instance.set_webview_window(fake_window)
 
 
 # ============================================================================
@@ -431,7 +535,7 @@ app.include_router(api_router)
 # 基础路由
 # ============================================================================
 
-@app.get("/")
+@app.get("/api")
 def read_root():
     """根路径，返回 API 信息"""
     return {
@@ -439,6 +543,25 @@ def read_root():
         "version": "1.0.0",
         "status": "running"
     }
+
+
+@app.get("/api/events")
+async def events_stream():
+    """
+    SSE 端点，向前端推送 JavaScript 代码
+
+    用于在 HTTP 模式下模拟 PyWebView 的 evaluate_js 功能。
+    前端通过监听此端点接收后端发送的 JS 代码并执行。
+    """
+    return StreamingResponse(
+        sse_emitter.create_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 # ============================================================================
@@ -460,6 +583,24 @@ def subscribe_to_logs_info() -> Dict[str, str]:
         "message": "HTTP 模式不支持回调订阅，请使用 WebSocket 或查看日志文件",
         "log_file": f"{api_instance.config_dir}/app.log"
     }
+
+
+# ============================================================================
+# 静态文件挂载
+# ============================================================================
+
+# 计算 frontend/dist 路径
+_frontend_dist_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+
+# 检查 dist 目录是否存在
+if os.path.exists(_frontend_dist_dir):
+    # 挂载静态文件到根路径
+    # 注意：必须在 API 路由之后挂载，否则 /api/* 会被静态文件拦截
+    app.mount("/", StaticFiles(directory=_frontend_dist_dir, html=True), name="static")
+    print(f"✓ 前端静态文件已挂载: {_frontend_dist_dir}")
+else:
+    print(f"⚠ 警告: 前端 dist 目录不存在: {_frontend_dist_dir}")
+    print("  请先运行: cd frontend && npm run build")
 
 
 # ============================================================================
