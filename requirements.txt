@@ -7,6 +7,8 @@ PyExecJS; sys_platform != "linux"
 pywebview; sys_platform != "linux"
 psutil; sys_platform != "linux"
 pyperclip; sys_platform != "linux"
+fastapi; sys_platform != "linux"
+uvicorn; sys_platform != "linux"
 
 
 # linux requirements
@@ -19,6 +21,8 @@ psutil==7.2.1; sys_platform == "linux"
 pyperclip==1.11.0; sys_platform == "linux"
 psutil==7.2.1; sys_platform == "linux"
 pyperclip==1.11.0; sys_platform == "linux"
+fastapi==0.128.0; sys_platform == "linux"
+uvicorn==0.40.0; sys_platform == "linux"
 # gtk or qt is required for webview on linux, see https://pywebview.flowrl.com/guide/web_engine.html
 # using gtk here
 pywebview[gtk]==6.1; sys_platform == "linux"
