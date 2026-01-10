@@ -13,7 +13,7 @@ RUN npm install -g pnpm && export CI='true' && pnpm install --frozen-lockfile
 RUN pnpm build
 
 # Stage 2: Python 后端
-FROM python:3.12-slim
+FROM nikolaik/python-nodejs:python3.12-nodejs22-slim
 
 WORKDIR /app
 
