@@ -1,6 +1,9 @@
 {
     "version": "2.0.0",
     "tasks": [
+        // ========================================
+        // 前端构建任务
+        // ========================================
         {
             "label": "构建前端",
             "type": "shell",
@@ -20,7 +23,38 @@
                 "group": "build"
             }
         },
-
+        {
+            "label": "启动前端开发服务器",
+            "type": "shell",
+            "command": "pnpm",
+            "args": ["dev"],
+            "options": {
+                "cwd": "${workspaceFolder}/frontend"
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^$",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "VITE.*ready in",
+                    "endsPattern": "Local:.*http://localhost:5173"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated",
+                "showReuseMessage": false,
+                "clear": false,
+                "group": "dev"
+            }
+        },
         {
             "label": "安装前端依赖",
             "type": "shell",
@@ -38,6 +72,74 @@
                 "showReuseMessage": false,
                 "clear": false,
                 "group": "setup"
+            }
+        },
+        
+        // ========================================
+        // Python 环境任务
+        // ========================================
+        {
+            "label": "安装 Python 依赖（uv）",
+            "type": "shell",
+            "command": "uv",
+            "args": ["sync"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false,
+                "group": "setup"
+            }
+        },
+        {
+            "label": "检查 Python 代码格式",
+            "type": "shell",
+            "command": "python",
+            "args": ["-m", "black", "--check", "backend/"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false,
+                "group": "check"
+            }
+        },
+        
+        // ========================================
+        // 清理任务
+        // ========================================
+        {
+            "label": "清理构建产物",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue frontend/dist, backend/__pycache__, backend/**/__pycache__"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false,
+                "group": "clean"
             }
         }
     ]

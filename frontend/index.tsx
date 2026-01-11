@@ -7,18 +7,6 @@ import "./index.css";
 const perfStart = performance.now();
 console.log("[Perf] React 启动开始...");
 
-// 检查 pywebview 对象
-if (window.pywebview) {
-  console.log(`[Perf] pywebview 对象已存在 (${(performance.now() - perfStart).toFixed(2)}ms)`);
-  if (window.pywebview.api) {
-    console.log(`[Perf] pywebview.api 已注入 (${(performance.now() - perfStart).toFixed(2)}ms)`);
-  } else {
-    console.log(`[Perf] pywebview.api 尚未注入 (${(performance.now() - perfStart).toFixed(2)}ms)`);
-  }
-} else {
-  console.log(`[Perf] pywebview 对象尚未创建 (${(performance.now() - perfStart).toFixed(2)}ms)`);
-}
-
 const rootElement = document.getElementById("root");
 if (!rootElement) {
   console.error("Could not find root element to mount to");
@@ -31,7 +19,7 @@ const root = ReactDOM.createRoot(rootElement);
 
 console.log(`[Perf] 创建 Root (${(performance.now() - perfStart).toFixed(2)}ms)`);
 
-// Add error boundaries around the app to catch any errors
+// 错误边界组件
 interface ErrorBoundaryProps {
   children: React.ReactNode;
 }

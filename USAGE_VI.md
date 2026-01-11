@@ -237,6 +237,48 @@ Nếu vấn đề vẫn chưa được giải quyết:
 
 ## 🎓 Sử dụng nâng cao
 
+### Chế độ máy chủ
+
+Ngoài ứng dụng máy tính để bàn, còn có thể chạy như một máy chủ độc lập:
+
+```powershell
+# Khởi động máy chủ
+python -m backend.server
+
+# Chỉ định cổng
+python -m backend.server --port 9000
+
+# Chế độ phát triển (tải lại nóng)
+python -m backend.server --dev
+```
+
+Truy cập `http://localhost:8000` để sử dụng giao diện Web.
+
+### HTTP API
+
+v2.0 cung cấp RESTful API đầy đủ cho các script tự động hóa hoặc tích hợp bên thứ ba:
+
+```powershell
+# Bắt đầu tác vụ thu thập
+curl -X POST http://localhost:8000/api/task/start `
+  -H "Content-Type: application/json" `
+  -d '{"type": "favorite", "target": "liên_kết_người_dùng", "limit": 20}'
+
+# Lấy trạng thái tác vụ
+curl http://localhost:8000/api/task/status?task_id=task_xxx
+
+# Lấy kết quả thu thập
+curl http://localhost:8000/api/task/results/task_xxx
+```
+
+Các endpoint API chính:
+- `POST /api/task/start` - Bắt đầu tác vụ thu thập
+- `GET /api/task/status` - Truy vấn trạng thái tác vụ
+- `GET /api/task/results/{task_id}` - Lấy kết quả thu thập
+- `GET /api/settings` - Lấy cài đặt
+- `POST /api/settings` - Lưu cài đặt
+- `GET /api/events` - Luồng sự kiện SSE thời gian thực
+
 ### Chế độ dòng lệnh
 
 Ngoài giao diện GUI, còn hỗ trợ thao tác dòng lệnh:

@@ -1,17 +1,40 @@
+"""
+DouyinCrawler GUI 启动器
+
+使用 PyWebView 创建桌面窗口，加载 FastAPI 后端服务。
+启动流程：
+1. 创建窗口（url="about:blank"）
+2. 使用 webview.start(func) 启动后端服务
+3. 等待服务就绪后加载实际页面
+"""
+
 import os
+import socket
 import sys
+import threading
+import time
 
 import webview
 from loguru import logger
 
-from backend.api import API
-from backend.constants import PROJECT_ROOT, RESOURCE_ROOT
+from backend.constants import (
+    PROJECT_ROOT,
+    RESOURCE_ROOT,
+    SERVER_DEFAULTS,
+    WEBVIEW_STORAGE_DIR,
+    WINDOW_MIN_SIZE,
+)
+from backend.state import state
 
 # 判断是否为打包环境
 IS_PACKAGED = getattr(sys, "frozen", False)
 
-# 配置日志：打包后禁用控制台输出
-logger.remove()  # 移除默认handler
+# 服务配置（从常量读取）
+SERVER_HOST = SERVER_DEFAULTS["HOST"]
+SERVER_PORT = SERVER_DEFAULTS["PORT"]
+
+# 配置日志
+logger.remove()
 
 if not IS_PACKAGED:
     # 开发环境：保留控制台输出
@@ -20,143 +43,191 @@ if not IS_PACKAGED:
         format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <level>{message}</level>",
         level="INFO",
     )
-# 打包环境：不添加handler，避免控制台编码问题
-# 日志会在API初始化后自动配置（文件+前端面板）
 
 
-def get_entrypoint():
-    """获取前端入口文件路径（从资源目录读取）"""
-    index_path = os.path.join(RESOURCE_ROOT, "frontend", "dist", "index.html")
+def is_port_in_use(port: int, host: str = "127.0.0.1") -> bool:
+    """检查端口是否被占用"""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        try:
+            s.bind((host, port))
+            return False
+        except OSError:
+            return True
 
-    if os.path.exists(index_path):
-        logger.info(f"🔄 加载前端: {index_path}")
-        return index_path
-    else:
-        logger.error(f"❌ 未找到前端文件: {index_path}")
-        logger.error("💡 请先构建前端: cd frontend && pnpm build")
-        sys.exit(1)
+
+def wait_for_server_ready(host: str, port: int, timeout: int = 10) -> bool:
+    """等待服务器就绪"""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(1)
+                s.connect((host, port))
+                return True
+        except (socket.error, socket.timeout):
+            time.sleep(0.2)
+    return False
 
 
 def get_icon_path():
-    """获取应用图标路径（从资源目录读取）"""
-
-    # 优先使用构建后的图标
+    """获取应用图标路径"""
     dist_icon = os.path.join(RESOURCE_ROOT, "frontend", "dist", "favicon.ico")
     if os.path.exists(dist_icon):
         return dist_icon
-
-    # 备用：开发环境的图标
     public_icon = os.path.join(RESOURCE_ROOT, "frontend", "public", "favicon.ico")
     if os.path.exists(public_icon):
         return public_icon
-
     return None
 
 
-if __name__ == "__main__":
+def get_storage_path():
+    """获取 WebView 存储路径"""
+    os.makedirs(WEBVIEW_STORAGE_DIR, exist_ok=True)
+    return WEBVIEW_STORAGE_DIR
+
+
+def start_backend(window: webview.Window):
+    """
+    启动后端服务（在 webview.start 的单独线程中执行）
+
+    Args:
+        window: PyWebView 窗口实例
+    """
+    from backend.server import run_server
+
+    logger.info("🚀 正在启动后端服务...")
+
+    # 启动 FastAPI 服务（守护线程）
+    server_thread = threading.Thread(
+        target=run_server,
+        kwargs={"host": SERVER_HOST, "port": SERVER_PORT},
+        daemon=True,
+    )
+    server_thread.start()
+
+    # 等待服务就绪
+    if wait_for_server_ready(SERVER_HOST, SERVER_PORT, timeout=10):
+        logger.info(f"✓ 后端服务已就绪: http://{SERVER_HOST}:{SERVER_PORT}")
+        window.load_url(f"http://{SERVER_HOST}:{SERVER_PORT}")
+    else:
+        logger.error("❌ 后端服务启动超时")
+        window.load_html(
+            """
+            <html>
+            <head><meta charset="utf-8"><title>错误</title></head>
+            <body style="font-family: sans-serif; padding: 40px; text-align: center;">
+                <h1>😢 服务启动失败</h1>
+                <p>后端服务未能在规定时间内启动，请检查日志或重启应用。</p>
+            </body>
+            </html>
+        """
+        )
+
+
+def on_closing(window: webview.Window) -> bool:
+    """窗口关闭事件处理"""
+    result = window.create_confirmation_dialog(
+        title="确认退出", message="确定要退出吗？"
+    )
+
+    if result:
+        logger.info("🔄 正在关闭应用...")
+
+        # 清理后端资源
+        try:
+            state.cleanup()
+        except Exception as e:
+            logger.warning(f"清理资源时出错: {e}")
+
+        # 等待资源释放
+        time.sleep(0.5)
+        return True
+
+    return False
+
+
+def main():
+    """主程序入口"""
     logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    logger.info("🎉 DouyinCrawler客户端启动中...")
+    logger.info("🎉 DouyinCrawler 客户端启动中...")
     logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    
-    # 调试信息：打印关键路径
     logger.info(f"📍 运行环境信息:")
-    # logger.info(f"  - sys.frozen: {getattr(sys, 'frozen', False)}")
-    # logger.info(f"  - sys.executable: {sys.executable}")
-    # logger.info(f"  - sys.argv[0]: {sys.argv[0] if sys.argv else 'N/A'}")
     logger.info(f"  - 应用根目录: {PROJECT_ROOT}")
     logger.info(f"  - 资源根目录: {RESOURCE_ROOT}")
 
+    # 检查端口是否被占用
+    if is_port_in_use(SERVER_PORT, SERVER_HOST):
+        logger.error(f"❌ 端口 {SERVER_PORT} 已被占用")
+        logger.error("💡 请关闭占用该端口的程序后重试")
+
+        # 显示错误窗口
+        window = webview.create_window(
+            title="DouyinCrawler - 错误",
+            html=f"""
+                <html>
+                <head><meta charset="utf-8"><title>错误</title></head>
+                <body style="font-family: sans-serif; padding: 40px; text-align: center;">
+                    <h1>😢 端口被占用</h1>
+                    <p>端口 {SERVER_PORT} 已被其他程序占用。</p>
+                    <p>请关闭占用该端口的程序后重试。</p>
+                </body>
+                </html>
+            """,
+            width=500,
+            height=300,
+        )
+        webview.start()
+        return
+
+    # 加载窗口配置
+    settings = state.settings
+    window_width = settings["windowWidth"]
+    window_height = settings["windowHeight"]
+
+    # 计算居中位置
     try:
-        entry = get_entrypoint()
-        api = API()
-
-        # 加载窗口配置
-        window_width = api.settings.get("windowWidth", 1200)
-        window_height = api.settings.get("windowHeight", 800)
-
-        # 计算居中位置
         screen_width = webview.screens[0].width
         screen_height = webview.screens[0].height
         x = (screen_width - window_width) // 2
         y = (screen_height - window_height) // 2
+    except Exception:
+        x, y = None, None
 
-        # 创建窗口
-        window = webview.create_window(
-            title="DouyinCrawler",
-            url=entry,
-            js_api=api,
-            width=window_width,
-            height=window_height,
-            x=x,
-            y=y,
-            resizable=True,
-            min_size=(900, 800),
-            text_select=False,
-            # 允许跨域访问，解决视频预览问题
-            easy_drag=False,
-        )
+    # 创建窗口（初始加载空白页）
+    window = webview.create_window(
+        title="DouyinCrawler",
+        url="about:blank",
+        width=window_width,
+        height=window_height,
+        x=x,
+        y=y,
+        resizable=True,
+        min_size=WINDOW_MIN_SIZE,
+        text_select=False,
+        easy_drag=False,
+    )
 
-        api.set_webview_window(window)
+    # 注册关闭事件
+    window.events.closing += lambda: on_closing(window)
 
-        # 页面加载完成回调
-        def on_loaded():
-            logger.info("✓ 前端页面加载完成")
-            # 注意：不在这里启动 Aria2
-            # Aria2 将在前端 API 就绪后由前端主动调用启动
+    logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    logger.info(f"✓ 窗口已创建: {window_width}x{window_height}")
+    logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-        window.events.loaded += on_loaded
+    # 启动 GUI（start_backend 在单独线程中执行）
+    webview.start(
+        func=start_backend,
+        args=(window,),
+        icon=get_icon_path(),
+        storage_path=get_storage_path(),
+    )
 
-        # 窗口关闭事件
-        def on_closing():
-            result = window.create_confirmation_dialog(
-                title="确认退出", message="确定要退出吗？"
-            )
+    logger.info("👋 应用已正常退出")
 
-            if result:
-                logger.info("🔄 正在关闭应用...")
 
-                # 清理后端资源
-                api.cleanup()
-
-                # 给足够时间让所有资源释放
-                # 包括：日志文件、aria2进程、WebView缓存等
-                import time
-
-                time.sleep(1.0)
-
-                return True
-            return False
-
-        window.events.closing += on_closing
-
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        logger.info(f"✓ 窗口已创建: {window_width}x{window_height}")
-        logger.info("✓ 应用启动成功")
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-
-        # 启动应用
-        # 注意：生产环境不要使用 debug=True，会导致性能问题和卡顿
-        # http_server=True 允许加载外部资源（解决视频跨域问题）
-        # storage_path 使用独立目录，避免与config冲突
-        storage_path = os.path.join(api.config_dir, "webview_storage")
-        os.makedirs(storage_path, exist_ok=True)
-
-        webview.start(
-            debug=False,
-            # gui='edgechromium',
-            icon=get_icon_path(),
-            http_server=True,  # 启用HTTP服务器模式，允许跨域访问外部资源
-            storage_path=storage_path,
-        )
-
-        # webview.start()返回后，窗口已关闭
-        # 再次确保所有资源已释放
-        logger.info("👋 应用已正常退出")
-
-        # 最终清理：确保所有文件句柄都已关闭
-        import time
-
-        time.sleep(0.5)
+if __name__ == "__main__":
+    try:
+        main()
     except Exception as e:
         logger.error(f"💥 应用崩溃: {e}", exc_info=True)
         sys.exit(1)

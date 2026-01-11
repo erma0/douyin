@@ -12,9 +12,9 @@ import { WelcomeWizard } from './components/WelcomeWizard';
 import { WorkCard } from './components/WorkCard';
 import { useAria2Download } from './hooks/useAria2Download';
 import { bridge } from './services/bridge';
+import { sseClient, TaskResultEvent, TaskStatusEvent, TaskErrorEvent } from './services/sseClient';
 import { logger } from './services/logger';
 import { DouyinWork, TaskType } from './types';
-import { registerTaskCallback } from './utils/callbackManager';
 
 // 延迟加载虚拟滚动库（这些库比较大）
 import {
@@ -328,40 +328,39 @@ export const App: React.FC = () => {
     setIsLoading(true);
     setShowLimitMenu(false); // 关闭数量限制菜单
 
-    // 使用安全的回调管理器注册全局回调函数
-    // 避免命名冲突和内存泄漏
-    const cleanupCallback = registerTaskCallback((message) => {
-      if (message.type === 'result') {
+    // 用于存储当前任务ID
+    let taskId: string | null = null;
+
+    // 订阅 SSE 事件
+    const unsubResult = sseClient.onTaskResult((event: TaskResultEvent) => {
+      if (taskId && event.task_id === taskId) {
         // 实时追加新采集到的结果
-        setResults(prev => {
-          const newResults = [...prev, ...(message.data || [])];
-          return newResults;
-        });
-        logger.info(`已采集 ${message.total} 条数据`);
-      } else if (message.type === 'complete') {
+        setResults(prev => [...prev, ...(event.data || [])]);
+        logger.info(`已采集 ${event.total} 条数据`);
+      }
+    });
+
+    const unsubStatus = sseClient.onTaskStatus((event: TaskStatusEvent) => {
+      if (taskId && event.task_id === taskId && event.status === 'completed') {
         // 采集完成
         setIsLoading(false);
+        setCurrentTaskId(taskId);
+        logger.info(`保存任务ID: ${taskId}`);
 
-        // 保存当前任务ID，用于后续下载
-        if (message.task_id) {
-          setCurrentTaskId(message.task_id);
-          logger.info(`保存任务ID: ${message.task_id}`);
-        }
-
-        // 根据后端检测到的类型自动切换面板（类型已统一，无需映射）
-        if (message.detected_type && message.detected_type !== activeTab) {
-          const detectedType = message.detected_type as TaskType;
+        // 根据后端检测到的类型自动切换面板
+        if (event.detected_type && event.detected_type !== activeTab) {
+          const detectedType = event.detected_type as TaskType;
           setActiveTab(detectedType);
           setResultsTaskType(detectedType);
-          logger.info(`后端识别类型: ${message.detected_type}，自动切换面板`);
+          logger.info(`后端识别类型: ${event.detected_type}，自动切换面板`);
         }
 
-        if (message.total && message.total > 0) {
-          logger.success(`采集成功，共获取到 ${message.total} 条数据`);
-          toast.success(`采集成功，共获取到 ${message.total} 条数据`);
+        if (event.total && event.total > 0) {
+          logger.success(`采集成功，共获取到 ${event.total} 条数据`);
+          toast.success(`采集成功，共获取到 ${event.total} 条数据`);
         } else {
           // 区分增量采集和普通采集
-          if (message.is_incremental) {
+          if (event.is_incremental) {
             logger.info("✓ 增量采集完成，暂无新作品");
             toast.info("增量采集完成，暂无新作品（已是最新状态）");
           } else {
@@ -370,12 +369,18 @@ export const App: React.FC = () => {
           }
         }
 
-        // 清理回调函数
-        cleanupCallback();
-      } else if (message.type === 'error') {
+        // 清理订阅
+        unsubResult();
+        unsubStatus();
+        unsubError();
+      }
+    });
+
+    const unsubError = sseClient.onTaskError((event: TaskErrorEvent) => {
+      if (taskId && event.task_id === taskId) {
         // 采集失败
         setIsLoading(false);
-        const errorMsg = message.error || '未知错误';
+        const errorMsg = event.error || '未知错误';
         logger.error(`任务执行失败: ${errorMsg}`);
 
         // 根据错误类型提供友好的提示信息
@@ -387,24 +392,27 @@ export const App: React.FC = () => {
           toast.error(`采集失败: ${errorMsg}`);
         }
 
-        // 清理回调函数
-        cleanupCallback();
+        // 清理订阅
+        unsubResult();
+        unsubStatus();
+        unsubError();
       }
     });
 
     try {
-      // 调用后端API开始采集任务（不传递回调函数，后端通过 evaluate_js 调用全局函数）
+      // 调用后端API开始采集任务
       // 搜索任务传递筛选参数
       const taskFilters = activeTab === TaskType.SEARCH ? filters : undefined;
-      await bridge.startTask(
+      const response = await bridge.startTask(
         activeTab, 
         inputVal, 
         maxCount,
         taskFilters
       );
 
-      // 任务已启动，等待回调处理结果
-      logger.info("采集任务已启动，正在后台执行...");
+      // 保存任务ID，用于匹配 SSE 事件
+      taskId = response.task_id;
+      logger.info(`采集任务已启动，任务ID: ${taskId}`);
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -421,6 +429,11 @@ export const App: React.FC = () => {
         toast.error(`采集失败: ${errorMsg}`);
       }
       setIsLoading(false);
+      
+      // 清理 SSE 订阅
+      unsubResult();
+      unsubStatus();
+      unsubError();
     }
   };
 

@@ -116,10 +116,53 @@ Xem chi tiết thư mục script.
 
 ## 📊 Tech Stack
 
-- **Backend**: Python 3.12, PyWebView
+- **Backend**: Python 3.12, FastAPI, PyWebView
 - **Frontend**: React 18, TypeScript, Vite
 - **Tải xuống**: Aria2
 - **Đóng gói**: PyInstaller / Nuitka
+
+## Chế độ máy chủ
+
+Backend được xây dựng bằng FastAPI, cung cấp RESTful API đầy đủ.
+
+```bash
+# Khởi động máy chủ
+python -m backend.server
+
+# Hoặc sử dụng Docker
+docker compose up -d
+```
+
+Truy cập `http://localhost:8000` (Docker: `http://localhost`)
+
+```text
+Tham số dòng lệnh:
+    python -m backend.server              # Cấu hình mặc định
+    python -m backend.server --port 9000  # Chỉ định cổng
+    python -m backend.server --dev        # Chế độ phát triển
+
+Biến môi trường (tiền tố DOUYIN_):
+    DOUYIN_HOST          Địa chỉ lắng nghe (mặc định: 127.0.0.1)
+    DOUYIN_PORT          Cổng lắng nghe (mặc định: 8000)
+    DOUYIN_DEV           Chế độ phát triển (mặc định: false)
+    DOUYIN_LOG_LEVEL     Mức độ nhật ký (mặc định: info)
+```
+
+### Kiến trúc API
+
+v2.0 được tái cấu trúc theo kiến trúc tách biệt frontend-backend tiêu chuẩn:
+
+- **Backend**: FastAPI cung cấp RESTful API + SSE đẩy thời gian thực
+- **Frontend**: React giao tiếp với backend qua HTTP API
+- **Thời gian thực**: SSE (Server-Sent Events) đẩy tiến độ và kết quả thu thập
+
+Các module API:
+- `/api/task/*` - Quản lý tác vụ thu thập
+- `/api/settings/*` - Cài đặt ứng dụng
+- `/api/aria2/*` - Dịch vụ tải xuống Aria2
+- `/api/file/*` - Thao tác tệp
+- `/api/system/*` - Công cụ hệ thống
+- `/api/events` - Luồng sự kiện SSE thời gian thực
 
 ## Lịch sử Star
 

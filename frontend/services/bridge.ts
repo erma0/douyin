@@ -1,355 +1,202 @@
-/**
+﻿/**
  * 前后端通信桥接服务
- *
- * 动态检测并选择后端连接方式：
- * - PyWebView 模式：优先使用，通过 window.pywebview.api 调用
- * - HTTP 模式：回退方案，通过 FastAPI RESTful 接口调用
+ * 统一使用 HTTP API 与后端通信
  */
 
 import { AppSettings, TaskType } from '../types';
 import { handleError } from '../utils/errorHandler';
 import { logger } from './logger';
-import { httpBridge } from './httpBridge';
+import { sseClient } from './sseClient';
+import api from './api';
 
-// ============================================================================
-// PyWebView Bridge 实现
-// ============================================================================
+export type RunMode = 'gui' | 'web';
 
-const pywebviewBridge = {
-  /**
-   * 检查 PyWebView 是否可用
-   */
-  isAvailable: (): boolean => {
-    return typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined';
+export function detectRunMode(): RunMode {
+  if (typeof window === 'undefined') return 'web';
+  if ('pywebview' in window) return 'gui';
+  if (navigator.userAgent.toLowerCase().includes('pywebview')) return 'gui';
+  return 'web';
+}
+
+let _runMode: RunMode | null = null;
+export function getRunMode(): RunMode {
+  if (_runMode === null) {
+    _runMode = detectRunMode();
+    console.log('[Bridge] mode: ' + _runMode);
+  }
+  return _runMode;
+}
+
+export function isGUIMode(): boolean {
+  return getRunMode() === 'gui';
+}
+
+export interface Bridge {
+  isAvailable: () => boolean;
+  waitForReady: (timeout?: number) => Promise<boolean>;
+  startTask: (type: TaskType, target: string, limit?: number, filters?: Record<string, string>) => Promise<{ task_id: string; status: string }>;
+  openExternal: (url: string) => void;
+  getSettings: () => Promise<AppSettings>;
+  saveSettings: (settings: AppSettings) => Promise<void>;
+  selectFolder: () => Promise<string>;
+  subscribeToLogs: (callback: (log: any) => void) => Promise<() => void>;
+  getTaskStatus: (taskId?: string) => Promise<any[]>;
+  getAria2Config: () => Promise<{ host: string; port: number; secret: string }>;
+  isFirstRun: () => Promise<boolean>;
+  startAria2: () => Promise<void>;
+  getTaskResults: (taskId: string) => Promise<any[]>;
+  getClipboardText: () => Promise<string>;
+  readConfigFile: (filePath: string) => Promise<string>;
+  getAria2ConfigPath: (taskId?: string) => Promise<string>;
+  checkFileExists: (filePath: string) => Promise<boolean>;
+  openFolder: (folderPath: string) => Promise<boolean>;
+}
+
+export const bridge: Bridge = {
+  isAvailable: () => true,
+
+  waitForReady: async (timeout = 30000) => {
+    console.log('[Bridge] waiting...');
+    const ready = await api.waitForReady(timeout);
+    if (ready) {
+      sseClient.connect(api.baseUrl + '/api/events');
+      await new Promise(r => setTimeout(r, 500));
+      console.log(sseClient.isConnected() ? '[Bridge] SSE OK' : '[Bridge] SSE failed');
+    }
+    return ready;
   },
 
-  /**
-   * 等待 PyWebView API 就绪
-   */
-  waitForReady: (timeout: number = 30000): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const startTime = Date.now();
-
-      // 检查是否已经就绪
-      if (window.pywebview?.api) {
-        console.log('[Bridge] pywebview API 已就绪');
-        resolve(true);
-        return;
-      }
-
-      // 监听 pywebviewready 事件
-      const onReady = () => {
-        const elapsed = Date.now() - startTime;
-        console.log(`[Bridge] pywebview API就绪 (${elapsed}ms)`);
-        window.removeEventListener('pywebviewready', onReady);
-        clearTimeout(timeoutId);
-        resolve(true);
-      };
-
-      window.addEventListener('pywebviewready', onReady);
-
-      // 超时处理
-      const timeoutId = setTimeout(() => {
-        window.removeEventListener('pywebviewready', onReady);
-        console.error('[Bridge] 连接超时');
-        resolve(false);
-      }, timeout);
-    });
-  },
-
-  /**
-   * 开始采集任务（支持流式返回）
-   */
-  startTask: async (
-    type: TaskType,
-    target: string,
-    limit: number = 0,
-    filters?: Record<string, string>
-  ): Promise<{ task_id: string; status: string }> => {
+  startTask: async (type, target, limit = 0, filters) => {
     try {
-      if (!window.pywebview) {
-        throw new Error('Backend not available');
-      }
-
-      logger.api.request('开始采集任务', { type, target, limit, filters });
-
-      // 如果filters为undefined，传递null给后端
-      const result = await window.pywebview.api.start_task(type, target, limit, filters || null);
-
-      logger.api.response('采集任务启动成功', { taskId: result.task_id, status: result.status });
-      return result as { task_id: string; status: string };
+      logger.api.request('start task', { type, target, limit, filters });
+      const result = await api.task.start({ type, target, limit, filters });
+      logger.api.response('task started', { taskId: result.task_id });
+      return result;
     } catch (error) {
-      handleError(error, { type, target, limit, filters }, {
-        customMessage: '采集任务启动失败'
-      });
+      handleError(error, { type, target, limit, filters }, { customMessage: 'task start failed' });
       throw error;
     }
   },
 
-  /**
-   * 打开外部链接
-   */
-  openExternal: (url: string) => {
-    if (window.pywebview) {
-      window.pywebview.api.open_url(url);
+  openExternal: (url) => {
+    if (isGUIMode()) {
+      api.system.openUrl(url).catch(() => window.open(url, '_blank'));
     } else {
       window.open(url, '_blank');
     }
   },
 
-  /**
-   * 获取应用设置
-   */
-  getSettings: async (): Promise<AppSettings> => {
+  getSettings: async () => {
     try {
-      if (!window.pywebview) {
-        throw new Error('Backend not available');
-      }
-
-      const settings = await window.pywebview.api.get_settings();
-      logger.api.response('获取应用设置成功');
-      return settings;
+      return await api.settings.get();
     } catch (error) {
-      handleError(error, {}, {
-        customMessage: '获取应用设置失败',
-        showToast: false  // 设置获取失败不显示Toast，避免干扰用户
-      });
+      handleError(error, {}, { customMessage: 'get settings failed', showToast: false });
       throw error;
     }
   },
 
-  /**
-   * 保存应用设置
-   */
-  saveSettings: async (settings: AppSettings): Promise<void> => {
+  saveSettings: async (settings) => {
     try {
-      if (!window.pywebview) {
-        throw new Error('Backend not available');
-      }
-
-      logger.api.request('保存应用设置', settings);
-      await window.pywebview.api.save_settings(settings);
-      logger.api.response('保存应用设置成功');
+      logger.api.request('save settings', settings);
+      await api.settings.save(settings);
     } catch (error) {
-      handleError(error, settings, {
-        customMessage: '保存应用设置失败'
-      });
+      handleError(error, settings, { customMessage: 'save settings failed' });
       throw error;
     }
   },
 
-  /**
-   * 选择文件夹
-   */
-  selectFolder: async (): Promise<string> => {
-    if (window.pywebview) {
-      return await window.pywebview.api.select_folder();
+  selectFolder: async () => {
+    if (isGUIMode()) {
+      try {
+        const settings = await api.settings.get();
+        return settings.downloadPath || '';
+      } catch { return ''; }
     }
-    throw new Error('Backend not available');
+    return '';
   },
 
-  /**
-   * 订阅后端日志
-   */
-  subscribeToLogs: async (callback: (log: any) => void): Promise<(() => void)> => {
-    if (window.pywebview) {
-      await window.pywebview.api.subscribe_to_logs(callback);
-      return () => {
-        try {
-          window.pywebview.api.unsubscribe_from_logs(callback);
-        } catch (error) {
-          console.error('[Bridge] 取消订阅失败:', error);
-        }
-      };
-    }
-    return () => { };
-  },
+  subscribeToLogs: async (callback) => sseClient.onLog(callback),
 
-  /**
-   * 获取任务状态
-   */
-  getTaskStatus: async (taskId?: string): Promise<any[]> => {
-    if (window.pywebview) {
-      return await window.pywebview.api.get_task_status(taskId);
-    }
-    throw new Error('Backend not available');
-  },
-
-  /**
-   * 获取 Aria2 配置
-   */
-  getAria2Config: async (): Promise<{ host: string; port: number; secret: string }> => {
-    if (window.pywebview) {
-      return await window.pywebview.api.get_aria2_config();
-    }
-    throw new Error('Backend not available');
-  },
-
-  /**
-   * 检查是否首次运行
-   */
-  isFirstRun: async (): Promise<boolean> => {
-    if (window.pywebview) {
-      return await window.pywebview.api.is_first_run_check();
-    }
-    return false;
-  },
-
-  /**
-   * 启动 Aria2 服务
-   */
-  startAria2: async (): Promise<void> => {
-    if (window.pywebview) {
-      await window.pywebview.api.start_aria2_after_loaded();
-    }
-  },
-
-  /**
-   * 获取任务的采集结果
-   */
-  getTaskResults: async (taskId: string): Promise<any[]> => {
-    if (window.pywebview) {
-      return await window.pywebview.api.get_task_results(taskId);
-    }
-    throw new Error('Backend not available');
-  },
-
-  /**
-   * 获取系统剪贴板内容
-   */
-  getClipboardText: async (): Promise<string> => {
-    if (window.pywebview) {
-      return await window.pywebview.api.get_clipboard_text();
-    }
-    throw new Error('Backend not available');
-  },
-
-  /**
-   * 读取配置文件
-   */
-  readConfigFile: async (filePath: string): Promise<string> => {
+  getTaskStatus: async (taskId) => {
     try {
-      if (!window.pywebview) {
-        throw new Error('Backend not available');
-      }
-
-      return await window.pywebview.api.read_config_file(filePath);
+      return await api.task.status(taskId);
     } catch (error) {
-      handleError(error, { filePath }, {
-        customMessage: '读取配置文件失败'
-      });
+      handleError(error, { taskId }, { customMessage: 'get task status failed' });
       throw error;
     }
   },
 
-  /**
-   * 获取aria2配置文件路径
-   */
-  getAria2ConfigPath: async (taskId?: string): Promise<string> => {
+  getAria2Config: async () => {
     try {
-      if (!window.pywebview) {
-        throw new Error('Backend not available');
-      }
-
-      return await window.pywebview.api.get_aria2_config_path(taskId);
+      return await api.aria2.config();
     } catch (error) {
-      handleError(error, { taskId }, {
-        customMessage: '获取配置文件路径失败'
-      });
+      handleError(error, {}, { customMessage: 'get aria2 config failed' });
       throw error;
     }
   },
 
-  /**
-   * 检查文件是否存在
-   */
-  checkFileExists: async (filePath: string): Promise<boolean> => {
+  isFirstRun: async () => {
     try {
-      if (!window.pywebview) {
-        throw new Error('Backend not available');
-      }
+      return await api.settings.isFirstRun();
+    } catch { return false; }
+  },
 
-      return await window.pywebview.api.check_file_exists(filePath);
+  startAria2: async () => {
+    try {
+      await api.aria2.start();
     } catch (error) {
-      console.error('[Bridge] 检查文件存在失败:', error);
-      return false;
+      handleError(error, {}, { customMessage: 'start aria2 failed' });
+      throw error;
     }
   },
 
-  /**
-   * 打开文件夹
-   */
-  openFolder: async (folderPath: string): Promise<boolean> => {
+  getTaskResults: async (taskId) => {
     try {
-      console.log('[Bridge] 准备打开文件夹:', folderPath);
-      if (!window.pywebview) {
-        throw new Error('Backend not available');
-      }
-
-      const result = await window.pywebview.api.open_folder(folderPath);
-      console.log('[Bridge] 打开文件夹返回结果:', result);
-      return result;
+      return await api.task.results(taskId);
     } catch (error) {
-      console.error('[Bridge] 打开文件夹失败:', error);
-      return false;
+      handleError(error, { taskId }, { customMessage: 'get task results failed' });
+      throw error;
     }
+  },
+
+  getClipboardText: async () => {
+    try {
+      return await api.system.clipboard();
+    } catch (error) {
+      handleError(error, {}, { customMessage: 'get clipboard failed' });
+      throw error;
+    }
+  },
+
+  readConfigFile: async (filePath) => {
+    try {
+      return await api.file.readConfig(filePath);
+    } catch (error) {
+      handleError(error, { filePath }, { customMessage: 'read config failed' });
+      throw error;
+    }
+  },
+
+  getAria2ConfigPath: async (taskId) => {
+    try {
+      return await api.aria2.configPath(taskId);
+    } catch (error) {
+      handleError(error, { taskId }, { customMessage: 'get config path failed' });
+      throw error;
+    }
+  },
+
+  checkFileExists: async (filePath) => {
+    try {
+      return await api.file.checkExists(filePath);
+    } catch { return false; }
+  },
+
+  openFolder: async (folderPath) => {
+    try {
+      return await api.file.openFolder(folderPath);
+    } catch { return false; }
   }
 };
 
-// ============================================================================
-// Bridge 选择逻辑
-// ============================================================================
-
-export type Bridge = typeof pywebviewBridge
-
-/**
- * 动态选择 bridge
- * 每次调用都检测，优先使用 PyWebView
- */
-function getBridge(): Bridge {
-  return pywebviewBridge.isAvailable() ? pywebviewBridge : httpBridge;
-}
-
-/**
- * 导出的 bridge 实例
- * 使用 Proxy 自动转发所有方法调用
- */
-export const bridge = new Proxy({} as Bridge, {
-  get(_target, prop) {
-    // waitForReady 特殊处理：并行尝试两种模式，谁先就绪用谁
-    if (prop === 'waitForReady') {
-      return async (timeout: number = 30000) => {
-        // 如果已经检测到 pywebview，直接等待
-        if (pywebviewBridge.isAvailable()) {
-          console.log('[Bridge] 检测到 PyWebView，等待就绪...');
-          return pywebviewBridge.waitForReady(timeout);
-        }
-        
-        // 否则并行尝试：pywebview 和 HTTP
-        console.log('[Bridge] 并行检测 PyWebView 和 HTTP 模式...');
-        const results = await Promise.race([
-          pywebviewBridge.waitForReady(timeout).then(ready => ({ type: 'pywebview', ready })),
-          httpBridge.waitForReady(timeout).then(ready => ({ type: 'http', ready }))
-        ]);
-        
-        if (results.type === 'pywebview' && results.ready) {
-          console.log('[Bridge] 使用 PyWebView 模式');
-        } else {
-          console.log('[Bridge] 使用 HTTP 模式');
-        }
-        
-        return results.ready;
-      };
-    }
-    
-    const selectedBridge = getBridge();
-    const value = selectedBridge[prop as keyof Bridge];
-    
-    // 如果是函数，绑定正确的 this
-    if (typeof value === 'function') {
-      return value.bind(selectedBridge);
-    }
-    
-    return value;
-  }
-});
+export default bridge;

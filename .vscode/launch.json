@@ -1,41 +1,193 @@
 {
-    // 使用 IntelliSense 了解相关属性。 
-    // 悬停以查看现有属性的描述。
-    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
+        // ========================================
+        // GUI 模式调试
+        // ========================================
         {
-            "name": "🚀 启动应用（生产模式）",
+            "name": "🖥️ GUI 模式（完整应用）",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/main.py",
-            "args": [],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "env": {
                 "PYTHONUNBUFFERED": "1"
             },
-            "preLaunchTask": "构建前端"
+            "preLaunchTask": "构建前端",
+            "presentation": {
+                "group": "1-gui",
+                "order": 1
+            }
         },
         {
-            "name": "🐍 调试后端（跳过前端构建）",
+            "name": "🖥️ GUI 模式（跳过构建）",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/main.py",
-            "args": [],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "env": {
                 "PYTHONUNBUFFERED": "1"
+            },
+            "presentation": {
+                "group": "1-gui",
+                "order": 2
             }
         },
+        
+        // ========================================
+        // 后端 API 调试
+        // ========================================
+        {
+            "name": "🔧 FastAPI 服务（开发模式）",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "backend.server",
+            "args": [
+                "--dev",
+                "--log-level", "debug"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONUNBUFFERED": "1"
+            },
+            "presentation": {
+                "group": "2-backend",
+                "order": 1
+            }
+        },
+        {
+            "name": "🔧 FastAPI 服务（生产模式）",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "backend.server",
+            "args": [
+                "--log-level", "info"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONUNBUFFERED": "1"
+            },
+            "presentation": {
+                "group": "2-backend",
+                "order": 2
+            }
+        },
+        {
+            "name": "🔧 FastAPI 服务（自定义端口）",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "backend.server",
+            "args": [
+                "--port", "9000",
+                "--dev"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONUNBUFFERED": "1"
+            },
+            "presentation": {
+                "group": "2-backend",
+                "order": 3
+            }
+        },
+        
+        // ========================================
+        // CLI 模式调试
+        // ========================================
+        {
+            "name": "💻 CLI 模式（交互式）",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "backend.cli",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONUNBUFFERED": "1"
+            },
+            "presentation": {
+                "group": "3-cli",
+                "order": 1
+            }
+        },
+        {
+            "name": "💻 CLI 模式（测试采集）",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "backend.cli",
+            "args": [
+                "-u", "https://www.douyin.com/user/xxx",
+                "-l", "5",
+                "--no-download"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONUNBUFFERED": "1"
+            },
+            "presentation": {
+                "group": "3-cli",
+                "order": 2
+            }
+        },
+        
+        // ========================================
+        // 通用调试
+        // ========================================
         {
             "name": "📝 调试当前 Python 文件",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONUNBUFFERED": "1"
+            },
+            "presentation": {
+                "group": "4-general",
+                "order": 1
+            }
+        },
+        {
+            "name": "🧪 运行 Python 测试",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${file}",
+                "-v"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONUNBUFFERED": "1"
+            },
+            "presentation": {
+                "group": "4-general",
+                "order": 2
+            }
+        }
+    ],
+    
+    // ========================================
+    // 复合调试配置
+    // ========================================
+    "compounds": [
+        {
+            "name": "🚀 全栈调试（后端 + 前端开发服务器）",
+            "configurations": [
+                "🔧 FastAPI 服务（开发模式）"
+            ],
+            "preLaunchTask": "启动前端开发服务器",
+            "presentation": {
+                "group": "0-compound",
+                "order": 1
+            }
         }
     ]
 }

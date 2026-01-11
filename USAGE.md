@@ -237,6 +237,48 @@ python main.py
 
 ## 🎓 高级用法
 
+### 服务器模式
+
+除了桌面应用，还可以作为独立服务器运行：
+
+```powershell
+# 启动服务器
+python -m backend.server
+
+# 指定端口
+python -m backend.server --port 9000
+
+# 开发模式（热重载）
+python -m backend.server --dev
+```
+
+访问 `http://localhost:8000` 使用 Web 界面。
+
+### HTTP API
+
+v2.0 提供完整的 RESTful API，可用于自动化脚本或第三方集成：
+
+```powershell
+# 启动采集任务
+curl -X POST http://localhost:8000/api/task/start `
+  -H "Content-Type: application/json" `
+  -d '{"type": "favorite", "target": "用户链接", "limit": 20}'
+
+# 获取任务状态
+curl http://localhost:8000/api/task/status?task_id=task_xxx
+
+# 获取采集结果
+curl http://localhost:8000/api/task/results/task_xxx
+```
+
+主要 API 端点：
+- `POST /api/task/start` - 启动采集任务
+- `GET /api/task/status` - 查询任务状态
+- `GET /api/task/results/{task_id}` - 获取采集结果
+- `GET /api/settings` - 获取设置
+- `POST /api/settings` - 保存设置
+- `GET /api/events` - SSE 实时事件流
+
 ### 命令行模式
 
 除了GUI界面，还支持功能完整的命令行操作：

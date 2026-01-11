@@ -116,10 +116,53 @@ See script directory for details.
 
 ## 📊 Tech Stack
 
-- **Backend**: Python 3.12, PyWebView
+- **Backend**: Python 3.12, FastAPI, PyWebView
 - **Frontend**: React 18, TypeScript, Vite
 - **Download**: Aria2
 - **Packaging**: PyInstaller / Nuitka
+
+## Server Mode
+
+Backend is built with FastAPI, providing complete RESTful API.
+
+```bash
+# Start server
+python -m backend.server
+
+# Or use Docker
+docker compose up -d
+```
+
+Visit `http://localhost:8000` (Docker: `http://localhost`)
+
+```text
+Command line arguments:
+    python -m backend.server              # Default config
+    python -m backend.server --port 9000  # Specify port
+    python -m backend.server --dev        # Development mode
+
+Environment variables (prefix DOUYIN_):
+    DOUYIN_HOST          Listen address (default: 127.0.0.1)
+    DOUYIN_PORT          Listen port (default: 8000)
+    DOUYIN_DEV           Development mode (default: false)
+    DOUYIN_LOG_LEVEL     Log level (default: info)
+```
+
+### API Architecture
+
+v2.0 refactored to standard frontend-backend separation architecture:
+
+- **Backend**: FastAPI provides RESTful API + SSE real-time push
+- **Frontend**: React communicates with backend via HTTP API
+- **Real-time**: SSE (Server-Sent Events) pushes collection progress and results
+
+API modules:
+- `/api/task/*` - Collection task management
+- `/api/settings/*` - Application settings
+- `/api/aria2/*` - Aria2 download service
+- `/api/file/*` - File operations
+- `/api/system/*` - System tools
+- `/api/events` - SSE real-time event stream
 
 ## Star History
 

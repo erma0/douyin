@@ -237,6 +237,48 @@ If the problem is not solved:
 
 ## 🎓 Advanced Usage
 
+### Server Mode
+
+In addition to the desktop application, it can also run as a standalone server:
+
+```powershell
+# Start server
+python -m backend.server
+
+# Specify port
+python -m backend.server --port 9000
+
+# Development mode (hot reload)
+python -m backend.server --dev
+```
+
+Visit `http://localhost:8000` to use the Web interface.
+
+### HTTP API
+
+v2.0 provides complete RESTful API for automation scripts or third-party integration:
+
+```powershell
+# Start collection task
+curl -X POST http://localhost:8000/api/task/start `
+  -H "Content-Type: application/json" `
+  -d '{"type": "favorite", "target": "user_link", "limit": 20}'
+
+# Get task status
+curl http://localhost:8000/api/task/status?task_id=task_xxx
+
+# Get collection results
+curl http://localhost:8000/api/task/results/task_xxx
+```
+
+Main API endpoints:
+- `POST /api/task/start` - Start collection task
+- `GET /api/task/status` - Query task status
+- `GET /api/task/results/{task_id}` - Get collection results
+- `GET /api/settings` - Get settings
+- `POST /api/settings` - Save settings
+- `GET /api/events` - SSE real-time event stream
+
 ### Command Line Mode
 
 In addition to the GUI interface, command line operation is also supported:
