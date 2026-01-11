@@ -56,7 +56,6 @@ def test_user_post(settings_cookie):
 @pytest.mark.cookie
 def test_user_like(settings_cookie):
     """测试用户喜欢采集"""
-
     d = Douyin(target="https://v.douyin.com/e2BkGS7/",
                type="favorite",
                limit=18, cookie=settings_cookie)
@@ -66,10 +65,9 @@ def test_user_like(settings_cookie):
 
 @pytest.mark.network
 @pytest.mark.cookie
-def test_user_favorite(settings_cookie):
+def test_user_collection(settings_cookie):
     """测试用户收藏采集"""
-    d = Douyin(type="favorite", target="https://v.douyin.com/uWYGV1c9WVk/", limit=18, cookie=settings_cookie)
-    # d = Douyin(type="favorite", limit=18, cookie=settings_cookie)
+    d = Douyin(type="collection", limit=18, cookie=settings_cookie)
     d.run()
     assert len(d.results) > 0
 

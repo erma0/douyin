@@ -1,4 +1,4 @@
-from lib.douyin.request import Request
+from backend.lib.douyin.request import Request
 import pytest
 
 
@@ -13,11 +13,8 @@ class TestRequest:
 
     def test_get_aweme_detail(self, request_client):
         """测试获取作品详情"""
-        params = {"aweme_id": "7379453318386437428"}
+        params = {"aweme_id": "7235055125771898149"}
         uri = "/aweme/v1/web/aweme/detail/"
-        params.update(request_client.PARAMS2)
-        params = request_client.get_params(params)
-        params["a_bogus"] = request_client.get_sign(uri, params)
         resp = request_client.getJSON(uri, params)
         aweme_detail = resp.get("aweme_detail")
         assert aweme_detail is not None
