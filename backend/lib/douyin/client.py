@@ -182,28 +182,21 @@ class DouyinClient:
         elif type == "following":
             uri = APIEndpoint.USER_FOLLOWING
             params = {
-                "address_book_access": 0,
+                "sec_user_id": target_id,
+                "offset": max_cursor,
                 "count": APIConfig.FOLLOW_COUNT,
                 "gps_access": 0,
                 "is_top": 1,
-                "max_time": max_cursor,
-                "min_time": 0,
-                "offset": 0,
-                "source_type": 1,
-                "sec_user_id": target_id,
             }
         elif type == "follower":
             uri = APIEndpoint.USER_FOLLOWER
             params = {
-                "address_book_access": 0,
+                "sec_user_id": target_id,
+                "offset": max_cursor,
                 "count": APIConfig.FOLLOW_COUNT,
                 "gps_access": 0,
                 "is_top": 1,
-                "max_time": max_cursor,
-                "min_time": 0,
-                "offset": 0,
-                "source_type": 3,
-                "sec_user_id": target_id,
+                "source_type": 2,
             }
         else:
             quit(f"不支持的采集类型: {type}")

@@ -125,3 +125,29 @@ def test_search(settings_cookie):
     )
     d.run()
     assert len(d.results) > 0
+
+
+@pytest.mark.network
+@pytest.mark.cookie
+def test_user_following(settings_cookie):
+    """测试用户关注列表采集"""
+    d = Douyin(
+        type="following",
+        limit=60,
+        cookie=settings_cookie
+    )
+    d.run()
+    assert len(d.results) > 0
+
+
+@pytest.mark.network
+@pytest.mark.cookie
+def test_user_follower(settings_cookie):
+    """测试用户粉丝列表采集"""
+    d = Douyin(
+        type="follower",
+        limit=20,
+        cookie=settings_cookie
+    )
+    d.run()
+    assert len(d.results) > 0
