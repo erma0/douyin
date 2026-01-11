@@ -4,314 +4,153 @@
 
 ## 📋 Table of Contents
 
-- [Install Aria2](#install-aria2)
 - [Get Cookie](#get-cookie)
-- [Feature Description](#feature-description)
-- [Configuration Management](#configuration-management)
+- [Features](#features)
 - [FAQ](#faq)
-- [Troubleshooting](#troubleshooting)
 - [Advanced Usage](#advanced-usage)
 
 ---
-
-## Install Aria2
-
-Batch download function requires Aria2 support:
-
-```powershell
-# Method 1: Use project script (Recommended)
-.\scripts\setup\aria2.ps1
-
-# Method 2: Manual Installation
-# 1. Download https://github.com/aria2/aria2/releases
-# 2. Extract to the project's aria2 directory or add to system PATH
-# 3. Verify: aria2c --version
-```
-
 
 ## 🍪 Get Cookie
 
 Cookie is the necessary credential for obtaining data.
 
-### Acquisition Steps
+### Steps
 
-1. **Open Douyin Web Version**
-   - Visit https://www.douyin.com
-   - Log in to your Douyin account
+1. Visit https://www.douyin.com and log in
+2. Press `F12` to open developer tools
+3. Switch to `Network` tab, refresh the page
+4. Type `aweme` in filter, click any request
+5. Find `Cookie:` field in `Request Headers`, copy the full content
+6. Paste and save in application settings
 
-2. **Open Developer Tools**
-   - Press `F12` key
-   - Or right-click on the page → Select "Inspect"
+![Schematic](./docs/images/image.png)
 
-3. **Switch to Network Tab**
-   - Click on the top `Network` tab
-   - Refresh the page (F5)
-
-4. **Find Request**
-   - Input `aweme` in the filter
-   - Find any `post/?` or similar request
-
-5. **Copy Cookie**
-   - Click on the request
-   - Find `Request Headers` on the right
-   - Find the `Cookie:` field
-   - Double-click the Cookie value to select all and copy
-
-6. **Save Cookie**
-   - Click the settings icon in the application
-   - Paste the Cookie into the input box
-   - Click Save
-
-![Schematic Diagram](./docs/images/image.png)
-
-### Cookie Verification
-
-A valid Cookie should contain the following fields:
-- `sessionid`
-- `ttwid`
-- `__ac_nonce`
-
-If the Cookie is missing these fields, it may not work properly.
+Valid Cookie should contain: `sessionid`, `ttwid`, `__ac_nonce`
 
 ---
 
-## 🎯 Feature Description
+## 🎯 Features
 
 ### Collection Types
 
-| Type | Description | Input Example | Status |
-|------|-------------|---------------|--------|
-| **Single Work** | Get single work info | `https://www.douyin.com/video/7xxx` | ✅ Normal |
-| **User Posts** | Get user published works | `https://www.douyin.com/user/MS4wLjABxxx` | ✅ Normal |
-| **User Favorites** | Get user liked works | User homepage link | ✅ Normal |
-| **User Collections** | Get user collected works | User homepage link | ✅ Normal |
-| **Hashtag** | Get works under hashtag | `https://www.douyin.com/hashtag/xxx` | ✅ Normal |
-| **Mix** | Get works in mix | Mix link | ✅ Normal |
-| **Music** | Get works using this music | `https://www.douyin.com/music/7xxx` | ✅ Normal |
-| **Keyword Search** | Search related works | `Scenery` | ✅ Normal |
-
-### Collection Quantity Limit
-
-- **All**: Collect all available data (may be slow)
-- **20/50/100 items**: Quickly collect specified quantity
-- **Custom**: Input any quantity
+| Type | Input Example |
+|------|---------------|
+| Single Work | `https://www.douyin.com/video/7xxx` |
+| User Posts | `https://www.douyin.com/user/MS4wLjABxxx` |
+| User Favorites/Collections | User homepage link |
+| Hashtag | `https://www.douyin.com/hashtag/xxx` |
+| Mix | Mix link |
+| Music | `https://www.douyin.com/music/7xxx` |
+| Keyword Search | `Scenery` |
 
 ### Batch Download
 
-Click the "One-click Download All" button, the system will automatically:
-1. Read the Aria2 configuration of the collection result
-2. Submit download tasks to Aria2 via JSON-RPC
-3. Display download progress and status in real-time
-4. Automatically handle failed tasks and errors
+Requires Aria2 support:
 
-**Features**:
-- ✅ Real-time progress display
-- ✅ Supports breakpoint resume
-- ✅ Automatically skip existing files
-- ✅ Intelligent error handling and retry
+```powershell
+# Install Aria2
+.\scripts\setup\aria2.ps1
+```
 
-### Settings Options
+Click "Download All" to automatically download collection results via Aria2.
 
-| Option | Description | Default Value |
-|--------|-------------|---------------|
-| **Cookie** | Douyin login credential | Empty |
-| **Download Path** | File save location | `./download` |
-| **Max Retries** | Download failure retry count | 3 |
-| **Max Concurrency** | Simultaneous download task count | 5 |
-| **Aria2 Host** | Aria2 service address | localhost |
-| **Aria2 Port** | Aria2 service port | 6800 |
-| **Aria2 Secret** | Aria2 RPC secret | douyin_crawler_default_secret |
+### Settings
 
+| Option | Default |
+|--------|---------|
+| Download Path | `./download` |
+| Max Retries | 3 |
+| Max Concurrency | 5 |
+| Aria2 Port | 6800 |
 
+---
 
 ## ❓ FAQ
 
-### Q1: Prompt "Cookie invalid or expired"
+### Cookie invalid or expired
 
-**Reason:**
-- Cookie has expired
-- Cookie format is incorrect
-- Not logged into Douyin account
+Re-acquire Cookie, ensure it contains required fields like `sessionid`.
 
-**Solution:**
-1. Re-acquire Cookie (refer to steps above)
-2. Ensure Cookie is completely copied
-3. Check if necessary fields are included
+### Collection result is empty
 
-### Q2: Collection result is empty
-
-**Solution:**
-1. Check if the link is correct
+1. Check if link format is correct
 2. Update Cookie
-3. Check network connection
+3. Favorites/Collections require target user to have open permissions
 
-### Q3: Download failed
+### Download failed
 
-**Solution:**
 1. Confirm Aria2 is installed: `aria2c --version`
-2. View detailed error information in the log panel
-3. Check if disk space is sufficient
-4. Try reducing concurrency (adjust in settings)
+2. Check disk space
+3. Try reducing concurrency
 
-### Q4: Application startup failed
+### Application startup failed
 
-**Possible Reasons:**
-- Dependencies not installed
-- Port occupied
-- Frontend not built
-- Configuration file corrupted
-
-**Solution:**
 ```powershell
-# Method 1: Use build script (Recommended)
 .\scripts\dev.ps1 -Clean
-
-# Method 2: Manual Reinstall
-pip install -r requirements.txt
-cd frontend
-pnpm install  # or npm install
-pnpm build    # or npm run build
 ```
-
-### Q5: Frontend page blank
-
-**Possible Reasons:**
-- Firewall blocking access
-- Frontend not built
-- Build path error
-- Missing files in dist directory
-
-**Solution:**
-1. Check firewall settings, ensure application is allowed to access network (usually private network configuration is sufficient)
-2. Confirm frontend is built
-3. Check if build path is correct
-
-### Q6: Some features unavailable
-
-**Known Issues:**
-- Douyin ID parsing function not yet implemented
-- Like/Favorite function requires target open permission, some targets cannot be obtained
-- Auto get Cookie function has been removed
-
-**Solution:**
-1. Use recommended stable features
-2. Manually configure Cookie
-3. Use full links
-
-### Q7: Configuration lost or reset
-
-**Possible Reasons:**
-- Configuration file deleted
-- Configuration file format error
-- Permission issues
-
-**Solution:**
-```powershell
-# Check configuration file
-cat config/settings.json
-
-# If file is corrupted, delete and restart
-Remove-Item config/settings.json
-python main.py
-```
-
-#### Q8: Some tasks failed
-
-**This is normal**, possible reasons:
-- File already exists (automatically skipped)
-- Download link expired
-- Network temporary interruption
-- Cookie expired
-
 
 ### Contact Support
 
-If the problem is not solved:
+When submitting an [Issue](https://github.com/erma0/douyin/issues), please include: target link, error message, software version
 
-1. View project Issues: https://github.com/erma0/douyin/issues
-2. When submitting a new Issue, please include:
-   - Target link
-   - Error information
-   - Software version
-   - System and environment version
+---
 
 ## 🎓 Advanced Usage
 
 ### Server Mode
 
-In addition to the desktop application, it can also run as a standalone server:
-
-```powershell
-# Start server
-python -m backend.server
-
-# Specify port
-python -m backend.server --port 9000
-
-# Development mode (hot reload)
-python -m backend.server --dev
+```bash
+python -m backend.server              # Default port 8000
+python -m backend.server --port 9000  # Specify port
+python -m backend.server --dev        # Development mode
 ```
 
-Visit `http://localhost:8000` to use the Web interface.
+Environment variables: `DOUYIN_HOST`, `DOUYIN_PORT`, `DOUYIN_DEV`, `DOUYIN_LOG_LEVEL`
 
 ### HTTP API
 
-v2.0 provides complete RESTful API for automation scripts or third-party integration:
-
-```powershell
+```bash
 # Start collection task
-curl -X POST http://localhost:8000/api/task/start `
-  -H "Content-Type: application/json" `
+curl -X POST http://localhost:8000/api/task/start \
+  -H "Content-Type: application/json" \
   -d '{"type": "favorite", "target": "user_link", "limit": 20}'
 
-# Get task status
-curl http://localhost:8000/api/task/status?task_id=task_xxx
-
-# Get collection results
+# Get results
 curl http://localhost:8000/api/task/results/task_xxx
 ```
 
-Main API endpoints:
-- `POST /api/task/start` - Start collection task
-- `GET /api/task/status` - Query task status
-- `GET /api/task/results/{task_id}` - Get collection results
+Main endpoints:
+- `POST /api/task/start` - Start task
+- `GET /api/task/status` - Task status
+- `GET /api/task/results/{task_id}` - Collection results
 - `GET /api/settings` - Get settings
 - `POST /api/settings` - Save settings
-- `GET /api/events` - SSE real-time event stream
+- `GET /api/events` - SSE event stream
 
 ### Command Line Mode
 
-In addition to the GUI interface, command line operation is also supported:
-
-```powershell
-# View Help
-python -m backend.cli --help
-
-# Collect user homepage works
-python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx
-
-# Limit quantity
-python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx -l 20
+```bash
+# Basic usage
+python -m backend.cli -u https://www.douyin.com/user/xxx -l 20
 
 # Specify type
-python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx -t favorite
-```
+python -m backend.cli -u link -t favorite  # post/favorite/collection/hashtag/music/mix/aweme/search
 
-### Batch Collection
+# Search filters
+python -m backend.cli -u "food" -t search --sort-type 2 --publish-time 7
 
-Create a text file, one link per line:
-
-```text
-https://www.douyin.com/user/MS4wLjABxxx
-https://www.douyin.com/user/MS4wLjAByyy
-https://www.douyin.com/user/MS4wLjABzzz
-```
-
-Then run:
-
-```powershell
+# Batch collection (urls.txt with one link per line)
 python -m backend.cli -u urls.txt -l 50
+
+# Collection only, no download
+python -m backend.cli -u link --no-download
 ```
+
+Filter parameters:
+- `--sort-type`: 0=comprehensive, 1=most likes, 2=newest
+- `--publish-time`: 0=unlimited, 1=within a day, 7=within a week, 180=within half a year
+- `--filter-duration`: 0-1=under 1 min, 1-5=1-5 min, 5-10000=over 5 min
 
 ---
 

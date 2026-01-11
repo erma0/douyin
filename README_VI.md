@@ -4,9 +4,9 @@
 
 **[English](./README_EN.md) | Tiếng Việt | [简体中文](./README.md)**
 
-> ❤️ [Mã nguồn mở không dễ dàng, hoan nghênh tặng sao ⭐](#star-history)
+> ❤️[Mã nguồn mở không dễ dàng, hoan nghênh tặng sao⭐](#star-history)
 
-## 📢 Tuyên bố từ chối trách nhiệm
+## 📢Tuyên bố từ chối trách nhiệm
 
 > Mục đích ban đầu của dự án này là học `python` crawler, gọi dòng lệnh `Aria2` và các trường hợp triển khai `WebUI` bằng `python`. Sau đó nó được sử dụng để trải nghiệm lập trình AI (phần giao diện người dùng và tương tác backend đều do AI tạo ra). Chức năng ứng dụng là lấy thông tin công khai trên nền tảng Douyin, chỉ dùng cho mục đích kiểm tra và nghiên cứu học tập, nghiêm cấm sử dụng cho mục đích thương mại hoặc bất kỳ mục đích bất hợp pháp nào.
 >
@@ -18,101 +18,71 @@
 
 ---
 
-## 🏠 Địa chỉ dự án
+## 🏠Địa chỉ dự án
 
 > [https://github.com/erma0/douyin](https://github.com/erma0/douyin)
 
-## 🍬 Tính năng
+## 🍬Tính năng
 
 ### 📊 Thu thập dữ liệu
-- ✅ Dữ liệu tác phẩm đơn
-- ✅ Bài đăng người dùng
-- ✅ Yêu thích người dùng (yêu cầu mục tiêu mở quyền)
-- ✅ Bộ sưu tập người dùng (yêu cầu mục tiêu mở quyền)
-- ✅ Tác phẩm hashtag
-- ✅ Tác phẩm mix
-- ✅ Tác phẩm nhạc
-- ✅ Tìm kiếm tác phẩm theo từ khóa
+- ✅ Tác phẩm đơn / Bài đăng người dùng / Yêu thích / Bộ sưu tập
+- ✅ Hashtag / Mix / Nhạc / Tìm kiếm từ khóa
 
 ### 🎯 Tính năng ứng dụng
 - 🔄 **Thu thập tăng dần**: Thu thập tăng dần thông minh các tác phẩm trang chủ người dùng
 - ⬇️ **Tải xuống hàng loạt**: Tích hợp Aria2, hỗ trợ tải xuống hàng loạt video/hình ảnh
-- 🎨 **Giao diện trực quan**: Ứng dụng máy tính để bàn React, hiển thị nhật ký thời gian thực
-- 🎉 **Hướng dẫn chạy lần đầu**: Giao diện chào mừng thân thiện, hướng dẫn cấu hình
+- 🎨 **Nhiều chế độ**: Ứng dụng GUI / Máy chủ Web / Dòng lệnh
+- 🌐 **RESTful API**: v2.0 cung cấp HTTP API đầy đủ
 
 ## 📸 Giao diện
 
 ![Giao diện phần mềm](./docs/images/main.png)
 
-## 🚀 Bắt đầu nhanh
+## 🚀Bắt đầu nhanh
 
-### Yêu cầu môi trường
+### Người dùng Windows
 
-> 📍 Môi trường thử nghiệm: `Win10 x64` + `Python 3.12` + `Node.js 22.13.0` + `uv 0.9+`
+Tải xuống từ [Releases](https://github.com/erma0/douyin/releases), giải nén và chạy `DouyinCrawler.exe`
 
+### Máy chủ / Docker / Linux
 
-### Khởi động nhanh
+```bash
+# Docker (Khuyên dùng)
+docker compose up -d
 
-- Tải xuống phiên bản mới nhất từ [Releases](https://github.com/erma0/douyin/releases)
-- Giải nén và nhấp đúp để chạy `DouyinCrawler.exe`
-
-
-Hướng dẫn sử dụng chi tiết vui lòng xem [USAGE_VI.md](USAGE_VI.md)
-
-## 🔨 Xây dựng và Đóng gói
-
-### 📁 Thư mục Script
-
-Tất cả các script xây dựng đã được sắp xếp vào thư mục `scripts/`:
-
-```
-scripts/
-├── build/              # Script đóng gói
-│   ├── pyinstaller.ps1      # Đóng gói PyInstaller
-│   ├── pyinstaller-dir.spec # Cấu hình chế độ thư mục
-│   ├── pyinstaller-onefile.spec # Cấu hình tệp đơn
-│   └── nuitka.ps1           # Đóng gói Nuitka
-├── setup/              # Cấu hình môi trường
-│   ├── uv.ps1               # Cấu hình môi trường uv
-│   ├── aria2.ps1            # Tải xuống aria2
-│   └── pyinstaller.ps1      # Cài đặt riêng PyInstaller
-└── dev.ps1             # Xây dựng môi trường phát triển
+# Hoặc khởi động thủ công
+uv sync
+cd frontend && pnpm install && pnpm build && cd ..
+python -m backend.server
 ```
 
-### 🚀 Bắt đầu nhanh
+Truy cập `http://localhost:8000`
 
-#### Cách 1: Sử dụng Menu Khởi động nhanh (Khuyên dùng)
+### Dòng lệnh
+
+```bash
+python -m backend.cli -u https://www.douyin.com/user/xxx -l 20
+```
+
+📖 Hướng dẫn sử dụng chi tiết vui lòng xem [USAGE_VI.md](USAGE_VI.md)
+
+## 🔨Xây dựng và Đóng gói
 
 ```powershell
+# Menu tương tác
 .\quick-start.ps1
+
+# Hoặc đóng gói trực tiếp
+.\scripts\build\pyinstaller.ps1
 ```
 
-Cung cấp menu tương tác, chọn thao tác bằng số.
-
-#### Cách 2: Thực thi Script thủ công
-
-Xem chi tiết thư mục script.
-
-### 📦 Hướng dẫn đóng gói
-
-#### PyInstaller (Khuyên dùng)
-- ✅ Tốc độ đóng gói nhanh (5-10 phút)
-- ✅ Hỗ trợ chế độ thư mục và chế độ tệp đơn
-- ✅ Khả năng tương thích tốt
-- 📦 Kích thước: Chế độ thư mục ~30MB, Tệp đơn ~21MB
-
-#### Nuitka (Hiệu suất cao)
-- ✅ Biên dịch thành mã gốc, hiệu suất tốt hơn
-- ✅ Tốc độ khởi động nhanh
-- ⚠️ Thời gian biên dịch lâu (10-20 phút)
-- ⚠️ Yêu cầu trình biên dịch MinGW64 (tự động tải xuống)
-- 📦 Kích thước: Chế độ thư mục ~45MB, Tệp đơn ~35MB
-
-#### Sản phẩm đóng gói
-- **Chế độ thư mục**: `dist/DouyinCrawler/DouyinCrawler.exe` (Khởi động nhanh)
-- **Chế độ tệp đơn**: `dist/DouyinCrawler.exe` (Dễ dàng phân phối)
-- **Gói phát hành**: `release/DouyinCrawler_*.zip` (Tự động tạo)
-
+Cấu trúc thư mục script:
+```
+scripts/
+├── build/          # Script đóng gói (PyInstaller / Nuitka)
+├── setup/          # Cấu hình môi trường (uv / aria2)
+└── dev.ps1         # Xây dựng môi trường phát triển
+```
 
 ## 📊 Tech Stack
 
@@ -120,49 +90,6 @@ Xem chi tiết thư mục script.
 - **Frontend**: React 18, TypeScript, Vite
 - **Tải xuống**: Aria2
 - **Đóng gói**: PyInstaller / Nuitka
-
-## Chế độ máy chủ
-
-Backend được xây dựng bằng FastAPI, cung cấp RESTful API đầy đủ.
-
-```bash
-# Khởi động máy chủ
-python -m backend.server
-
-# Hoặc sử dụng Docker
-docker compose up -d
-```
-
-Truy cập `http://localhost:8000` (Docker: `http://localhost`)
-
-```text
-Tham số dòng lệnh:
-    python -m backend.server              # Cấu hình mặc định
-    python -m backend.server --port 9000  # Chỉ định cổng
-    python -m backend.server --dev        # Chế độ phát triển
-
-Biến môi trường (tiền tố DOUYIN_):
-    DOUYIN_HOST          Địa chỉ lắng nghe (mặc định: 127.0.0.1)
-    DOUYIN_PORT          Cổng lắng nghe (mặc định: 8000)
-    DOUYIN_DEV           Chế độ phát triển (mặc định: false)
-    DOUYIN_LOG_LEVEL     Mức độ nhật ký (mặc định: info)
-```
-
-### Kiến trúc API
-
-v2.0 được tái cấu trúc theo kiến trúc tách biệt frontend-backend tiêu chuẩn:
-
-- **Backend**: FastAPI cung cấp RESTful API + SSE đẩy thời gian thực
-- **Frontend**: React giao tiếp với backend qua HTTP API
-- **Thời gian thực**: SSE (Server-Sent Events) đẩy tiến độ và kết quả thu thập
-
-Các module API:
-- `/api/task/*` - Quản lý tác vụ thu thập
-- `/api/settings/*` - Cài đặt ứng dụng
-- `/api/aria2/*` - Dịch vụ tải xuống Aria2
-- `/api/file/*` - Thao tác tệp
-- `/api/system/*` - Công cụ hệ thống
-- `/api/events` - Luồng sự kiện SSE thời gian thực
 
 ## Lịch sử Star
 
