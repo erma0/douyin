@@ -237,22 +237,22 @@ Nếu vấn đề vẫn chưa được giải quyết:
 
 ## 🎓 Sử dụng nâng cao
 
-### Chế độ dòng lệnh (Cập nhật chậm, có thể xem nhánh v4)
+### Chế độ dòng lệnh
 
 Ngoài giao diện GUI, còn hỗ trợ thao tác dòng lệnh:
 
 ```powershell
 # Xem trợ giúp
-python backend/cli.py -h
+python -m backend.cli --help
 
 # Thu thập tác phẩm trang chủ người dùng
-python backend/cli.py -u https://v.douyin.com/iybvCom1/
+python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx
 
 # Giới hạn số lượng
-python backend/cli.py -l 5 -u https://v.douyin.com/iybvCom1/
+python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx -l 20
 
 # Chỉ định loại
-python backend/cli.py -t like -u https://v.douyin.com/iybvCom1/
+python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx -t favorite
 ```
 
 ### Thu thập hàng loạt
@@ -268,7 +268,7 @@ https://www.douyin.com/user/MS4wLjABzzz
 Sau đó chạy:
 
 ```powershell
-python backend/cli.py -u urls.txt
+python -m backend.cli -u urls.txt -l 50
 ```
 
 ---

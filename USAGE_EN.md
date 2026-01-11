@@ -237,22 +237,22 @@ If the problem is not solved:
 
 ## 🎓 Advanced Usage
 
-### Command Line Mode (Update lagging, can view v4 branch)
+### Command Line Mode
 
 In addition to the GUI interface, command line operation is also supported:
 
 ```powershell
 # View Help
-python backend/cli.py -h
+python -m backend.cli --help
 
 # Collect user homepage works
-python backend/cli.py -u https://v.douyin.com/iybvCom1/
+python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx
 
 # Limit quantity
-python backend/cli.py -l 5 -u https://v.douyin.com/iybvCom1/
+python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx -l 20
 
 # Specify type
-python backend/cli.py -t like -u https://v.douyin.com/iybvCom1/
+python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx -t favorite
 ```
 
 ### Batch Collection
@@ -268,7 +268,7 @@ https://www.douyin.com/user/MS4wLjABzzz
 Then run:
 
 ```powershell
-python backend/cli.py -u urls.txt
+python -m backend.cli -u urls.txt -l 50
 ```
 
 ---

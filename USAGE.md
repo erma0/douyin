@@ -245,60 +245,60 @@ python main.py
 
 ```powershell
 # 查看帮助
-python backend/cli.py -h
+python -m backend.cli --help
 
 # 采集用户主页作品
-python backend/cli.py -u https://www.douyin.com/user/MS4wLjABxxx
+python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx
 
 # 限制采集数量
-python backend/cli.py -u https://www.douyin.com/user/MS4wLjABxxx -l 20
+python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx -l 20
 
 # 仅采集数据，不下载文件
-python backend/cli.py -u https://www.douyin.com/user/MS4wLjABxxx --no-download
+python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx --no-download
 ```
 
 #### 采集类型
 
 ```powershell
 # 用户主页作品（默认）
-python backend/cli.py -u https://www.douyin.com/user/MS4wLjABxxx -t post
+python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx -t post
 
 # 用户喜欢作品
-python backend/cli.py -u https://www.douyin.com/user/MS4wLjABxxx -t favorite
+python -m backend.cli -u https://www.douyin.com/user/MS4wLjABxxx -t favorite
 
-# 用户收藏作品
-python backend/cli.py -u https://www.douyin.com/user/MS4wLjABxxx -t collection
+# 用户收藏作品（需要登录账号有收藏权限）
+python -m backend.cli -t collection
 
 # 话题作品
-python backend/cli.py -u https://www.douyin.com/hashtag/xxx -t hashtag
+python -m backend.cli -u https://www.douyin.com/hashtag/xxx -t hashtag
 
 # 音乐作品
-python backend/cli.py -u https://www.douyin.com/music/7xxx -t music
+python -m backend.cli -u https://www.douyin.com/music/7xxx -t music
 
 # 合集作品
-python backend/cli.py -u 合集链接 -t mix
+python -m backend.cli -u 合集链接 -t mix
 
 # 单个作品
-python backend/cli.py -u https://www.douyin.com/video/7xxx -t aweme
+python -m backend.cli -u https://www.douyin.com/video/7xxx -t aweme
 
 # 关键词搜索
-python backend/cli.py -u "美食" -t search
+python -m backend.cli -u "美食" -t search
 ```
 
 #### 搜索筛选
 
 ```powershell
 # 搜索并按最新排序
-python backend/cli.py -u "美食" -t search --sort-type 2
+python -m backend.cli -u "美食" -t search --sort-type 2
 
 # 搜索一周内的视频
-python backend/cli.py -u "美食" -t search --publish-time 7
+python -m backend.cli -u "美食" -t search --publish-time 7
 
 # 搜索1-5分钟的视频
-python backend/cli.py -u "美食" -t search --filter-duration "1-5"
+python -m backend.cli -u "美食" -t search --filter-duration "1-5"
 
 # 组合筛选条件
-python backend/cli.py -u "美食" -t search --sort-type 2 --publish-time 7 --filter-duration "1-5"
+python -m backend.cli -u "美食" -t search --sort-type 2 --publish-time 7 --filter-duration "1-5"
 ```
 
 **筛选参数说明：**
@@ -310,11 +310,11 @@ python backend/cli.py -u "美食" -t search --sort-type 2 --publish-time 7 --fil
 
 ```powershell
 # 方式1：命令行指定
-python backend/cli.py -u 目标链接 -c "your_cookie_string"
+python -m backend.cli -u 目标链接 -c "your_cookie_string"
 
 # 方式2：配置文件（推荐）
 # 在 config/settings.json 中设置 cookie 字段
-python backend/cli.py -u 目标链接
+python -m backend.cli -u 目标链接
 ```
 
 #### 批量采集
@@ -331,13 +331,13 @@ https://www.douyin.com/music/7xxx
 然后运行：
 
 ```powershell
-python backend/cli.py -u urls.txt -l 50
+python -m backend.cli -u urls.txt -l 50
 ```
 
 #### 自定义下载路径
 
 ```powershell
-python backend/cli.py -u 目标链接 -p "D:/Downloads/douyin"
+python -m backend.cli -u 目标链接 -p "D:/Downloads/douyin"
 ```
 
 ---

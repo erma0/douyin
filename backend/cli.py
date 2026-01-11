@@ -9,19 +9,17 @@
 """
 
 import os
-import sys
-
-# 添加backend目录到Python路径
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import click
 import ujson as json
-from constants import DEFAULT_SETTINGS, PATHS
-from lib.cookies import CookieManager
-from lib.douyin import Douyin
 from loguru import logger
 
-version = "V4.260103"
+# 统一使用绝对导入
+from backend.constants import CONFIG_DIR, DEFAULT_SETTINGS, SETTINGS_FILE
+from backend.lib.cookies import CookieManager
+from backend.lib.douyin import Douyin
+
+version = "V4.260111"
 banner = rf"""
   ____                    _          ____                    _           
  |  _ \  ___  _   _ _   _(_)_ __    / ___|_ __ __ ___      _| | ___ _ __ 
@@ -87,7 +85,7 @@ print(banner)
     "-c",
     "--cookie",
     type=click.STRING,
-    help=f"已登录账号的cookie，可填写在{PATHS['CONFIG_DIR']}/{PATHS['SETTINGS_FILE']}中",
+    help=f"已登录账号的cookie，可填写在 {SETTINGS_FILE} 中",
 )
 @click.option(
     "--sort-type",
@@ -121,15 +119,15 @@ def main(
     示例：
     \b
     # 采集用户主页作品
-    python cli.py -u https://www.douyin.com/user/xxx -l 10
+    python -m backend.cli -u https://www.douyin.com/user/xxx -l 10
 
     \b
     # 搜索视频
-    python cli.py -u "美食" -t search --sort-type 2 --publish-time 7
+    python -m backend.cli -u "美食" -t search --sort-type 2 --publish-time 7
 
     \b
     # 批量采集（从文件读取）
-    python cli.py -u urls.txt
+    python -m backend.cli -u urls.txt
     """
 
     # 构建筛选条件
@@ -141,23 +139,17 @@ def main(
     if filter_duration is not None:
         filters["filter_duration"] = filter_duration
 
-    # 获取项目根目录和配置目录
-    backend_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(backend_dir)
-    config_dir = os.path.join(project_root, PATHS["CONFIG_DIR"])
-    settings_file = os.path.join(config_dir, PATHS["SETTINGS_FILE"])
-
     # 确保配置目录存在
-    os.makedirs(config_dir, exist_ok=True)
+    os.makedirs(CONFIG_DIR, exist_ok=True)
 
     # 如果配置文件不存在，创建默认配置
-    if not os.path.exists(settings_file):
+    if not os.path.exists(SETTINGS_FILE):
         logger.info("首次运行，正在创建默认配置文件...")
         try:
 
-            with open(settings_file, "w", encoding="utf-8") as f:
+            with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
                 json.dump(DEFAULT_SETTINGS, f, ensure_ascii=False, indent=2)
-            logger.success(f"✓ 配置文件已创建: {settings_file}")
+            logger.success(f"✓ 配置文件已创建: {SETTINGS_FILE}")
             logger.info("提示：可以在配置文件中设置 cookie 字段以避免每次输入")
         except Exception as e:
             logger.warning(f"创建配置文件失败: {e}")
@@ -175,7 +167,7 @@ def main(
             return
     else:
         # 从配置文件加载
-        cookie_str = CookieManager.load_from_settings(settings_file)
+        cookie_str = CookieManager.load_from_settings(SETTINGS_FILE)
         if cookie_str:
             logger.info("✓ 已从配置文件加载Cookie")
 
@@ -184,10 +176,8 @@ def main(
         logger.warning("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         logger.warning("⚠ 未找到Cookie配置")
         logger.info("配置方法：")
-        logger.info(
-            f"  方法1：在 {PATHS['CONFIG_DIR']}/{PATHS['SETTINGS_FILE']} 中设置 cookie 字段"
-        )
-        logger.info("  方法2：使用 -c 参数：python cli.py -c 'your_cookie'")
+        logger.info(f"  方法1：在 {SETTINGS_FILE} 中设置 cookie 字段")
+        logger.info("  方法2：使用 -c 参数：python -m backend.cli -c 'your_cookie'")
         logger.warning("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
         # 询问用户是否现在输入Cookie
@@ -245,7 +235,8 @@ def main(
             logger.info(f"从文件读取目标：{url}")
             try:
                 with open(url, "r", encoding="utf-8") as f:
-                    lines = [line.strip() for line in f.readlines() if line.strip()]
+                    lines = [line.strip()
+                             for line in f.readlines() if line.strip()]
 
                 if not lines:
                     logger.error(f"文件 [{url}] 中没有发现目标URL")
@@ -312,7 +303,7 @@ def start(url, limit, no_download, type, path, cookie, filters):
             logger.info("此类型不需要下载文件")
         else:
             # 调用下载模块
-            from lib.download import download
+            from backend.lib.download import download
 
             logger.info("开始下载文件...")
             download(douyin.down_path, douyin.aria2_conf)
