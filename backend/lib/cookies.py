@@ -6,22 +6,11 @@ Cookie管理模块
 """
 
 import os
-from typing import Dict, Optional
+from typing import Dict
 
 import requests
 import ujson as json
 from loguru import logger
-
-# 修复相对导入问题
-try:
-    from ..constants import PATHS
-except ImportError:
-    # 命令行模式下的导入
-    import os
-    import sys
-
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from constants import PATHS
 
 
 class CookieManager:

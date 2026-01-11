@@ -23,10 +23,10 @@ from typing import Optional
 from loguru import logger
 
 from ..constants import (
+    ARIA2_CONF_FILE,
     ARIA2_DEFAULTS,
+    CONFIG_DIR,
     DOWNLOAD_DEFAULTS,
-    PATHS,
-    PROJECT_ROOT,
     RESOURCE_ROOT,
 )
 from .douyin.types import DouyinURL, RequestHeaders
@@ -221,16 +221,12 @@ class Aria2Manager:
             download_dir = self.download_dir
         else:
             # 默认使用应用根目录下的 download 文件夹
-            download_dir = os.path.join(PROJECT_ROOT, PATHS["DOWNLOAD_DIR"])
+            download_dir = CONFIG_DIR
 
         os.makedirs(download_dir, exist_ok=True)
 
         # 配置目录：应用根目录下的 config 文件夹
-        config_dir = os.path.join(PROJECT_ROOT, PATHS["CONFIG_DIR"])
-        os.makedirs(config_dir, exist_ok=True)
-
-        # 创建Aria2配置文件（优化：只在不存在或需要更新时创建）
-        config_path = os.path.join(config_dir, PATHS["ARIA2_CONF"])
+        os.makedirs(CONFIG_DIR, exist_ok=True)
 
         # Aria2配置参数（精简优化版）
         aria2_config = {
@@ -272,7 +268,7 @@ class Aria2Manager:
         try:
             # 优化：使用更快的写入方式
             config_content = "\n".join(f"{k}={v}" for k, v in aria2_config.items())
-            with open(config_path, "w", encoding="utf-8") as f:
+            with open(ARIA2_CONF_FILE, "w", encoding="utf-8") as f:
                 f.write(config_content)
         except Exception as e:
             logger.error(f"✗ 创建配置文件失败: {e}")
@@ -289,7 +285,7 @@ class Aria2Manager:
                 startupinfo.wShowWindow = subprocess.SW_HIDE
 
                 self.aria2_process = subprocess.Popen(
-                    [aria2_cmd, "--conf-path", config_path],
+                    [aria2_cmd, "--conf-path", ARIA2_CONF_FILE],
                     stdout=subprocess.DEVNULL,  # 丢弃标准输出，避免缓冲区满导致进程阻塞
                     stderr=subprocess.DEVNULL,  # 丢弃标准错误，避免缓冲区满导致进程阻塞
                     startupinfo=startupinfo,
@@ -298,7 +294,7 @@ class Aria2Manager:
                 )
             else:
                 self.aria2_process = subprocess.Popen(
-                    [aria2_cmd, "--conf-path", config_path],
+                    [aria2_cmd, "--conf-path", ARIA2_CONF_FILE],
                     stdout=subprocess.DEVNULL,  # 丢弃标准输出，避免缓冲区满导致进程阻塞
                     stderr=subprocess.DEVNULL,  # 丢弃标准错误，避免缓冲区满导致进程阻塞
                     close_fds=True,
