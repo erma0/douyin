@@ -201,8 +201,8 @@ class Request(object):
         url = f"{self.HOST}{uri}"
         # 合并基础参数
         params.update(self.PARAMS)
-        # 注意：单个作品详情/音乐接口需要签名
-        if uri in [APIEndpoint.AWEME_DETAIL, APIEndpoint.MUSIC_AWEME]:
+        # 注意：单个作品详情/音乐/粉丝接口需要签名
+        if uri in [APIEndpoint.AWEME_DETAIL, APIEndpoint.MUSIC_AWEME, APIEndpoint.USER_FOLLOWER]:
             params["a_bogus"] = self.get_sign(uri, params)
         # 根据是否有data决定使用POST还是GET
         if data:

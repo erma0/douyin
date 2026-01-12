@@ -46,8 +46,8 @@ Cookie 是获取数据的必要凭证。
 | **合集**       | 获取合集中的作品     | `https://www.douyin.com/mix/xxx`          | ✅ 正常 |
 | **音乐原声**   | 获取使用该音乐的作品 | `https://www.douyin.com/music/7xxx`       | ✅ 正常 |
 | **关键词搜索** | 搜索相关作品         | `风景`                                    | ✅ 正常 |
-| **关注用户**   | 获取关注的用户       | `https://www.douyin.com/user/MS4wLjABxxx` | ❌ 异常 |
-| **粉丝用户**   | 获取粉丝的用户       | `https://www.douyin.com/user/MS4wLjABxxx` | ❌ 异常 |
+| **关注用户**   | 获取关注的用户       | `https://www.douyin.com/user/MS4wLjABxxx` | ✅ 正常 |
+| **粉丝用户**   | 获取粉丝的用户       | `https://www.douyin.com/user/MS4wLjABxxx` | ✅ 正常 |
 
 ### 批量下载
 

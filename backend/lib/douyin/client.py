@@ -50,7 +50,7 @@ class DouyinClient:
         self, type: str, target_id: str, max_cursor: int, logid: str, filters: dict
     ) -> Tuple[List[dict], int, str, bool]:
         """
-        获取作品列表
+        获取作品/用户列表
 
         Args:
             type: 采集类型
@@ -183,7 +183,9 @@ class DouyinClient:
             uri = APIEndpoint.USER_FOLLOWING
             params = {
                 "sec_user_id": target_id,
-                "offset": max_cursor,
+                "offset": 0,
+                "min_time": 0,
+                "max_time": max_cursor,
                 "count": APIConfig.FOLLOW_COUNT,
                 "gps_access": 0,
                 "is_top": 1,
@@ -192,11 +194,13 @@ class DouyinClient:
             uri = APIEndpoint.USER_FOLLOWER
             params = {
                 "sec_user_id": target_id,
-                "offset": max_cursor,
+                "offset": 0,
+                "min_time": 0,
+                "max_time": max_cursor,
                 "count": APIConfig.FOLLOW_COUNT,
                 "gps_access": 0,
                 "is_top": 1,
-                "source_type": 2,
+                "source_type": 3,  # 网页端默认排序 3最早/1最近/4综合
             }
         else:
             quit(f"不支持的采集类型: {type}")

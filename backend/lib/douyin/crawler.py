@@ -163,7 +163,7 @@ class Douyin:
         self.save()
 
     def get_awemes_list(self):
-        """获取作品列表"""
+        """获取作品/用户列表"""
         max_cursor = 0
         logid = ""
         retry = 0
