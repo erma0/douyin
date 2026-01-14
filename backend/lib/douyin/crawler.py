@@ -26,14 +26,14 @@ class Douyin:
     """抖音爬虫主类"""
 
     def __init__(
-        self,
-        target: str = "",
-        limit: int = 0,
-        type: str = "post",
-        down_path: str = "下载",
-        cookie: str = "",
-        filters: dict = None,
-        on_new_items: callable = None,
+            self,
+            target: str = "",
+            limit: int = 0,
+            type: str = "post",
+            down_path: str = "下载",
+            cookie: str = "",
+            filters: dict = None,
+            on_new_items: callable = None,
     ):
         """
         初始化爬虫
@@ -82,7 +82,10 @@ class Douyin:
         self._get_target_info()
 
         # 根据类型执行不同的采集逻辑
-        if self.type in ["following", "follower"]:
+        if self.type == "follower":
+            # 修改：粉丝类型仅获取数量，不爬取列表
+            self.get_follower_count()
+        elif self.type == "following":
             self.get_awemes_list()
         elif self.type in [
             "post",
@@ -98,6 +101,43 @@ class Douyin:
             self.get_aweme_detail()
         else:
             quit(f"获取目标类型错误, type: {self.type}")
+
+    def get_follower_count(self):
+        """获取粉丝数量"""
+        if not self.info:
+            logger.error("未获取到目标用户信息")
+            return
+
+        # self.info 使用驼峰命名法 (camelCase)
+        nickname = self.info.get("nickname", "未知")
+
+        # 1. 获取粉丝数 (尝试 followerCount 和 mplatformFollowersCount)
+        follower_count = self.info.get("followerCount", 0)
+        if not follower_count:
+            follower_count = self.info.get("mplatformFollowersCount", 0)
+
+        logger.info(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        logger.info(f"目标用户: {nickname}")
+        logger.info(f"粉丝数量: {follower_count}")
+        logger.info(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+        # 2. 构造结果数据 (修正了所有字段的 key)
+        self.results = [{
+            "nickname": nickname,
+            "uid": self.info.get("uid"),
+            "sec_uid": self.info.get("secUid"),  # 对应 secUid
+            "follower_count": follower_count,
+            "unique_id": self.info.get("uniqueId"),  # 对应 uniqueId
+            "short_id": self.info.get("shortId"),  # 对应 shortId
+            "signature": self.info.get("desc"),  # 对应 desc
+            "avatar": self.info.get("avatarUrl"),  # 对应 avatarUrl
+            "aweme_count": self.info.get("awemeCount"),  # 对应 awemeCount
+            "following_count": self.info.get("followingCount"),  # 对应 followingCount
+            "total_favorited": self.info.get("totalFavorited"),  # 对应 totalFavorited
+        }]
+
+        # 保存结果
+        self.save()
 
     def get_target_id(self):
         """

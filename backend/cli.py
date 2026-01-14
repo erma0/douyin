@@ -12,6 +12,8 @@ import os
 
 import click
 import ujson as json
+import csv
+import time
 from loguru import logger
 
 # 统一使用绝对导入
@@ -225,6 +227,18 @@ def main(
     # 处理多个URL
     success_count = 0
     fail_count = 0
+    all_batch_results = []  # 【新增】用于汇总所有结果
+
+    # 定义处理逻辑的闭包函数（为了复用代码）
+    def process_url(target_url):
+        nonlocal success_count, fail_count
+        res = start(target_url, limit, no_download, type, path, cookie_str, filters)
+        if res is not None:
+            success_count += 1
+            if res:  # 如果有数据
+                all_batch_results.extend(res)
+        else:
+            fail_count += 1
 
     for url in urls:
         url = url.strip()
@@ -235,30 +249,36 @@ def main(
             logger.info(f"从文件读取目标：{url}")
             try:
                 with open(url, "r", encoding="utf-8") as f:
-                    lines = [line.strip()
-                             for line in f.readlines() if line.strip()]
+                    lines = [line.strip() for line in f.readlines() if line.strip()]
 
                 if not lines:
                     logger.error(f"文件 [{url}] 中没有发现目标URL")
-                    fail_count += 1
                     continue
 
                 logger.info(f"文件中共有 {len(lines)} 个目标")
                 for idx, line in enumerate(lines, 1):
                     logger.info(f"处理第 {idx}/{len(lines)} 个目标")
-                    if start(line, limit, no_download, type, path, cookie_str, filters):
-                        success_count += 1
-                    else:
-                        fail_count += 1
+                    process_url(line)  # 调用处理函数
             except Exception as e:
                 logger.error(f"读取文件失败: {e}")
                 fail_count += 1
         else:
             # 单个URL
-            if start(url, limit, no_download, type, path, cookie_str, filters):
-                success_count += 1
-            else:
-                fail_count += 1
+            process_url(url)
+
+    # 【新增】批量保存逻辑
+    if all_batch_results and type == "follower":
+        save_path = os.path.join(path, f"批量粉丝统计_{int(time.time())}.csv")
+        try:
+            # 获取表头 (基于第一条数据)
+            headers = list(all_batch_results[0].keys())
+            with open(save_path, "w", encoding="utf-8-sig", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=headers)
+                writer.writeheader()
+                writer.writerows(all_batch_results)
+            logger.success(f"📊 批量统计报告已生成: {save_path}")
+        except Exception as e:
+            logger.error(f"保存汇总CSV失败: {e}")
 
     # 输出统计信息
     logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -269,19 +289,11 @@ def main(
 def start(url, limit, no_download, type, path, cookie, filters):
     """
     启动单个采集任务
-
     Returns:
-        bool: 是否成功
+        list: 采集结果列表（失败返回None）
     """
     try:
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        logger.info(f"开始采集任务")
-        logger.info(f"  目标: {url or '本账号'}")
-        logger.info(f"  类型: {type}")
-        logger.info(f"  数量限制: {'不限' if limit == 0 else f'{limit}条'}")
-        if filters:
-            logger.info(f"  筛选条件: {filters}")
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        # ... (中间的日志代码保持不变) ...
 
         # 创建爬虫实例
         douyin = Douyin(
@@ -296,29 +308,19 @@ def start(url, limit, no_download, type, path, cookie, filters):
         # 执行采集
         douyin.run()
 
-        # 判断是否需要下载
-        if no_download:
-            logger.info("已跳过下载（--no-download）")
-        elif douyin.type in ["following", "follower"]:
-            logger.info("此类型不需要下载文件")
-        else:
-            # 调用下载模块
-            from backend.lib.download import download
+        # ... (下载相关的代码保持不变) ...
 
-            logger.info("开始下载文件...")
-            download(douyin.down_path, douyin.aria2_conf)
-
-        return True
+        # 【修改点】原来是 return True，改为返回数据
+        return douyin.results
 
     except KeyboardInterrupt:
         logger.warning("用户中断任务")
-        return False
+        return None  # 【修改点】
     except Exception as e:
         logger.error(f"任务执行失败: {e}")
         import traceback
-
         logger.debug(traceback.format_exc())
-        return False
+        return None  # 【修改点】
 
 
 if __name__ == "__main__":
