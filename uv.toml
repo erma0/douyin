@@ -2,12 +2,12 @@
 # 使用清华镜像源加速下载
 
 [pip]
-# PyPI 清华镜像源
 index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 
-# 额外的镜像源（备用）
-extra-index-url = [
-    "https://mirrors.aliyun.com/pypi/simple/",
-]
+[[index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+default = true
 
+[[index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
 
