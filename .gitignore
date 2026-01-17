@@ -71,8 +71,10 @@ pnpm-debug.log*
 # ==========================
 
 # ai IDE 配置
-.trae/
-.kiro/
+.trae/*
+!.trae/rules
+.kiro/*
+!.kiro/steering
 
 # VS Code 配置
 .vscode/*
