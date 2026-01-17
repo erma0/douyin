@@ -145,7 +145,7 @@ def test_user_following(settings_cookie):
 def test_user_follower(settings_cookie):
     """测试用户粉丝列表采集"""
     d = Douyin(
-        target="MS4wLjABAAAAxXsQDnKsnZqeYGC5LsoewO_1-OOJQ5vMQwFBo3izoyL94LgJeuKKJ-01lWWcsaNC",
+        target="MS4wLjABAAAAGa0vp7T68ZdsevlrlBuZ3hXxhcbF2PRemtcT_mrmQLA",
         type="follower",
         limit=40,
         cookie=settings_cookie
