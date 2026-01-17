@@ -14,8 +14,9 @@ from fastapi import APIRouter, HTTPException
 from loguru import logger
 from pydantic import BaseModel
 
-from ..constants import DOWNLOAD_DIR, SETTINGS_FILE
+from ..constants import DOWNLOAD_DIR
 from ..lib.cookies import CookieManager
+from ..settings import settings
 from ..sse import SSEEventType, sse
 from ..state import state
 
@@ -180,9 +181,7 @@ def _execute_task(
         from ..lib.douyin import Douyin
 
         # 获取 cookie
-        cookie = CookieManager.load_from_settings(SETTINGS_FILE)
-        if not cookie:
-            cookie = state.settings.get("cookie", "").strip()
+        cookie = settings.get("cookie", "").strip()
 
         # 验证 cookie
         if not CookieManager.validate_cookie(cookie):
@@ -232,11 +231,9 @@ def _execute_task(
             target=target,
             limit=int(limit) if limit > 0 else 0,
             type=task_type,
-            down_path=state.settings.get(
-                "downloadPath",
-                DOWNLOAD_DIR,
-            ),
+            down_path=settings.get("downloadPath", DOWNLOAD_DIR),
             cookie=cookie,
+            user_agent=settings.get("userAgent", ""),
             filters=filters or {},
             on_new_items=handle_new_items,
         )

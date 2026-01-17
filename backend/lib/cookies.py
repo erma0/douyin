@@ -1,54 +1,23 @@
 # -*- encoding: utf-8 -*-
 """
-Cookie管理模块
+Cookie工具模块
 
-统一管理Cookie的读取、保存、验证和浏览器获取功能。
+提供Cookie的格式转换和验证功能。
 """
 
-import os
 from typing import Dict
 
 import requests
-import ujson as json
 from loguru import logger
 
 
 class CookieManager:
     """
-    Cookie管理器（工具类）
+    Cookie工具类
 
-    提供Cookie的加载、格式转换和验证功能。
+    提供Cookie的格式转换和验证功能。
     所有方法都是静态方法，不需要实例化。
     """
-
-    @staticmethod
-    def load_from_settings(settings_file: str) -> str:
-        """
-        从配置文件加载Cookie
-
-        Args:
-            settings_file: settings.json 文件路径
-
-        Returns:
-            Cookie字符串，如果未找到或加载失败则返回空字符串
-        """
-        if not os.path.exists(settings_file):
-            logger.debug(f"配置文件不存在: {settings_file}")
-            return ""
-
-        try:
-            with open(settings_file, "r", encoding="utf-8") as f:
-                settings = json.load(f)
-                cookie = settings.get("cookie", "").strip()
-                if cookie:
-                    logger.debug("从配置文件加载Cookie成功")
-                    return cookie
-                else:
-                    logger.debug("配置文件中未设置Cookie")
-                    return ""
-        except Exception as e:
-            logger.warning(f"读取配置文件失败: {e}")
-            return ""
 
     @staticmethod
     def validate_cookie(cookie: str) -> bool:

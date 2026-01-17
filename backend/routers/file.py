@@ -14,7 +14,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 from ..constants import DOWNLOAD_DIR
-from ..state import state
+from ..settings import settings
 
 router = APIRouter(prefix="/api/file", tags=["文件操作"])
 
@@ -118,7 +118,7 @@ def check_file_exists(request: CheckFileExistsRequest) -> Dict[str, bool]:
 
     try:
         # 安全检查：确保文件路径在下载目录内
-        download_dir = os.path.abspath(state.settings.get("downloadPath", DOWNLOAD_DIR))
+        download_dir = os.path.abspath(settings.get("downloadPath", DOWNLOAD_DIR))
         abs_path = os.path.abspath(file_path)
 
         if not abs_path.startswith(download_dir):
@@ -145,7 +145,7 @@ def read_config_file(request: ReadConfigFileRequest) -> Dict[str, str]:
         logger.info(f"开始读取配置文件: {file_path}")
 
         # 安全检查：确保文件路径在下载目录内
-        download_dir = os.path.abspath(state.settings.get("downloadPath", DOWNLOAD_DIR))
+        download_dir = os.path.abspath(settings.get("downloadPath", DOWNLOAD_DIR))
         abs_path = os.path.abspath(file_path)
 
         if not abs_path.startswith(download_dir) or not abs_path.endswith(".txt"):

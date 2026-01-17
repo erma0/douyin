@@ -24,6 +24,7 @@ from backend.constants import (
     WEBVIEW_STORAGE_DIR,
     WINDOW_MIN_SIZE,
 )
+from backend.settings import settings
 from backend.state import state
 
 # 判断是否为打包环境
@@ -180,9 +181,8 @@ def main():
         return
 
     # 加载窗口配置
-    settings = state.settings
-    window_width = settings["windowWidth"]
-    window_height = settings["windowHeight"]
+    window_width = settings.get("windowWidth")
+    window_height = settings.get("windowHeight")
 
     # 计算居中位置
     try:

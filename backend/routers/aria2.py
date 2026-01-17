@@ -13,6 +13,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 from ..constants import ARIA2_DEFAULTS
+from ..settings import settings
 from ..state import state
 
 router = APIRouter(prefix="/api/aria2", tags=["Aria2管理"])
@@ -63,12 +64,12 @@ def get_aria2_config() -> Dict[str, Any]:
     返回 Aria2 RPC 服务的连接配置。
     """
 
-    user_secret = state.settings.get("aria2Secret", ARIA2_DEFAULTS["SECRET"])
+    user_secret = settings.get("aria2Secret", ARIA2_DEFAULTS["SECRET"])
     default_secret = ARIA2_DEFAULTS["SECRET"] if not user_secret else user_secret
 
     return {
-        "host": state.settings.get("aria2Host", ARIA2_DEFAULTS["HOST"]),
-        "port": state.settings.get("aria2Port", ARIA2_DEFAULTS["PORT"]),
+        "host": settings.get("aria2Host", ARIA2_DEFAULTS["HOST"]),
+        "port": settings.get("aria2Port", ARIA2_DEFAULTS["PORT"]),
         "secret": default_secret,
     }
 

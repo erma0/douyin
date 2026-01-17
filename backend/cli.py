@@ -15,9 +15,10 @@ import ujson as json
 from loguru import logger
 
 # 统一使用绝对导入
-from backend.constants import CONFIG_DIR, DEFAULT_SETTINGS, SETTINGS_FILE
+from backend.constants import SETTINGS_FILE
 from backend.lib.cookies import CookieManager
 from backend.lib.douyin import Douyin
+from backend.settings import settings
 
 version = "V4.260111"
 banner = rf"""
@@ -139,22 +140,6 @@ def main(
     if filter_duration is not None:
         filters["filter_duration"] = filter_duration
 
-    # 确保配置目录存在
-    os.makedirs(CONFIG_DIR, exist_ok=True)
-
-    # 如果配置文件不存在，创建默认配置
-    if not os.path.exists(SETTINGS_FILE):
-        logger.info("首次运行，正在创建默认配置文件...")
-        try:
-
-            with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
-                json.dump(DEFAULT_SETTINGS, f, ensure_ascii=False, indent=2)
-            logger.success(f"✓ 配置文件已创建: {SETTINGS_FILE}")
-            logger.info("提示：可以在配置文件中设置 cookie 字段以避免每次输入")
-        except Exception as e:
-            logger.warning(f"创建配置文件失败: {e}")
-
-    # 初始化 Cookie 管理器（无需实例化，使用静态方法）
 
     # 加载 Cookie
     cookie_str = ""
@@ -166,8 +151,8 @@ def main(
             logger.error("无法加载指定的Cookie")
             return
     else:
-        # 从配置文件加载
-        cookie_str = CookieManager.load_from_settings(SETTINGS_FILE)
+        # 从配置加载
+        cookie_str = settings.get("cookie", "").strip()
         if cookie_str:
             logger.info("✓ 已从配置文件加载Cookie")
 
@@ -290,6 +275,7 @@ def start(url, limit, no_download, type, path, cookie, filters):
             type=type,
             down_path=path,
             cookie=cookie,
+            user_agent=settings.get("userAgent", ""),
             filters=filters,
         )
 

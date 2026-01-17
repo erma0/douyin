@@ -32,6 +32,7 @@ class Douyin:
         type: str = "post",
         down_path: str = "下载",
         cookie: str = "",
+        user_agent: str = "",
         filters: dict = None,
         on_new_items: callable = None,
     ):
@@ -44,6 +45,7 @@ class Douyin:
             type: 采集类型
             down_path: 下载路径
             cookie: Cookie字符串
+            user_agent: User-Agent字符串，留空使用内置默认值
             filters: 过滤条件
             on_new_items: 新数据回调函数，接收(new_items, type)参数
         """
@@ -65,7 +67,7 @@ class Douyin:
         self.lock = Lock()
 
         # 初始化请求客户端
-        self.request = Request(cookie)
+        self.request = Request(cookie, user_agent)
         self.client = DouyinClient(self.request)
 
         # 目标信息（将在run时初始化）
