@@ -183,10 +183,10 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "click" },
+    { name = "exejs" },
     { name = "fastapi" },
     { name = "loguru" },
     { name = "psutil" },
-    { name = "pyexecjs" },
     { name = "pyperclip" },
     { name = "pywebview" },
     { name = "pywebview", extra = ["gtk"], marker = "sys_platform == 'linux'" },
@@ -207,10 +207,10 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.3.1" },
+    { name = "exejs", specifier = ">=0.0.7" },
     { name = "fastapi", specifier = ">=0.128.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "psutil", specifier = ">=7.2.1" },
-    { name = "pyexecjs", specifier = ">=1.5.1" },
     { name = "pyperclip", specifier = ">=1.11.0" },
     { name = "pywebview", marker = "sys_platform != 'linux'", specifier = ">=6.1" },
     { name = "pywebview", extras = ["gtk"], marker = "sys_platform == 'linux'", specifier = ">=6.1" },
@@ -226,6 +226,15 @@ dev = [
     { name = "ordered-set", specifier = ">=4.1.0" },
     { name = "pyinstaller", specifier = ">=6.17.0" },
     { name = "pytest", specifier = ">=9.0.2" },
+]
+
+[[package]]
+name = "exejs"
+version = "0.0.7"
+source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
+sdist = { url = "https://mirrors.aliyun.com/pypi/packages/63/cd/e308640d52ddd471d6a26aceff8d8e90557adc0a83fb488e4e60876dee22/exejs-0.0.7.tar.gz", hash = "sha256:238d93442f7ba1ac4f156c16d599a89514a57ae46d3f0cd230dd69459fa94c39" }
+wheels = [
+    { url = "https://mirrors.aliyun.com/pypi/packages/b4/2f/a9786ef0130b2de80ed2273a43e0ca7c86333ac61de6b6c9b4307b8fd66b/exejs-0.0.7-py3-none-any.whl", hash = "sha256:ba92cd72ecc5070789bd2418578f69fe2ea1de9942c0a90185449e855f283201" },
 ]
 
 [[package]]
@@ -484,15 +493,6 @@ wheels = [
     { url = "https://mirrors.aliyun.com/pypi/packages/6e/0d/e3549b2399f71d56476b77dbf3cf8937cec5cd70536bdc0e374a421d0599/pydantic_core-2.41.5-graalpy312-graalpy250_312_native-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c007fe8a43d43b3969e8469004e9845944f1a80e6acd47c150856bb87f230c56" },
     { url = "https://mirrors.aliyun.com/pypi/packages/f7/07/34573da085946b6a313d7c42f82f16e8920bfd730665de2d11c0c37a74b5/pydantic_core-2.41.5-graalpy312-graalpy250_312_native-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:76d0819de158cd855d1cbb8fcafdf6f5cf1eb8e470abe056d5d161106e38062b" },
 ]
-
-[[package]]
-name = "pyexecjs"
-version = "1.5.1"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
-dependencies = [
-    { name = "six" },
-]
-sdist = { url = "https://mirrors.aliyun.com/pypi/packages/ba/8e/aedef81641c8dca6fd0fb7294de5bed9c45f3397d67fddf755c1042c2642/PyExecJS-1.5.1.tar.gz", hash = "sha256:34cc1d070976918183ff7bdc0ad71f8157a891c92708c00c5fbbff7a769f505c" }
 
 [[package]]
 name = "pygments"
@@ -763,15 +763,6 @@ source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
 sdist = { url = "https://mirrors.aliyun.com/pypi/packages/18/5d/3bf57dcd21979b887f014ea83c24ae194cfcd12b9e0fda66b957c69d1fca/setuptools-80.9.0.tar.gz", hash = "sha256:f36b47402ecde768dbfafc46e8e4207b4360c654f1f3bb84475f0a28628fb19c" }
 wheels = [
     { url = "https://mirrors.aliyun.com/pypi/packages/a3/dc/17031897dae0efacfea57dfd3a82fdd2a2aeb58e0ff71b77b87e44edc772/setuptools-80.9.0-py3-none-any.whl", hash = "sha256:062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922" },
-]
-
-[[package]]
-name = "six"
-version = "1.17.0"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
-sdist = { url = "https://mirrors.aliyun.com/pypi/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81" }
-wheels = [
-    { url = "https://mirrors.aliyun.com/pypi/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274" },
 ]
 
 [[package]]

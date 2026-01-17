@@ -9,13 +9,12 @@
 """
 import os
 import random
-from pathlib import Path
 from urllib.parse import quote
 
+import exejs
 import requests
 from loguru import logger
 
-from ...utils.execjs_fix import execjs
 from ..cookies import CookieManager
 from .types import (
     APIEndpoint,
@@ -27,13 +26,16 @@ from .types import (
     TokenConfig,
 )
 
+# 指定JS运行时为Node.js
+# exejs.reset_runtime("Node")
+
 
 def _load_sign_script():
     """加载 JS 签名脚本"""
     current_dir = os.path.dirname(os.path.abspath(__file__))
     js_file = os.path.join(current_dir, "js", "douyin.js")
     with open(js_file, "r", encoding="utf-8") as f:
-        return execjs.compile(f.read())
+        return exejs.compile(f.read())
 
 
 class Request(object):
@@ -202,7 +204,11 @@ class Request(object):
         # 合并基础参数
         params.update(self.PARAMS)
         # 注意：单个作品详情/音乐/粉丝接口需要签名
-        if uri in [APIEndpoint.AWEME_DETAIL, APIEndpoint.MUSIC_AWEME, APIEndpoint.USER_FOLLOWER]:
+        if uri in [
+            APIEndpoint.AWEME_DETAIL,
+            APIEndpoint.MUSIC_AWEME,
+            APIEndpoint.USER_FOLLOWER,
+        ]:
             params["a_bogus"] = self.get_sign(uri, params)
         # 根据是否有data决定使用POST还是GET
         if data:
