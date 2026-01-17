@@ -25,14 +25,23 @@
 ## 🍬Features
 
 ### 📊 Data Collection
-- ✅ Single work / User posts / User favorites / User collections
-- ✅ Hashtag / Mix / Music / Keyword search
+- ✅ Single work data
+- ✅ User homepage posts
+- ✅ User favorites (requires target to have open permissions)
+- ✅ User collections (requires target to have open permissions)
+- ✅ Hashtag/Challenge works
+- ✅ Mix/Playlist works
+- ✅ Music/Sound works
+- ✅ Keyword search works
+- ✅ Following users (CLI mode only, requires target to have open permissions)
+- ✅ Follower users (CLI mode only, requires target to have open permissions)
 
 ### 🎯 Application Features
 - 🔄 **Incremental Collection**: Smart incremental collection of user homepage works
 - ⬇️ **Batch Download**: Integrated Aria2, supports video/image batch download
-- 🎨 **Multiple Modes**: GUI desktop app / Web server / Command line
+- 🎨 **Multiple Modes**: GUI desktop app / Web server / CLI command line
 - 🌐 **RESTful API**: v2.0 provides complete HTTP API
+- 🔧 **Cross-platform Support**: Windows / macOS / Linux
 
 ## 📸 Interface Preview
 
@@ -40,11 +49,15 @@
 
 ## 🚀Quick Start
 
+### Requirements
+
+> 📍Test environment: `Win10 x64` + `Python 3.12` + `Node.js 22.13.0` + `uv 0.9+`
+
 ### Windows Users
 
 Download from [Releases](https://github.com/erma0/douyin/releases), extract and run `DouyinCrawler.exe`
 
-### Server / Docker / Linux
+### Web Service (Docker / All Platforms)
 
 ```bash
 # Docker (Recommended)
@@ -58,7 +71,7 @@ python -m backend.server
 
 Visit `http://localhost:8000`
 
-### Command Line
+### Command Line (CLI Mode)
 
 ```bash
 python -m backend.cli -u https://www.douyin.com/user/xxx -l 20

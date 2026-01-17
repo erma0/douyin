@@ -25,14 +25,23 @@
 ## 🍬Tính năng
 
 ### 📊 Thu thập dữ liệu
-- ✅ Tác phẩm đơn / Bài đăng người dùng / Yêu thích / Bộ sưu tập
-- ✅ Hashtag / Mix / Nhạc / Tìm kiếm từ khóa
+- ✅ Dữ liệu tác phẩm đơn
+- ✅ Bài đăng trang chủ người dùng
+- ✅ Tác phẩm yêu thích của người dùng (cần mục tiêu mở quyền)
+- ✅ Tác phẩm bộ sưu tập của người dùng (cần mục tiêu mở quyền)
+- ✅ Tác phẩm hashtag/thử thách
+- ✅ Tác phẩm mix/playlist
+- ✅ Tác phẩm nhạc/âm thanh
+- ✅ Tác phẩm tìm kiếm từ khóa
+- ✅ Người dùng đang theo dõi (chỉ chế độ CLI, cần mục tiêu mở quyền)
+- ✅ Người theo dõi (chỉ chế độ CLI, cần mục tiêu mở quyền)
 
 ### 🎯 Tính năng ứng dụng
 - 🔄 **Thu thập tăng dần**: Thu thập tăng dần thông minh các tác phẩm trang chủ người dùng
 - ⬇️ **Tải xuống hàng loạt**: Tích hợp Aria2, hỗ trợ tải xuống hàng loạt video/hình ảnh
-- 🎨 **Nhiều chế độ**: Ứng dụng GUI / Máy chủ Web / Dòng lệnh
+- 🎨 **Nhiều chế độ**: Ứng dụng GUI / Máy chủ Web / Dòng lệnh CLI
 - 🌐 **RESTful API**: v2.0 cung cấp HTTP API đầy đủ
+- 🔧 **Hỗ trợ đa nền tảng**: Windows / macOS / Linux
 
 ## 📸 Giao diện
 
@@ -40,11 +49,15 @@
 
 ## 🚀Bắt đầu nhanh
 
+### Yêu cầu môi trường
+
+> 📍Môi trường thử nghiệm: `Win10 x64` + `Python 3.12` + `Node.js 22.13.0` + `uv 0.9+`
+
 ### Người dùng Windows
 
 Tải xuống từ [Releases](https://github.com/erma0/douyin/releases), giải nén và chạy `DouyinCrawler.exe`
 
-### Máy chủ / Docker / Linux
+### Dịch vụ Web (Docker / Tất cả nền tảng)
 
 ```bash
 # Docker (Khuyên dùng)
@@ -58,7 +71,7 @@ python -m backend.server
 
 Truy cập `http://localhost:8000`
 
-### Dòng lệnh
+### Dòng lệnh (Chế độ CLI)
 
 ```bash
 python -m backend.cli -u https://www.douyin.com/user/xxx -l 20
