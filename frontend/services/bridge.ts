@@ -50,6 +50,7 @@ export interface Bridge {
   getAria2ConfigPath: (taskId?: string) => Promise<string>;
   checkFileExists: (filePath: string) => Promise<boolean>;
   openFolder: (folderPath: string) => Promise<boolean>;
+  cookieLogin: () => Promise<{ success: boolean; cookie: string; user_agent: string; error: string }>;
 }
 
 export const bridge: Bridge = {
@@ -196,6 +197,18 @@ export const bridge: Bridge = {
     try {
       return await api.file.openFolder(folderPath);
     } catch { return false; }
+  },
+
+  cookieLogin: async () => {
+    try {
+      logger.api.request('cookie login', {});
+      const result = await api.system.cookieLogin();
+      logger.api.response('cookie login', { success: result.success });
+      return result;
+    } catch (error) {
+      handleError(error, {}, { customMessage: 'cookie login failed' });
+      throw error;
+    }
   }
 };
 

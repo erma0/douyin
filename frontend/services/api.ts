@@ -262,6 +262,12 @@ export const api = {
     /** 打开外部链接（GUI 模式使用） */
     openUrl: (url: string) => 
       post<{ status: string; message: string }>('/api/system/open-url', { url }),
+
+    /** 通过登录获取 Cookie（仅 GUI 模式） */
+    cookieLogin: () =>
+      post<{ success: boolean; cookie: string; user_agent: string; error: string }>(
+        '/api/system/cookie-login'
+      ),
   },
 };
 

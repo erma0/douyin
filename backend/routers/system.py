@@ -11,6 +11,8 @@ from fastapi import APIRouter, HTTPException
 from loguru import logger
 from pydantic import BaseModel
 
+from ..lib.cookie_login import get_cookie_by_login
+
 router = APIRouter(prefix="/api/system", tags=["系统工具"])
 
 
@@ -36,6 +38,15 @@ class OpenUrlResponse(BaseModel):
 
     status: str
     message: str
+
+
+class CookieLoginResponse(BaseModel):
+    """Cookie 登录获取响应"""
+
+    success: bool
+    cookie: str = ""
+    user_agent: str = ""
+    error: str = ""
 
 
 # ============================================================================
@@ -89,3 +100,43 @@ def open_url(request: OpenUrlRequest) -> Dict[str, str]:
     except Exception as e:
         logger.error(f"打开 URL 失败: {e}")
         raise HTTPException(status_code=500, detail=f"打开 URL 失败: {e}")
+
+
+@router.post("/cookie-login", response_model=CookieLoginResponse)
+def cookie_login() -> Dict[str, Any]:
+    """
+    通过登录获取 Cookie
+
+    打开抖音登录窗口，引导用户登录后自动获取 Cookie。
+    仅在 GUI 模式下可用。
+    """
+    logger.info("🔐 开始通过登录获取 Cookie...")
+
+    try:
+        result = get_cookie_by_login()
+
+        if result.success:
+            logger.success("✓ Cookie 登录获取成功")
+            return {
+                "success": True,
+                "cookie": result.cookie,
+                "user_agent": result.user_agent,
+                "error": "",
+            }
+        else:
+            logger.warning(f"✗ Cookie 登录获取失败: {result.error}")
+            return {
+                "success": False,
+                "cookie": "",
+                "user_agent": "",
+                "error": result.error,
+            }
+
+    except Exception as e:
+        logger.error(f"✗ Cookie 登录获取异常: {e}")
+        return {
+            "success": False,
+            "cookie": "",
+            "user_agent": "",
+            "error": str(e),
+        }

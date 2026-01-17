@@ -81,12 +81,6 @@ def get_icon_path():
     return None
 
 
-def get_storage_path():
-    """获取 WebView 存储路径"""
-    os.makedirs(WEBVIEW_STORAGE_DIR, exist_ok=True)
-    return WEBVIEW_STORAGE_DIR
-
-
 def start_backend(window: webview.Window):
     """
     启动后端服务（在 webview.start 的单独线程中执行）
@@ -219,7 +213,8 @@ def main():
         func=start_backend,
         args=(window,),
         icon=get_icon_path(),
-        storage_path=get_storage_path(),
+        storage_path=WEBVIEW_STORAGE_DIR,
+        private_mode=False,
     )
 
     logger.info("👋 应用已正常退出")

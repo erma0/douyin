@@ -57,6 +57,7 @@ export interface DownloadProgress {
 
 export interface AppSettings {
   cookie: string;
+  userAgent: string;
   downloadPath: string;
   maxRetries: number;
   maxConcurrency: number;
