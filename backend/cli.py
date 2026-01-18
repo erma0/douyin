@@ -20,7 +20,7 @@ from backend.lib.cookies import CookieManager
 from backend.lib.douyin import Douyin
 from backend.settings import settings
 
-version = "V4.260111"
+version = "V5.1.260118"
 banner = rf"""
   ____                    _          ____                    _           
  |  _ \  ___  _   _ _   _(_)_ __    / ___|_ __ __ ___      _| | ___ _ __ 
