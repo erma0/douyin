@@ -17,6 +17,9 @@ import time
 import webview
 from loguru import logger
 
+# 移除默认日志配置
+logger.remove()
+
 from backend.constants import (
     PROJECT_ROOT,
     RESOURCE_ROOT,
@@ -29,14 +32,6 @@ from backend.state import state
 
 # 判断是否为打包环境
 IS_PACKAGED = getattr(sys, "frozen", False)
-
-# 服务配置（从常量读取）
-SERVER_HOST = SERVER_DEFAULTS["HOST"]
-SERVER_PORT = SERVER_DEFAULTS["PORT"]
-
-# 配置日志
-logger.remove()
-
 if not IS_PACKAGED:
     # 开发环境：保留控制台输出
     logger.add(
@@ -44,6 +39,12 @@ if not IS_PACKAGED:
         format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <level>{message}</level>",
         level="INFO",
     )
+# 打包环境：不保存日志文件
+
+
+# 服务配置（从常量读取）
+SERVER_HOST = SERVER_DEFAULTS["HOST"]
+SERVER_PORT = SERVER_DEFAULTS["PORT"]
 
 
 def is_port_in_use(port: int, host: str = "127.0.0.1") -> bool:

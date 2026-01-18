@@ -26,6 +26,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from loguru import logger
 from pydantic import BaseModel
 
 from .constants import RESOURCE_ROOT, SERVER_DEFAULTS
@@ -69,20 +70,20 @@ class APIInfoResponse(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print("🚀 FastAPI Server 启动中...")
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    logger.info("🚀 FastAPI Server 启动中...")
+    logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
     # state 在模块导入时已初始化
-    print("✓ 应用状态已初始化")
+    logger.info("✓ 应用状态已初始化")
 
     yield
 
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print("🧹 正在清理资源...")
+    logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    logger.info("🧹 正在清理资源...")
     state.cleanup()
-    print("✓ 资源已清理")
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    logger.info("✓ 资源已清理")
+    logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
 
 # ============================================================================
@@ -154,10 +155,10 @@ _frontend_dist_dir = os.path.join(RESOURCE_ROOT, "frontend", "dist")
 
 if os.path.exists(_frontend_dist_dir):
     app.mount("/", StaticFiles(directory=_frontend_dist_dir, html=True), name="static")
-    print(f"✓ 前端静态文件已挂载: {_frontend_dist_dir}")
+    logger.info(f"✓ 前端静态文件已挂载: {_frontend_dist_dir}")
 else:
-    print(f"⚠ 警告: 前端 dist 目录不存在: {_frontend_dist_dir}")
-    print("  请先运行: cd frontend && pnpm build")
+    logger.warning(f"前端 dist 目录不存在: {_frontend_dist_dir}")
+    logger.warning("请先运行: cd frontend && pnpm build")
 
 
 # ============================================================================
@@ -214,14 +215,14 @@ def run_server(
 )
 def main(host: str, port: int, dev: bool, log_level: str):
     """抖音采集工具 FastAPI 服务"""
-    print("\n" + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print("📡 配置信息")
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print(f"  监听地址: {host}")
-    print(f"  监听端口: {port}")
-    print(f"  开发模式: {'启用' if dev else '禁用'}")
-    print(f"  日志级别: {log_level}")
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+    logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    logger.info("📡 配置信息")
+    logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    logger.info(f"  监听地址: {host}")
+    logger.info(f"  监听端口: {port}")
+    logger.info(f"  开发模式: {'启用' if dev else '禁用'}")
+    logger.info(f"  日志级别: {log_level}")
+    logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
     uvicorn.run(
         "backend.server:app",
