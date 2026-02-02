@@ -247,6 +247,22 @@ export const api = {
       const result = await post<{ content: string }>('/api/file/read-config', { file_path: path });
       return result.content;
     },
+
+    /** 查找本地已下载文件 */
+    findLocal: (workId: string) =>
+      get<{ found: boolean; video_path: string | null; images: string[] | null }>(
+        `/api/file/find-local/${encodeURIComponent(workId)}`
+      ),
+
+    /** 获取媒体文件 URL */
+    getMediaUrl: (filePath: string) => {
+      // 将路径分段编码，保留路径分隔符
+      const encodedPath = filePath
+        .split(/[/\\]/)
+        .map(segment => encodeURIComponent(segment))
+        .join('/');
+      return `${API_BASE_URL}/api/file/media/${encodedPath}`;
+    },
   },
   
   // ========================================================================

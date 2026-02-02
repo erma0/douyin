@@ -153,11 +153,12 @@ export const useAria2Download = () => {
       const newProgress: Record<string, number> = {};
       let currentSpeed = 0;
 
-      // 使用批量查询，避免每个任务单独请求导致连接池耗尽
+      // 使用批量查询，包括已停止的任务（完成/失败）
       try {
         const activeTasks = await aria2Service.getActiveTasks();
         const waitingTasks = await aria2Service.getWaitingTasks();
-        const allTasks = [...activeTasks, ...waitingTasks];
+        const stoppedTasks = await aria2Service.getStoppedTasks();
+        const allTasks = [...activeTasks, ...waitingTasks, ...stoppedTasks];
 
         // 计算总下载速度
         currentSpeed = activeTasks.reduce((sum, task) => sum + (task.downloadSpeed || 0), 0);
@@ -174,7 +175,6 @@ export const useAria2Download = () => {
               newProgress[workId] = 0;
             } else if (task.status === 'complete') {
               logger.info(`下载完成: ${info.filename}`);
-              toast.success(`下载完成: ${info.filename}`);
               downloads.delete(workId);
               statsRef.current.completed++;
               newProgress[workId] = 100;
@@ -189,8 +189,9 @@ export const useAria2Download = () => {
               statsRef.current.failed++;
             }
           } else {
-            // 任务不在活动/等待列表中，可能已完成或失败
+            // 任务不在任何列表中，可能已被清理
             // 从跟踪列表中移除，避免无限轮询
+            console.log(`[useAria2Download] 任务 ${workId} 不在 aria2 列表中，移除跟踪`);
             downloads.delete(workId);
           }
         }

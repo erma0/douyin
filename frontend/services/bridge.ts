@@ -51,6 +51,8 @@ export interface Bridge {
   checkFileExists: (filePath: string) => Promise<boolean>;
   openFolder: (folderPath: string) => Promise<boolean>;
   cookieLogin: () => Promise<{ success: boolean; cookie: string; user_agent: string; error: string }>;
+  findLocalFile: (workId: string) => Promise<{ found: boolean; video_path: string | null; images: string[] | null }>;
+  getMediaUrl: (filePath: string) => string;
 }
 
 export const bridge: Bridge = {
@@ -209,7 +211,17 @@ export const bridge: Bridge = {
       handleError(error, {}, { customMessage: 'cookie login failed' });
       throw error;
     }
-  }
+  },
+
+  findLocalFile: async (workId) => {
+    try {
+      return await api.file.findLocal(workId);
+    } catch {
+      return { found: false, video_path: null, images: null };
+    }
+  },
+
+  getMediaUrl: (filePath) => api.file.getMediaUrl(filePath),
 };
 
 export default bridge;

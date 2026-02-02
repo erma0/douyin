@@ -1,6 +1,7 @@
 import {
   ChevronLeft, ChevronRight,
   Download,
+  HardDrive,
   Heart,
   Image as ImageIcon,
   Link,
@@ -17,6 +18,12 @@ import { DouyinWork } from '../types';
 import { withErrorHandling } from '../utils/errorHandler';
 import { toast } from './Toast';
 
+/** 本地文件信息 */
+interface LocalFileInfo {
+  found: boolean;
+  videoUrl?: string;
+  imageUrls?: string[];
+}
 
 interface DetailModalProps {
   work: DouyinWork | null;
@@ -25,7 +32,6 @@ interface DetailModalProps {
   onNext?: () => void;
   hasPrev?: boolean;
   hasNext?: boolean;
-  // 下载相关的 props
   addDownload: (workId: string, url: string, filename: string, downloadPath: string, cookie?: string) => Promise<boolean>;
   startPolling: () => void;
   progress: Record<string, number>;
@@ -37,24 +43,127 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [localFile, setLocalFile] = useState<LocalFileInfo>({ found: false });
+  const [isCheckingLocal, setIsCheckingLocal] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
+
+  // 检查本地文件
+  const checkLocalFile = async (workId: string) => {
+    setIsCheckingLocal(true);
+    try {
+      const result = await bridge.findLocalFile(workId);
+      if (result.found) {
+        if (result.video_path) {
+          setLocalFile({
+            found: true,
+            videoUrl: bridge.getMediaUrl(result.video_path),
+          });
+        } else if (result.images && result.images.length > 0) {
+          setLocalFile({
+            found: true,
+            imageUrls: result.images.map(p => bridge.getMediaUrl(p)),
+          });
+        }
+      } else {
+        setLocalFile({ found: false });
+      }
+    } catch {
+      setLocalFile({ found: false });
+    } finally {
+      setIsCheckingLocal(false);
+    }
+  };
 
   useEffect(() => {
     setCurrentImageIndex(0);
+    setLocalFile({ found: false });
+    setDownloadProgress(null);
+    setIsDownloading(false);
+    if (work) {
+      checkLocalFile(work.id);
+    }
   }, [work]);
 
-  // 监听下载进度变化，记录日志
+  // 监听下载进度变化
   useEffect(() => {
     if (!work) return;
 
     const workProgress = progress[work.id];
-    if (workProgress !== undefined) {
-      if (workProgress === 100) {
-        logger.success(`✓ 作品下载完成: ${work.id}`);
-      } else if (workProgress < 0) {
-        logger.error(`✗ 作品下载失败: ${work.id}`);
-      } else if (workProgress > 0) {
-        logger.info(`📊 作品下载进度: ${work.id} - ${workProgress}%`);
-      }
+    
+    console.log('[DetailModal] progress 更新:', { 
+      workId: work.id, 
+      workProgress, 
+      allProgressKeys: Object.keys(progress),
+    });
+    
+    if (workProgress === undefined || workProgress === null) {
+      return;
+    }
+    
+    setDownloadProgress(workProgress);
+    
+    if (workProgress >= 0 && workProgress < 100) {
+      setIsDownloading(true);
+    } else if (workProgress === 100) {
+      logger.success(`✓ 作品下载完成: ${work.id}`);
+      setIsDownloading(false);
+      
+      const checkAndPlay = async () => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const result = await bridge.findLocalFile(work.id);
+        console.log('[DetailModal] 下载完成，检查本地文件:', result);
+        
+        if (result.found) {
+          if (result.video_path) {
+            setLocalFile({
+              found: true,
+              videoUrl: bridge.getMediaUrl(result.video_path),
+            });
+            toast.success('下载完成，开始播放');
+          } else if (result.images && result.images.length > 0) {
+            setLocalFile({
+              found: true,
+              imageUrls: result.images.map(p => bridge.getMediaUrl(p)),
+            });
+            toast.success('下载完成');
+          }
+        } else {
+          let retryCount = 0;
+          const maxRetries = 5;
+          const retryInterval = setInterval(async () => {
+            retryCount++;
+            const retryResult = await bridge.findLocalFile(work.id);
+            console.log(`[DetailModal] 重试检查本地文件 (${retryCount}/${maxRetries}):`, retryResult);
+            
+            if (retryResult.found || retryCount >= maxRetries) {
+              clearInterval(retryInterval);
+              if (retryResult.found) {
+                if (retryResult.video_path) {
+                  setLocalFile({
+                    found: true,
+                    videoUrl: bridge.getMediaUrl(retryResult.video_path),
+                  });
+                  toast.success('下载完成，开始播放');
+                } else if (retryResult.images && retryResult.images.length > 0) {
+                  setLocalFile({
+                    found: true,
+                    imageUrls: retryResult.images.map(p => bridge.getMediaUrl(p)),
+                  });
+                  toast.success('下载完成');
+                }
+              }
+            }
+          }, 1000);
+        }
+      };
+      
+      checkAndPlay();
+    } else if (workProgress < 0) {
+      logger.error(`✗ 作品下载失败: ${work.id}`);
+      setIsDownloading(false);
+      setDownloadProgress(null);
+      toast.error('下载失败');
     }
   }, [progress, work]);
 
@@ -71,25 +180,21 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 
   if (!work) return null;
 
+
   const handleDownload = withErrorHandling(async () => {
     setIsDownloading(true);
+    setDownloadProgress(0);
 
     try {
-      // 获取下载路径和 Cookie
       const settings = await bridge.getSettings();
       const downloadPath = settings.downloadPath || '';
       const cookie = settings.cookie || '';
-
-      // 直接使用作品描述，不做额外处理（后端已处理过）
       const baseFilename = `${work.id}_${work.desc || '无标题'}`;
 
       let successCount = 0;
 
       if (work.type === 'video' && work.videoUrl) {
-        // 视频：直接保存在下载目录
         const filename = `${baseFilename}.mp4`;
-
-        // 显示开始下载的提示
         toast.info(`正在添加视频下载任务...`);
         logger.download.start(`开始下载视频: ${filename}`, { workId: work.id });
 
@@ -103,16 +208,15 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 
         if (result === true) {
           successCount++;
-          toast.success(`视频下载任务已添加，aria2将自动处理断点续传`);
+          startPolling();
           logger.download.success(`视频下载已添加到队列: ${filename}`, { workId: work.id });
         } else {
+          setIsDownloading(false);
+          setDownloadProgress(null);
           throw new Error('视频下载添加失败');
         }
       } else if (work.type === 'image' && work.images) {
-        // 图集：保存在子目录中
         const imageDir = `${downloadPath}/${baseFilename}`;
-
-        // 显示开始下载的提示
         toast.info(`正在添加图集下载任务: ${work.images.length} 张图片`);
         logger.download.start(`开始下载图集: ${work.images.length} 张图片`, { workId: work.id });
 
@@ -138,24 +242,26 @@ export const DetailModal: React.FC<DetailModalProps> = ({
           }
         }
 
-        // 显示图集下载结果
         if (successCount > 0) {
-          toast.success(`已添加 ${successCount} 张图片到下载队列，aria2将自动处理断点续传`);
+          toast.success(`已添加 ${successCount} 张图片到下载队列`);
+          setIsDownloading(false);
+          setDownloadProgress(null);
         }
       }
 
-      // 启动轮询监控下载进度
-      startPolling();
+      if (work.type === 'video') {
+        startPolling();
+      }
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : '下载失败';
       toast.error(errorMsg);
-      throw error;
-    } finally {
       setIsDownloading(false);
+      setDownloadProgress(null);
+      throw error;
     }
   }, { workId: work.id, workType: work.type }, {
-    showToast: false, // 我们手动处理toast显示
+    showToast: false,
     logLevel: 'error'
   });
 
@@ -164,18 +270,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({
       const settings = await bridge.getSettings();
       const downloadPath = settings.downloadPath || '';
       const cookie = settings.cookie || '';
-
       const filename = `${work.id}_cover.jpg`;
-      const result = await addDownload(
-        `${work.id}_cover`,
-        work.cover,
-        filename,
-        downloadPath,
-        cookie
-      );
+      const result = await addDownload(`${work.id}_cover`, work.cover, filename, downloadPath, cookie);
 
       if (result === true) {
-        console.log('[DetailModal] 封面下载已添加:', work.id);
         toast.success('封面下载已添加到队列');
         logger.success(`[DetailModal] 封面下载已添加到队列: ${work.id}`);
       } else {
@@ -183,7 +281,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
         logger.error(`[DetailModal] 封面下载添加失败: ${work.id}`);
       }
     } catch (e) {
-      console.error('[DetailModal] 封面下载失败:', e);
       toast.error(`封面下载失败: ${e instanceof Error ? e.message : '未知错误'}`);
       logger.error(`[DetailModal] 封面下载失败: ${work.id} - ${e}`);
     }
@@ -195,18 +292,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({
         const settings = await bridge.getSettings();
         const downloadPath = settings.downloadPath || '';
         const cookie = settings.cookie || '';
-
         const filename = `${work.id}_music.mp3`;
-        const result = await addDownload(
-          `${work.id}_music`,
-          work.music.url,
-          filename,
-          downloadPath,
-          cookie
-        );
+        const result = await addDownload(`${work.id}_music`, work.music.url, filename, downloadPath, cookie);
 
         if (result === true) {
-          console.log('[DetailModal] 音乐下载已添加:', work.id);
           toast.success('音乐下载已添加到队列');
           logger.success(`[DetailModal] 音乐下载已添加到队列: ${work.id}`);
         } else {
@@ -214,7 +303,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
           logger.error(`[DetailModal] 音乐下载添加失败: ${work.id}`);
         }
       } catch (e) {
-        console.error('[DetailModal] 音乐下载失败:', e);
         toast.error(`音乐下载失败: ${e instanceof Error ? e.message : '未知错误'}`);
         logger.error(`[DetailModal] 音乐下载失败: ${work.id} - ${e}`);
       }
@@ -230,7 +318,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 
   const nextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (work.images && currentImageIndex < work.images.length - 1) {
+    const maxIndex = (localFile.found && localFile.imageUrls ? localFile.imageUrls.length : work.images?.length) || 1;
+    if (currentImageIndex < maxIndex - 1) {
       setCurrentImageIndex(prev => prev + 1);
     }
   };
@@ -244,15 +333,12 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
-      {/* Main Container - Fixed Size */}
       <div
         className="bg-white rounded-2xl shadow-2xl flex overflow-hidden w-[720px] h-[85vh] relative animate-in zoom-in-95 duration-200 border border-gray-200/50"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Left Side: Media (Black Background) */}
+        {/* Left Side: Media */}
         <div className="flex-1 bg-black relative flex items-center justify-center group overflow-hidden">
-
-          {/* Global Prev/Next Navigation (Inside Media Area) */}
           {hasPrev && (
             <button
               onClick={(e) => { e.stopPropagation(); onPrev?.(); }}
@@ -271,29 +357,86 @@ export const DetailModal: React.FC<DetailModalProps> = ({
           )}
 
           {work.type === 'video' ? (
-            <video
-              src={work.videoUrl}
-              controls
-              autoPlay
-              loop
-              crossOrigin="anonymous"
-              playsInline
-              className="max-w-full max-h-full w-auto h-auto object-contain"
-              onError={(e) => {
-                console.error('[DetailModal] 视频加载失败:', work.videoUrl);
-                toast.error('视频加载失败，可能需要下载后观看');
-              }}
-            />
+            localFile.found && localFile.videoUrl ? (
+              <div className="relative w-full h-full flex items-center justify-center">
+                <video
+                  key={localFile.videoUrl}
+                  src={localFile.videoUrl}
+                  controls
+                  autoPlay
+                  loop
+                  playsInline
+                  className="max-w-full max-h-full w-auto h-auto object-contain"
+                />
+                <div className="absolute top-4 left-4 flex items-center gap-1.5 px-2 py-1 bg-green-500/90 text-white text-xs rounded-full backdrop-blur-sm">
+                  <HardDrive size={12} />
+                  本地文件
+                </div>
+              </div>
+            ) : (
+              <div className="relative w-full h-full flex items-center justify-center">
+                <img src={work.cover} className="absolute inset-0 w-full h-full object-cover blur-sm opacity-30" alt="" />
+                <img src={work.cover} className="relative max-w-full max-h-full object-contain z-10" alt="" />
+                {!isCheckingLocal && (
+                  <div className="absolute inset-0 flex items-center justify-center z-20">
+                    <div className="bg-black/60 backdrop-blur-md rounded-2xl p-6 max-w-[280px] text-center border border-white/10 shadow-2xl">
+                      <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-white/10 flex items-center justify-center">
+                        {isDownloading ? (
+                          <Loader2 className="animate-spin text-white" size={24} />
+                        ) : (
+                          <Download size={24} className="text-white" />
+                        )}
+                      </div>
+                      
+                      {isDownloading && downloadProgress !== null && downloadProgress >= 0 ? (
+                        <>
+                          <p className="text-white text-sm font-medium mb-2">正在下载...</p>
+                          <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden mb-2">
+                            <div 
+                              className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-300"
+                              style={{ width: `${downloadProgress}%` }}
+                            />
+                          </div>
+                          <p className="text-white/80 text-xs">{downloadProgress}%</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-white text-sm font-medium mb-2">视频暂无法在线播放</p>
+                          <p className="text-white/60 text-xs mb-4">受跨域限制，请下载后本地观看</p>
+                          <button
+                            onClick={handleDownload}
+                            disabled={isDownloading}
+                            className="w-full py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 rounded-lg text-white text-sm font-medium transition-all active:scale-95 shadow-lg disabled:opacity-50"
+                          >
+                            立即下载
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
           ) : (
             <div className="relative w-full h-full flex items-center justify-center">
+              {localFile.found && localFile.imageUrls && (
+                <div className="absolute top-4 left-4 flex items-center gap-1.5 px-2 py-1 bg-green-500/90 text-white text-xs rounded-full backdrop-blur-sm z-10">
+                  <HardDrive size={12} />
+                  本地文件
+                </div>
+              )}
               <img
-                src={work.images?.[currentImageIndex] || work.cover}
+                src={
+                  localFile.found && localFile.imageUrls
+                    ? localFile.imageUrls[currentImageIndex] || work.cover
+                    : work.images?.[currentImageIndex] || work.cover
+                }
                 className="max-w-full max-h-full object-contain"
                 alt=""
               />
 
-              {/* Image Navigation & Counter - Bottom Center */}
-              {work.images && work.images.length > 1 && (
+              {((localFile.found && localFile.imageUrls && localFile.imageUrls.length > 1) ||
+                (work.images && work.images.length > 1)) && (
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 z-20">
                   <button
                     onClick={prevImage}
@@ -302,14 +445,12 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                   >
                     <ChevronLeft size={16} />
                   </button>
-
                   <span className="text-xs font-medium text-white/90 bg-black/40 px-3 py-1 rounded-full backdrop-blur-md border border-white/10 tabular-nums">
-                    {currentImageIndex + 1} / {work.images.length}
+                    {currentImageIndex + 1} / {localFile.found && localFile.imageUrls ? localFile.imageUrls.length : work.images?.length || 0}
                   </span>
-
                   <button
                     onClick={nextImage}
-                    disabled={currentImageIndex === work.images.length - 1}
+                    disabled={currentImageIndex === ((localFile.found && localFile.imageUrls ? localFile.imageUrls.length : work.images?.length) || 1) - 1}
                     className="p-1.5 rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-md border border-white/10"
                   >
                     <ChevronRight size={16} />
@@ -320,10 +461,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({
           )}
         </div>
 
-        {/* Right Side: Info (White Background) */}
-        <div className="w-[300px] bg-white flex flex-col border-l border-gray-100 shrink-0">
 
-          {/* Header Actions */}
+        {/* Right Side: Info */}
+        <div className="w-[300px] bg-white flex flex-col border-l border-gray-100 shrink-0">
           <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100 bg-gray-50/30">
             <span className="font-bold text-gray-800">作品详情</span>
             <div className="flex items-center gap-1">
@@ -345,7 +485,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             </div>
           </div>
 
-          {/* Author Info */}
           <div className="px-5 py-4 flex items-center gap-3">
             <img src={work.author.avatar} className="w-10 h-10 rounded-full border border-gray-100" />
             <div className="min-w-0 flex-1">
@@ -360,7 +499,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             </div>
           </div>
 
-          {/* Description */}
           <div className="px-5 py-2 flex-1 overflow-y-auto custom-scrollbar">
             <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{work.desc}</p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -375,7 +513,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             </div>
           </div>
 
-          {/* Stats */}
           <div className="px-5 py-3 border-t border-gray-50 grid grid-cols-3 gap-2">
             <div className="flex flex-col items-center gap-1 text-gray-600 p-2 rounded-lg bg-gray-50">
               <Heart size={16} className={work.stats.digg_count > 0 ? "fill-red-500 text-red-500" : ""} />
@@ -391,9 +528,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="p-5 border-t border-gray-100 bg-gray-50/50 space-y-3">
-            {/* Top Row: Cover + Music */}
             <div className="flex gap-2">
               <button
                 onClick={downloadCover}
@@ -411,7 +546,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                   <Music size={14} />
                   原声
                 </button>
-                {/* Tooltip for Music Title */}
                 {work.music?.title && (
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-30 shadow-lg">
                     {work.music.title}
@@ -421,7 +555,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
               </div>
             </div>
 
-            {/* Bottom Row: Main Download */}
             <button
               onClick={handleDownload}
               disabled={isDownloading}
