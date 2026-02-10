@@ -6,7 +6,9 @@
 """
 
 from typing import List, Tuple
-from urllib.parse import quote, unquote
+from urllib.parse import unquote
+
+import ujson as json
 
 from ...utils.text import quit
 from .request import Request
@@ -160,24 +162,33 @@ class DouyinClient:
             uri = APIEndpoint.MIX_AWEME
             params = {**self._build_common_params(max_cursor), "mix_id": target_id}
         elif type == "search":
-            uri = APIEndpoint.SEARCH_ITEM
+            # 构建 filter_selected JSON
+            filter_selected = json.dumps(
+                {
+                    "sort_type": filters.get("sort_type", "0"),
+                    "publish_time": filters.get("publish_time", "0"),
+                    "content_type": filters.get("content_type", "1"),
+                    "filter_duration": filters.get("filter_duration", "0"),
+                    "search_range": filters.get("search_range", "0"),
+                },
+                ensure_ascii=False,
+            )
+            uri = APIEndpoint.SEARCH_GENERAL
             params = {
-                "search_id": logid,
-                "search_channel": "aweme_video_web",
+                "search_channel": "aweme_general",
+                "enable_history": 1,
+                "filter_selected": filter_selected,
+                "keyword": unquote(target_id),
                 "search_source": "tab_search",
                 "query_correct_type": 1,
-                "from_group_id": "",
                 "is_filter_search": 1,
-                "list_type": "single",
-                "need_filter_settings": 1,
+                "from_group_id": "",
+                "disable_rs": 0,
                 "offset": max_cursor,
-                "sort_type": int(filters.get("sort_type", "0")),
-                "enable_history": 1,
-                "search_range": int(filters.get("search_range", "0")),
-                "publish_time": int(filters.get("publish_time", "0")),
-                "filter_duration": filters.get("filter_duration", ""),
                 "count": APIConfig.DEFAULT_COUNT,
-                "keyword": unquote(target_id),
+                "need_filter_settings": 0,
+                "list_type": "multi",
+                "search_id": logid,
             }
         elif type == "following":
             uri = APIEndpoint.USER_FOLLOWING

@@ -36,6 +36,7 @@ class APIEndpoint:
     CHALLENGE_AWEME = "/aweme/v1/web/challenge/aweme/"
     MIX_AWEME = "/aweme/v1/web/mix/aweme/"
     SEARCH_ITEM = "/aweme/v1/web/search/item/"
+    SEARCH_GENERAL = "/aweme/v1/web/general/search/single/"
     DISCOVER_SEARCH = "/aweme/v1/web/discover/search/"
     USER_FOLLOWING = "/aweme/v1/web/user/following/list/"
     USER_FOLLOWER = "/aweme/v1/web/user/follower/list/"

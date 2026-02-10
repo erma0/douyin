@@ -161,6 +161,7 @@ export const App: React.FC = () => {
     publish_time: '0',   // 默认不限时间
     filter_duration: '', // 默认不限时长
     search_range: '0',   // 默认不限范围
+    content_type: '1',   // 默认视频
   });
 
   // --- 下载管理 ---

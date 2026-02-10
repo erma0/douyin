@@ -6,6 +6,7 @@ export interface FilterSettings extends Record<string, string> {
   publish_time: string;   // 发布时间: 0不限 1一天内 7一周内 180半年内
   filter_duration: string; // 视频时长: ""不限 "0-1"一分钟以下 "1-5"1-5分钟 "5-10000"5分钟以上
   search_range: string;   // 搜索范围: 0不限 3关注的人 1最近看过 2还未看过
+  content_type: string;   // 内容形式: 0不限 1视频 2图文
 }
 
 interface SearchFilterProps {
@@ -69,6 +70,11 @@ export const SearchFilter: React.FC<SearchFilterProps> = ({
     { title: '关注的人', value: '3' },
     { title: '最近看过', value: '1' },
     { title: '还未看过', value: '2' },
+  ];
+
+  const contentTypeOptions = [
+    { title: '视频', value: '1' },
+    { title: '图文', value: '2' },
   ];
 
   const FilterSection = ({
@@ -146,6 +152,13 @@ export const SearchFilter: React.FC<SearchFilterProps> = ({
               options={rangeOptions}
               value={localFilters.search_range}
               onChange={(value) => handleFilterChange('search_range', value)}
+            />
+
+            <FilterSection
+              title="内容形式"
+              options={contentTypeOptions}
+              value={localFilters.content_type}
+              onChange={(value) => handleFilterChange('content_type', value)}
             />
           </div>
         </div>

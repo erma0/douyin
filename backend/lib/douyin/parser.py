@@ -5,7 +5,6 @@
 负责解析抖音API返回的数据，提取作品和用户信息
 """
 
-import os
 from typing import List
 
 from loguru import logger
@@ -96,6 +95,8 @@ class DataParser:
             dict: 解析后的作品数据，如果是不支持的类型则返回None
         """
         _type = item.get("aweme_type", item.get("awemeType"))
+        if  _type is None :
+            return
         aweme = item.get("statistics", item.get("stats", {}))
 
         # 清理不需要的字段
