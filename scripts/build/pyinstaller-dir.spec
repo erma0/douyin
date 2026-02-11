@@ -36,7 +36,6 @@ a = Analysis(
         'unittest',
         'tkinter',
         'test',
-        'distutils',
         'setuptools',
         'pip',
     ],
