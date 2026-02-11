@@ -1,0 +1,42 @@
+name: Close Stale Issues
+
+on:
+  schedule:
+    - cron: '30 1 * * *' # 每天 UTC 时间 01:30 (北京时间 09:30) 运行
+  workflow_dispatch: # 允许手动触发
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # 核心配置：多少天无活动
+          days-before-stale: 30       # 30天无活动后标记为 stale
+          days-before-close: 7        # 标记后再过7天无活动则关闭
+          
+          # 提示文案
+          stale-issue-message: '这个 Issue 已经 30 天没有活动了。如果问题仍未解决，请回复，否则将在 7 天后自动关闭。'
+          close-issue-message: '由于长时间没有活动，这个 Issue 已被自动关闭。'
+          
+          # 标签管理
+          stale-issue-label: 'stale'
+          
+          # 排除项：带有这些标签的 Issue 永远不会被自动关闭
+          exempt-issue-labels: 'pinned,security,enhancement,bug'
+          
+          # 调试模式：开启后不会真正执行关闭操作，只会打印日志
+          debug-only: false
+          
+          # 每次运行处理的最大数量，防止 API 超限
+          operations-per-run: 300
+          
+          # 可选：如果你只想针对带有 "waiting-for-feedback" 标签的 Issue 进行自动关闭
+          # 取消下面这行的注释，并确保你平时会给等待用户回复的 Issue 打上这个标签
+          # only-labels: 'waiting-for-feedback'
