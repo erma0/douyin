@@ -8,10 +8,11 @@
  * 4. 完成页面 - 显示配置完成信息
  */
 
-import { Check, ChevronLeft, ChevronRight, ExternalLink, FolderOpen, Sparkles, X } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, ExternalLink, FolderOpen, LogIn, Sparkles, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { APP_DEFAULTS } from '../constants';
-import { bridge } from '../services/bridge';
+import { bridge, isGUIMode } from '../services/bridge';
+import { logger } from '../services/logger';
 import { AppSettings } from '../types';
 import { toast } from './Toast';
 
@@ -27,6 +28,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
   const [currentStep, setCurrentStep] = useState<WizardStep>('welcome');
   const [settings, setSettings] = useState<AppSettings>({
     cookie: APP_DEFAULTS.COOKIE,
+    userAgent: APP_DEFAULTS.USER_AGENT,
     downloadPath: APP_DEFAULTS.DOWNLOAD_PATH,
     maxRetries: APP_DEFAULTS.MAX_RETRIES,
     maxConcurrency: APP_DEFAULTS.MAX_CONCURRENCY,
@@ -36,6 +38,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
     aria2Secret: APP_DEFAULTS.ARIA2_SECRET
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleNext = () => {
     const steps: WizardStep[] = ['welcome', 'cookie', 'download', 'complete'];
@@ -252,12 +255,55 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
                       </svg>
                       粘贴
                     </button>
+                    {isGUIMode() ? (
+                      <button
+                        onClick={async () => {
+                          setIsLoggingIn(true);
+                          toast.info('正在打开登录窗口，请完成登录...');
+                          try {
+                            const result = await bridge.cookieLogin();
+                            if (result.success) {
+                              setSettings(prev => ({
+                                ...prev,
+                                cookie: result.cookie,
+                                userAgent: result.user_agent || prev.userAgent
+                              }));
+                              toast.success('Cookie 获取成功！');
+                              logger.success('✓ 通过登录获取 Cookie 成功');
+                            } else {
+                              toast.error(result.error || '获取失败');
+                              logger.warn(`✗ Cookie 获取失败: ${result.error}`);
+                            }
+                          } catch (err) {
+                            console.error('登录获取失败:', err);
+                            toast.error('登录获取失败，请手动输入');
+                          } finally {
+                            setIsLoggingIn(false);
+                          }
+                        }}
+                        disabled={isLoggingIn}
+                        className="text-xs bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+                        title="打开抖音登录窗口获取 Cookie"
+                      >
+                        <LogIn size={12} />
+                        {isLoggingIn ? '登录中...' : '登录获取'}
+                      </button>
+                    ) : (
+                      <button
+                        disabled={true}
+                        className="text-xs bg-gray-400 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-not-allowed opacity-60"
+                        title="仅 GUI 模式支持"
+                      >
+                        <LogIn size={12} />
+                        仅GUI模式
+                      </button>
+                    )}
                     <button
-                      onClick={() => bridge.openExternal('https://github.com/erma0/douyin/blob/main/USAGE.md#-cookie%E8%8E%B7%E5%8F%96')}
+                      onClick={() => bridge.openExternal('https://github.com/erma0/douyin/blob/main/USAGE.md#cookie%E8%8E%B7%E5%8F%96')}
                       className="text-xs text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 transition-colors"
                       title="查看获取 Cookie 的详细教程"
                     >
-                      如何获取 Cookie?
+                      手动获取?
                       <ExternalLink size={12} />
                     </button>
                   </div>
