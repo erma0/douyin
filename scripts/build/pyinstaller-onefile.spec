@@ -34,9 +34,14 @@ a = Analysis(
         'backend.test',  # 排除测试文件
         'pytest',
         'unittest',
+        'tkinter',
+        'test',
+        'distutils',
+        'setuptools',
+        'pip',
     ],
     noarchive=False,
-    optimize=0,
+    optimize=2,  # 移除 docstrings 和 assert 语句
 )
 
 pyz = PYZ(a.pure)
@@ -52,7 +57,7 @@ exe = EXE(
     name='DouyinCrawler',
     debug=False,
     bootloader_ignore_signals=False,
-    strip=False,
+    strip=True,
     upx=True,
     upx_exclude=[
         'vcruntime140.dll',

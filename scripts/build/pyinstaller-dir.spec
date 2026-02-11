@@ -34,9 +34,14 @@ a = Analysis(
         'backend.test',  # 排除测试文件
         'pytest',
         'unittest',
+        'tkinter',
+        'test',
+        'distutils',
+        'setuptools',
+        'pip',
     ],
     noarchive=False,
-    optimize=0,
+    optimize=2,  # 移除 docstrings 和 assert 语句
 )
 
 pyz = PYZ(a.pure)
@@ -51,7 +56,7 @@ exe = EXE(
     name='DouyinCrawler',
     debug=False,
     bootloader_ignore_signals=False,
-    strip=False,
+    strip=True,
     upx=True,
     console=False,  # 生产环境禁用控制台
     disable_windowed_traceback=False,
@@ -68,7 +73,7 @@ coll = COLLECT(
     a.binaries,
     a.zipfiles,
     a.datas,
-    strip=False,
+    strip=True,
     upx=True,
     upx_exclude=[],
     name='DouyinCrawler',
