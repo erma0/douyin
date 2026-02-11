@@ -1,0 +1,148 @@
+# ============================================================
+# Release 工作流 - 推送版本 tag 时自动发布
+# ============================================================
+# 触发方式：
+#   1. 更新版本号（pyproject.toml 和 backend/cli.py）
+#   2. 提交代码
+#      git add .
+#      git commit -m "release: v5.2.260211"
+#   3. 打 tag 并推送
+#      git tag v5.2.260211
+#      git push origin main --tags
+#
+# 产物：在 GitHub Releases 页面自动创建新版本
+#       附带 DouyinCrawler_v5.2.260211.zip 下载
+#       Release Notes 根据 commit 记录自动生成
+# ============================================================
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"  # 只有 v 开头的 tag 才触发（如 v5.2.260211）
+
+permissions:
+  contents: write  # 需要写权限来创建 Release
+
+# 同一 tag 重复推送会取消旧的运行
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Python 环境 ──
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install Python dependencies
+        run: uv sync
+
+      # ── Node 环境 ──
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: pnpm-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: frontend
+
+      - name: Build frontend
+        run: pnpm build
+        working-directory: frontend
+
+      # ── 下载 aria2 ──
+      - name: Download aria2
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $headers = @{ Authorization = "Bearer $env:GH_TOKEN" }
+          $release = Invoke-RestMethod "https://api.github.com/repos/aria2/aria2/releases/latest" -Headers $headers
+          $asset = $release.assets | Where-Object { $_.name -match "win-64bit.*\.zip$" } | Select-Object -First 1
+          if (-not $asset) { Write-Error "未找到 aria2 win-64bit 资源"; exit 1 }
+          Invoke-WebRequest $asset.browser_download_url -OutFile aria2.zip
+          Expand-Archive aria2.zip -DestinationPath aria2_tmp
+          $inner = Get-ChildItem aria2_tmp -Directory | Select-Object -First 1
+          if (-not (Test-Path "aria2")) { New-Item -ItemType Directory -Path "aria2" | Out-Null }
+          Copy-Item "$($inner.FullName)\aria2c.exe" "aria2\aria2c.exe"
+          Remove-Item -Recurse -Force aria2_tmp, aria2.zip
+
+      # ── 下载 UPX（压缩 exe 体积）──
+      - name: Install UPX
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $headers = @{ Authorization = "Bearer $env:GH_TOKEN" }
+          $release = Invoke-RestMethod "https://api.github.com/repos/upx/upx/releases/latest" -Headers $headers
+          $asset = $release.assets | Where-Object { $_.name -match "win64.*\.zip$" } | Select-Object -First 1
+          Invoke-WebRequest $asset.browser_download_url -OutFile upx.zip
+          Expand-Archive upx.zip -DestinationPath upx_tmp
+          $inner = Get-ChildItem upx_tmp -Directory | Select-Object -First 1
+          Copy-Item "$($inner.FullName)\upx.exe" "upx.exe"
+          Remove-Item -Recurse -Force upx_tmp, upx.zip
+          echo "$PWD" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+
+      # ── PyInstaller 打包 ──
+      - name: Build with PyInstaller
+        run: uv run python -m PyInstaller scripts/build/pyinstaller-onefile.spec --clean --noconfirm
+
+      - name: Verify build
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist/DouyinCrawler.exe")) {
+            Write-Error "Build failed: DouyinCrawler.exe not found"
+            exit 1
+          }
+          $size = [math]::Round((Get-Item "dist/DouyinCrawler.exe").Length / 1MB, 2)
+          Write-Host "Build successful: DouyinCrawler.exe ($size MB)"
+
+      # ── 打包成 zip 用于 Release 附件 ──
+      - name: Create release package
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $releaseDir = "DouyinCrawler_$tag"
+          New-Item -ItemType Directory -Path $releaseDir | Out-Null
+          Copy-Item "dist/DouyinCrawler.exe" $releaseDir
+
+          @("README.md", "LICENSE") | ForEach-Object {
+            if (Test-Path $_) { Copy-Item $_ $releaseDir }
+          }
+
+          Compress-Archive -Path $releaseDir -DestinationPath "DouyinCrawler_$tag.zip"
+
+      # ── 创建 GitHub Release（自动生成 Release Notes）──
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: DouyinCrawler ${{ github.ref_name }}
+          generate_release_notes: true
+          files: DouyinCrawler_*.zip

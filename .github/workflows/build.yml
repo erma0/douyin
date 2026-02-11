@@ -1,0 +1,131 @@
+# ============================================================
+# Build 工作流 - 主分支自动构建
+# ============================================================
+# 触发方式：
+#   1. 推送代码到 main 分支（自动触发）
+#      git push origin main
+#   2. 向 main 分支提交 Pull Request（自动触发）
+#
+# 注意：推送 v* 开头的 tag 不会触发此工作流（由 release.yml 处理）
+#
+# 产物：DouyinCrawler.exe 作为 artifact 保留 7 天
+#       可在 GitHub Actions 页面 → 对应运行记录 → Artifacts 下载
+# ============================================================
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags-ignore:
+      - "v*"
+  pull_request:
+    branches: [main]
+
+# 同一分支的新推送会取消正在进行的旧构建
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Python 环境 ──
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true  # 缓存 uv 依赖，加速后续构建
+
+      - name: Install Python dependencies
+        run: uv sync
+
+      # ── Node 环境 ──
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      # 缓存 pnpm store，避免每次重新下载 node_modules
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: pnpm-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: frontend
+
+      - name: Build frontend
+        run: pnpm build
+        working-directory: frontend
+
+      # ── 下载 aria2（gitignore 忽略了 exe，CI 需要重新下载）──
+      - name: Download aria2
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 认证避免 API 速率限制
+        run: |
+          $headers = @{ Authorization = "Bearer $env:GH_TOKEN" }
+          $release = Invoke-RestMethod "https://api.github.com/repos/aria2/aria2/releases/latest" -Headers $headers
+          $asset = $release.assets | Where-Object { $_.name -match "win-64bit.*\.zip$" } | Select-Object -First 1
+          if (-not $asset) { Write-Error "未找到 aria2 win-64bit 资源"; exit 1 }
+          Invoke-WebRequest $asset.browser_download_url -OutFile aria2.zip
+          Expand-Archive aria2.zip -DestinationPath aria2_tmp
+          $inner = Get-ChildItem aria2_tmp -Directory | Select-Object -First 1
+          if (-not (Test-Path "aria2")) { New-Item -ItemType Directory -Path "aria2" | Out-Null }
+          Copy-Item "$($inner.FullName)\aria2c.exe" "aria2\aria2c.exe"
+          Remove-Item -Recurse -Force aria2_tmp, aria2.zip
+
+      # ── 下载 UPX（用于压缩 exe 体积，PyInstaller 的 upx=True 会自动调用）──
+      - name: Install UPX
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $headers = @{ Authorization = "Bearer $env:GH_TOKEN" }
+          $release = Invoke-RestMethod "https://api.github.com/repos/upx/upx/releases/latest" -Headers $headers
+          $asset = $release.assets | Where-Object { $_.name -match "win64.*\.zip$" } | Select-Object -First 1
+          Invoke-WebRequest $asset.browser_download_url -OutFile upx.zip
+          Expand-Archive upx.zip -DestinationPath upx_tmp
+          $inner = Get-ChildItem upx_tmp -Directory | Select-Object -First 1
+          Copy-Item "$($inner.FullName)\upx.exe" "upx.exe"
+          Remove-Item -Recurse -Force upx_tmp, upx.zip
+          echo "$PWD" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+
+      # ── PyInstaller 打包为单文件 exe ──
+      - name: Build with PyInstaller
+        run: uv run python -m PyInstaller scripts/build/pyinstaller-onefile.spec --clean --noconfirm
+
+      - name: Verify build
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist/DouyinCrawler.exe")) {
+            Write-Error "Build failed: DouyinCrawler.exe not found"
+            exit 1
+          }
+          $size = [math]::Round((Get-Item "dist/DouyinCrawler.exe").Length / 1MB, 2)
+          Write-Host "Build successful: DouyinCrawler.exe ($size MB)"
+
+      # ── 上传产物（在 Actions 页面可下载）──
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DouyinCrawler
+          path: dist/DouyinCrawler.exe
+          retention-days: 7
