@@ -29,6 +29,8 @@ concurrency:
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +43,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
-          enable-cache: true  # 缓存 uv 依赖，加速后续构建
+          enable-cache: false  # 禁用缓存，避免 400 错误
 
       - name: Install Python dependencies
         run: uv sync
@@ -75,38 +77,56 @@ jobs:
         run: pnpm build
         working-directory: frontend
 
-      # ── 下载 aria2（gitignore 忽略了 exe，CI 需要重新下载）──
-      - name: Download aria2
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 认证避免 API 速率限制
-        run: |
-          $headers = @{ Authorization = "Bearer $env:GH_TOKEN" }
-          $release = Invoke-RestMethod "https://api.github.com/repos/aria2/aria2/releases/latest" -Headers $headers
-          $asset = $release.assets | Where-Object { $_.name -match "win-64bit.*\.zip$" } | Select-Object -First 1
-          if (-not $asset) { Write-Error "未找到 aria2 win-64bit 资源"; exit 1 }
-          Invoke-WebRequest $asset.browser_download_url -OutFile aria2.zip
-          Expand-Archive aria2.zip -DestinationPath aria2_tmp
-          $inner = Get-ChildItem aria2_tmp -Directory | Select-Object -First 1
-          if (-not (Test-Path "aria2")) { New-Item -ItemType Directory -Path "aria2" | Out-Null }
-          Copy-Item "$($inner.FullName)\aria2c.exe" "aria2\aria2c.exe"
-          Remove-Item -Recurse -Force aria2_tmp, aria2.zip
+      # ── 缓存 aria2 ──
+      - name: Cache aria2
+        id: cache-aria2
+        uses: actions/cache@v4
+        with:
+          path: aria2
+          key: aria2-1.36.0-win64
 
-      # ── 下载 UPX（用于压缩 exe 体积，PyInstaller 的 upx=True 会自动调用）──
-      - name: Install UPX
+      # ── 下载 aria2（如果缓存未命中）──
+      - name: Download aria2
+        if: steps.cache-aria2.outputs.cache-hit != 'true'
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $headers = @{ Authorization = "Bearer $env:GH_TOKEN" }
-          $release = Invoke-RestMethod "https://api.github.com/repos/upx/upx/releases/latest" -Headers $headers
-          $asset = $release.assets | Where-Object { $_.name -match "win64.*\.zip$" } | Select-Object -First 1
-          Invoke-WebRequest $asset.browser_download_url -OutFile upx.zip
-          Expand-Archive upx.zip -DestinationPath upx_tmp
-          $inner = Get-ChildItem upx_tmp -Directory | Select-Object -First 1
-          Copy-Item "$($inner.FullName)\upx.exe" "upx.exe"
-          Remove-Item -Recurse -Force upx_tmp, upx.zip
-          echo "$PWD" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          $aria2Version = "1.36.0"
+          $aria2Url = "https://github.com/aria2/aria2/releases/download/release-${aria2Version}/aria2-${aria2Version}-win-64bit-build1.zip"
+          $maxRetries = 3
+          $retryCount = 0
+          $success = $false
+
+          while ($retryCount -lt $maxRetries -and -not $success) {
+            try {
+              $retryCount++
+              Write-Host "尝试下载 aria2 v${aria2Version} (尝试 $retryCount/$maxRetries)..."
+              Invoke-WebRequest $aria2Url -OutFile aria2.zip -UseBasicParsing
+              
+              if (-not (Test-Path "aria2")) { New-Item -ItemType Directory -Path "aria2" | Out-Null }
+              Expand-Archive aria2.zip -DestinationPath aria2_tmp -Force
+              $inner = Get-ChildItem aria2_tmp -Directory | Select-Object -First 1
+              Copy-Item "$($inner.FullName)\aria2c.exe" "aria2\aria2c.exe"
+              Remove-Item -Recurse -Force aria2_tmp, aria2.zip
+              
+              $success = $true
+              Write-Host "✓ aria2 下载成功"
+            } catch {
+              Write-Warning "下载失败: $_"
+              if ($retryCount -lt $maxRetries) {
+                Write-Host "等待 2 秒后重试..."
+                Start-Sleep -Seconds 2
+              }
+            }
+          }
+
+          if (-not $success) {
+            Write-Error "aria2 下载失败，已尝试 $maxRetries 次"
+            exit 1
+          }
+
+
 
       # ── PyInstaller 打包为单文件 exe ──
       - name: Build with PyInstaller

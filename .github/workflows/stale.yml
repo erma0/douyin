@@ -12,6 +12,8 @@ permissions:
 jobs:
   stale:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/stale@v9
         with:
