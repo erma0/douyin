@@ -40,7 +40,7 @@ a = Analysis(
         'pip',
     ],
     noarchive=False,
-    optimize=2,  # 移除 docstrings 和 assert 语句
+    optimize=0,  # 禁用优化，避免 DLL 加载问题
 )
 
 pyz = PYZ(a.pure)
@@ -56,7 +56,7 @@ exe = EXE(
     name='DouyinCrawler',
     debug=False,
     bootloader_ignore_signals=False,
-    strip=True,
+    strip=False,  # 禁用 strip，避免 DLL 加载问题
     upx=False,
     runtime_tmpdir=None,
     console=False,
