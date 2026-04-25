@@ -27,10 +27,10 @@ Cookie is the necessary credential for obtaining data.
 
 ### Method 2: Manual (Recommended)
 
-1. Visit `https://www.douyin.com/search/deepseek` and log in
+1. Visit `https://www.douyin.com/search/deepseek?type=video` and log in
 2. Press `F12` to open developer tools
 3. Switch to `Network` tab, refresh the page
-4. Type `/aweme/v1/web/general/search/single` in filter, click any request
+4. Type `/aweme/v1/web/search/item` in filter, click any request
 5. Find `Cookie:` field in `Request Headers`, copy the full content
 6. Paste and save in application settings
 

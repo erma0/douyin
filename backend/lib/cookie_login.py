@@ -15,12 +15,11 @@ from loguru import logger
 
 # 目标 API 路径（登录后会请求这些接口）
 TARGET_API_PATHS = [
-    "/aweme/v1/web/aweme/post/",
-    "/aweme/v1/web/aweme/favorite/",
+    "/aweme/v1/web/search/item",
 ]
 
 # 登录页面 URL
-LOGIN_URL = "https://www.douyin.com/user/self"
+LOGIN_URL = "https://www.douyin.com/search/deepseek?type=video"
 
 
 @dataclass

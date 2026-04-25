@@ -27,10 +27,10 @@ Cookie là thông tin xác thực cần thiết để lấy dữ liệu.
 
 ### Cách 2: Thủ công (Khuyến nghị)
 
-1. Truy cập `https://www.douyin.com/search/deepseek` và đăng nhập
+1. Truy cập `https://www.douyin.com/search/deepseek?type=video` và đăng nhập
 2. Nhấn `F12` để mở công cụ nhà phát triển
 3. Chuyển sang tab `Network`, làm mới trang
-4. Nhập `/aweme/v1/web/general/search/single` vào bộ lọc, nhấp vào bất kỳ yêu cầu nào
+4. Nhập `/aweme/v1/web/search/item` vào bộ lọc, nhấp vào bất kỳ yêu cầu nào
 5. Tìm trường `Cookie:` trong `Request Headers`, sao chép toàn bộ nội dung
 6. Dán và lưu trong cài đặt ứng dụng
 
