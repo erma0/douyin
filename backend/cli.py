@@ -103,6 +103,16 @@ print(banner)
     type=click.Choice(["", "0-1", "1-5", "5-10000"], case_sensitive=False),
     help="视频时长（仅search类型）：空=不限，0-1=1分钟以下，1-5=1-5分钟，5-10000=5分钟以上",
 )
+@click.option(
+    "--download-title",
+    is_flag=True,
+    help="下载标题文本文件",
+)
+@click.option(
+    "--download-cover",
+    is_flag=True,
+    help="下载封面图片",
+)
 def main(
     urls,
     limit,
@@ -113,6 +123,8 @@ def main(
     sort_type,
     publish_time,
     filter_duration,
+    download_title,
+    download_cover,
 ):
     """
     抖音数据采集命令行工具
@@ -195,7 +207,7 @@ def main(
         if type in ["favorite", "collection", "following", "follower"]:
             # 直接采集本账号
             logger.info(f"采集本账号的 {type} 数据")
-            start("", limit, no_download, type, path, cookie_str, filters)
+            start("", limit, no_download, type, path, cookie_str, filters, download_title, download_cover)
             return
         else:
             # 提示输入目标
@@ -231,7 +243,7 @@ def main(
                 logger.info(f"文件中共有 {len(lines)} 个目标")
                 for idx, line in enumerate(lines, 1):
                     logger.info(f"处理第 {idx}/{len(lines)} 个目标")
-                    if start(line, limit, no_download, type, path, cookie_str, filters):
+                    if start(line, limit, no_download, type, path, cookie_str, filters, download_title, download_cover):
                         success_count += 1
                     else:
                         fail_count += 1
@@ -240,7 +252,7 @@ def main(
                 fail_count += 1
         else:
             # 单个URL
-            if start(url, limit, no_download, type, path, cookie_str, filters):
+            if start(url, limit, no_download, type, path, cookie_str, filters, download_title, download_cover):
                 success_count += 1
             else:
                 fail_count += 1
@@ -251,7 +263,7 @@ def main(
     logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
 
-def start(url, limit, no_download, type, path, cookie, filters):
+def start(url, limit, no_download, type, path, cookie, filters, download_title=False, download_cover=False):
     """
     启动单个采集任务
 
@@ -266,7 +278,15 @@ def start(url, limit, no_download, type, path, cookie, filters):
         logger.info(f"  数量限制: {'不限' if limit == 0 else f'{limit}条'}")
         if filters:
             logger.info(f"  筛选条件: {filters}")
+        if download_title:
+            logger.info(f"  下载标题: ✓ 是")
+        if download_cover:
+            logger.info(f"  下载封面: ✓ 是")
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+        # 如果命令行没有指定，从配置文件读取
+        enable_download_title = download_title or settings.get("enableDownloadTitle", False)
+        enable_download_cover = download_cover or settings.get("enableDownloadCover", False)
 
         # 创建爬虫实例
         douyin = Douyin(
@@ -277,6 +297,8 @@ def start(url, limit, no_download, type, path, cookie, filters):
             cookie=cookie,
             user_agent=settings.get("userAgent", ""),
             filters=filters,
+            enable_download_title=enable_download_title,
+            enable_download_cover=enable_download_cover,
         )
 
         # 执行采集

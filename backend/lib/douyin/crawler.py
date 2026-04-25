@@ -36,6 +36,8 @@ class Douyin:
         user_agent: str = "",
         filters: dict = None,
         on_new_items: callable = None,
+        enable_download_title: bool = False,
+        enable_download_cover: bool = False,
     ):
         """
         初始化爬虫
@@ -49,12 +51,16 @@ class Douyin:
             user_agent: User-Agent字符串，留空使用内置默认值
             filters: 过滤条件
             on_new_items: 新数据回调函数，接收(new_items, type)参数
+            enable_download_title: 是否下载标题文本文件
+            enable_download_cover: 是否下载封面图
         """
         self.target = target
         self.limit = limit
         self.type = type
         self.filters = filters or {}
         self.on_new_items = on_new_items  # 新增回调函数
+        self.enable_download_title = enable_download_title  # 新增：是否下载标题
+        self.enable_download_cover = enable_download_cover  # 新增：是否下载封面
 
         # 初始化下载路径
         self.down_path = os.path.join(".", down_path)
@@ -287,24 +293,42 @@ class Douyin:
                 if self.type == "mix":
                     filename = f"第{line['no']}集_{filename}"
 
-                # 图文作品
+                # 确定当前作品的下载目录
+                item_down_path = self.down_path
+                
+                # 图文作品使用子目录
                 if isinstance(line["download_addr"], list):
                     if self.type == "aweme":
-                        down_path = self.down_path.replace(line["id"], filename)
+                        item_down_path = self.down_path.replace(line["id"], filename)
                     else:
-                        down_path = os.path.join(self.down_path, filename)
+                        item_down_path = os.path.join(self.down_path, filename)
 
                     for index, addr in enumerate(line["download_addr"]):
                         lines.append(
-                            f'{addr}\n dir={down_path}\n out={line["id"]}_{index + 1}.jpeg\n'
+                            f'{addr}\n dir={item_down_path}\n out={line["id"]}_{index + 1}.jpeg\n'
                         )
-                # 视频作品
+                # 视频作品使用根目录
                 elif isinstance(line["download_addr"], str):
                     lines.append(
                         f'{line["download_addr"]}\n dir={self.down_path}\n out={filename}.mp4\n'
                     )
                 else:
                     logger.error("下载地址错误")
+                
+                # 添加封面图下载（如果启用）
+                if self.enable_download_cover and line.get("cover"):
+                    lines.append(
+                        f'{line["cover"]}\n dir={item_down_path}\n out={line["id"]}_cover.jpg\n'
+                    )
+                
+                # 保存标题文本文件（如果启用）
+                if self.enable_download_title:
+                    try:
+                        title_file_path = os.path.join(item_down_path, f'{line["id"]}_title.txt')
+                        with open(title_file_path, "w", encoding="utf-8") as f:
+                            f.write(desc)
+                    except Exception as e:
+                        logger.error(f"保存标题文件失败: {e}")
 
         if lines:
             with open(self.aria2_conf, "w", encoding="utf-8") as f:

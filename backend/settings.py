@@ -46,6 +46,8 @@ class SettingsManager:
             "必须是1-65535的整数",
         ),
         "aria2Secret": (lambda x: isinstance(x, str), "必须是字符串"),
+        "enableDownloadTitle": (lambda x: isinstance(x, bool), "必须是布尔值"),
+        "enableDownloadCover": (lambda x: isinstance(x, bool), "必须是布尔值"),
     }
 
     def __init__(self, auto_load: bool = True) -> None:

@@ -236,6 +236,8 @@ def _execute_task(
             user_agent=settings.get("userAgent", ""),
             filters=filters or {},
             on_new_items=handle_new_items,
+            enable_download_title=settings.get("enableDownloadTitle", False),
+            enable_download_cover=settings.get("enableDownloadCover", False),
         )
 
         # 执行采集

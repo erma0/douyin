@@ -92,7 +92,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     enableIncrementalFetch: APP_DEFAULTS.ENABLE_INCREMENTAL_FETCH,
     aria2Host: APP_DEFAULTS.ARIA2_HOST,
     aria2Port: APP_DEFAULTS.ARIA2_PORT,
-    aria2Secret: APP_DEFAULTS.ARIA2_SECRET
+    aria2Secret: APP_DEFAULTS.ARIA2_SECRET,
+    enableDownloadTitle: APP_DEFAULTS.ENABLE_DOWNLOAD_TITLE,
+    enableDownloadCover: APP_DEFAULTS.ENABLE_DOWNLOAD_COVER,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -442,6 +444,48 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   type="checkbox"
                   checked={settings.enableIncrementalFetch}
                   onChange={(e) => setSettings({ ...settings, enableIncrementalFetch: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </div>
+            </label>
+          </div>
+
+          {/* 下载标题开关 */}
+          <div>
+            <label className="flex items-center justify-between cursor-pointer group">
+              <div>
+                <div className="text-sm font-semibold text-gray-700 mb-1">下载标题文本</div>
+                <p className="text-xs text-gray-400">
+                  一键下载时，同时保存每个作品的标题为文本文件
+                </p>
+              </div>
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={settings.enableDownloadTitle}
+                  onChange={(e) => setSettings({ ...settings, enableDownloadTitle: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </div>
+            </label>
+          </div>
+
+          {/* 下载封面开关 */}
+          <div>
+            <label className="flex items-center justify-between cursor-pointer group">
+              <div>
+                <div className="text-sm font-semibold text-gray-700 mb-1">下载封面图</div>
+                <p className="text-xs text-gray-400">
+                  一键下载时，同时下载每个作品的封面图片
+                </p>
+              </div>
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={settings.enableDownloadCover}
+                  onChange={(e) => setSettings({ ...settings, enableDownloadCover: e.target.checked })}
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>

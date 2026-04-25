@@ -65,6 +65,8 @@ export interface AppSettings {
   aria2Host: string;
   aria2Port: number;
   aria2Secret: string;
+  enableDownloadTitle: boolean;
+  enableDownloadCover: boolean;
 }
 
 export interface GlobalDownloadStat {

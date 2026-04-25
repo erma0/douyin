@@ -50,6 +50,8 @@ DEFAULT_SETTINGS = {
     "aria2Host": ARIA2_DEFAULTS["HOST"],
     "aria2Port": ARIA2_DEFAULTS["PORT"],
     "aria2Secret": ARIA2_DEFAULTS["SECRET"],
+    "enableDownloadTitle": False,  # 是否下载标题文本文件
+    "enableDownloadCover": False,  # 是否下载封面图
 }
 
 # 窗口最小尺寸
