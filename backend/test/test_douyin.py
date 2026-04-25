@@ -54,7 +54,7 @@ def test_user_post(settings_cookie):
 
 @pytest.mark.network
 @pytest.mark.cookie
-def test_user_like(settings_cookie):
+def test_user_favorite(settings_cookie):
     """测试用户喜欢采集"""
     d = Douyin(target="https://v.douyin.com/e2BkGS7/",
                type="favorite",
@@ -101,7 +101,7 @@ def test_music(settings_cookie):
 
 @pytest.mark.network
 @pytest.mark.cookie
-def test_challenge(settings_cookie):
+def test_hashtag(settings_cookie):
     """测试话题挑战采集"""
     d = Douyin(
         target="https://v.douyin.com/eOsR0vbqrp0/",
