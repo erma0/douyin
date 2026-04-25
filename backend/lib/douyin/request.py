@@ -15,7 +15,7 @@ import exejs
 import requests
 from loguru import logger
 
-from ..cookies import CookieManager
+from ..cookies import CookieManager, VerifyCheckError
 from .types import (
     APIEndpoint,
     CookieField,
@@ -222,17 +222,35 @@ class Request(object):
             )
 
         # 检查响应状态
-        if (
-            response.status_code != 200
-            or response.text == ""
-            or response.json().get("status_code", 0) != 0
-        ):
+        if response.status_code != 200 or response.text == "":
             logger.error(
                 f"JSON请求失败：url: {url},  params: {params}, code: {response.status_code}, body: {response.text}"
             )
             return {}
 
-        return response.json()
+        try:
+            json_data = response.json()
+        except Exception as e:
+            logger.error(
+                f"JSON解析失败：url: {url},  params: {params}, body: {response.text}, error: {e}"
+            )
+            return {}
+
+        # 检查是否触发验证码
+        if CookieManager.check_verify_check(json_data):
+            logger.error(
+                f"检测到验证码：url: {url},  params: {params}, body: {response.text}"
+            )
+            raise VerifyCheckError("触发验证码，请完成验证后再继续")
+
+        # 检查状态码
+        if json_data.get("status_code", 0) != 0:
+            logger.error(
+                f"JSON请求失败：url: {url},  params: {params}, code: {response.status_code}, body: {response.text}"
+            )
+            return {}
+
+        return json_data
 
 
 if __name__ == "__main__":

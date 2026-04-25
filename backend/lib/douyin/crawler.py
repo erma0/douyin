@@ -15,6 +15,7 @@ import ujson as json
 from loguru import logger
 
 from ...utils.text import quit, save_json
+from ..cookies import VerifyCheckError
 from .client import DouyinClient
 from .parser import DataParser
 from .request import Request
@@ -140,12 +141,19 @@ class Douyin:
 
     def get_aweme_detail(self):
         """获取单个作品详情"""
-        # 优先从render_data获取
-        if self.render_data.get("aweme"):
-            aweme_detail = self.render_data["aweme"]["detail"]
-        else:
-            # 通过API获取
-            aweme_detail = self.client.fetch_aweme_detail(self.id)
+        try:
+            # 优先从render_data获取
+            if self.render_data.get("aweme"):
+                aweme_detail = self.render_data["aweme"]["detail"]
+            else:
+                # 通过API获取
+                aweme_detail = self.client.fetch_aweme_detail(self.id)
+        except VerifyCheckError as e:
+            logger.error(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            logger.error(f"✗ 检测到验证码: {e}")
+            logger.error(f"  请在浏览器中打开抖音完成验证后再继续")
+            logger.error(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            raise
 
         # 解析数据
         with self.lock:
@@ -184,6 +192,15 @@ class Douyin:
                 if items_list:
                     retry = 0
 
+            except VerifyCheckError as e:
+                # 验证码异常，直接停止任务，不重试
+                logger.error(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                logger.error(f"✗ 检测到验证码: {e}")
+                logger.error(f"  请在浏览器中打开抖音完成验证后再继续")
+                logger.error(f"  当前已采集: {len(self.results)} 条数据")
+                logger.error(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                self.has_more = False
+                raise
             except Exception as e:
                 retry += 1
                 logger.error(f"采集请求出错: {e}... 进行第{retry}次重试")
