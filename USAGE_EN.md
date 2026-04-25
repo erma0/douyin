@@ -25,12 +25,12 @@ Cookie is the necessary credential for obtaining data.
 4. Cookie will be automatically filled after successful login
 5. Click "Save Settings"
 
-### Method 2: Manual
+### Method 2: Manual (Recommended)
 
-1. Visit https://www.douyin.com and log in
+1. Visit `https://www.douyin.com/search/deepseek` and log in
 2. Press `F12` to open developer tools
 3. Switch to `Network` tab, refresh the page
-4. Type `aweme` in filter, click any request
+4. Type `/aweme/v1/web/general/search/single` in filter, click any request
 5. Find `Cookie:` field in `Request Headers`, copy the full content
 6. Paste and save in application settings
 
@@ -38,7 +38,7 @@ Cookie is the necessary credential for obtaining data.
 
 ![Schematic](./docs/images/image.png)
 
-Valid Cookie should contain: `sessionid`, `ttwid`, `__ac_nonce`
+Valid Cookie should contain: `sessionid`, `ttwid`
 
 ---
 

@@ -15,7 +15,7 @@
 
 Cookie 是获取数据的必要凭证。
 
-### 方式一：登录获取（推荐）
+### 方式一：登录获取（不一定可用）
 
 > 💡 仅 GUI 模式支持
 
@@ -25,12 +25,12 @@ Cookie 是获取数据的必要凭证。
 4. 登录成功后 Cookie 会自动填入
 5. 点击「保存配置」
 
-### 方式二：手动获取
+### 方式二：手动获取（推荐）
 
-1. 访问 https://www.douyin.com 并登录
+1. 访问 `https://www.douyin.com/search/deepseek` 并登录
 2. 按 `F12` 打开开发者工具
 3. 切换到 `Network` 标签，刷新页面
-4. 过滤器输入 `aweme`，点击任意请求
+4. 过滤器输入 `/aweme/v1/web/general/search/single`，点击任意请求
 5. 在 `Request Headers` 中找到 `Cookie:` 字段，复制完整内容
 6. 在应用设置中粘贴并保存
 
@@ -38,7 +38,7 @@ Cookie 是获取数据的必要凭证。
 
 ![示意图](./docs/images/image.png)
 
-有效 Cookie 应包含：`sessionid`、`ttwid`、`__ac_nonce`
+有效 Cookie 应包含：`sessionid`、`ttwid`
 
 ---
 

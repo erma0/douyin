@@ -15,7 +15,7 @@
 
 Cookie là thông tin xác thực cần thiết để lấy dữ liệu.
 
-### Cách 1: Đăng nhập để lấy (Khuyến nghị)
+### Cách 1: Đăng nhập để lấy (Có thể không hoạt động)
 
 > 💡 Chỉ chế độ GUI
 
@@ -25,12 +25,12 @@ Cookie là thông tin xác thực cần thiết để lấy dữ liệu.
 4. Cookie sẽ được tự động điền sau khi đăng nhập thành công
 5. Nhấp "Lưu cài đặt"
 
-### Cách 2: Thủ công
+### Cách 2: Thủ công (Khuyến nghị)
 
-1. Truy cập https://www.douyin.com và đăng nhập
+1. Truy cập `https://www.douyin.com/search/deepseek` và đăng nhập
 2. Nhấn `F12` để mở công cụ nhà phát triển
 3. Chuyển sang tab `Network`, làm mới trang
-4. Nhập `aweme` vào bộ lọc, nhấp vào bất kỳ yêu cầu nào
+4. Nhập `/aweme/v1/web/general/search/single` vào bộ lọc, nhấp vào bất kỳ yêu cầu nào
 5. Tìm trường `Cookie:` trong `Request Headers`, sao chép toàn bộ nội dung
 6. Dán và lưu trong cài đặt ứng dụng
 
@@ -38,7 +38,7 @@ Cookie là thông tin xác thực cần thiết để lấy dữ liệu.
 
 ![Sơ đồ](./docs/images/image.png)
 
-Cookie hợp lệ phải chứa: `sessionid`, `ttwid`, `__ac_nonce`
+Cookie hợp lệ phải chứa: `sessionid`, `ttwid`
 
 ---
 
