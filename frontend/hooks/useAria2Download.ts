@@ -51,6 +51,7 @@ export const useAria2Download = () => {
   const onCompleteCallbackRef = useRef<(() => void) | null>(null);
   const statsRef = useRef<{ completed: number; failed: number }>({ completed: 0, failed: 0 });
   const prevConnectedRef = useRef(false);
+  const batchAbortRef = useRef<AbortController | null>(null);
 
   /**
    * 初始化Aria2连接
@@ -89,16 +90,18 @@ export const useAria2Download = () => {
 
     // 清理函数：确保组件卸载时清理所有资源
     return () => {
-      // 取消订阅连接状态变化
       unsubscribe();
 
-      // 清理轮询定时器
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
         pollIntervalRef.current = null;
       }
 
-      // 清理回调引用
+      if (batchAbortRef.current) {
+        batchAbortRef.current.abort();
+        batchAbortRef.current = null;
+      }
+
       onCompleteCallbackRef.current = null;
     };
   }, []);
@@ -244,6 +247,11 @@ export const useAria2Download = () => {
    * 需求 6.3: 确保及时清理内存中的任务信息
    */
   const cancelAll = useCallback(async () => {
+    if (batchAbortRef.current) {
+      batchAbortRef.current.abort();
+      batchAbortRef.current = null;
+    }
+
     const downloads = downloadsRef.current;
     if (downloads.size === 0) return;
 
@@ -464,10 +472,15 @@ export const useAria2Download = () => {
       logger.info(`开始批量下载 ${tasks.length} 个任务`);
       toast.info(`开始批量下载 ${tasks.length} 个任务`);
 
+      const abortController = new AbortController();
+      batchAbortRef.current = abortController;
+
       let cookie = '';
+      let downloadInterval = 0;
       try {
         const settings = await bridge.getSettings();
         cookie = settings.cookie || '';
+        downloadInterval = settings.downloadInterval || 0;
       } catch (error) {
         logger.warn('获取Cookie失败，将不使用Cookie进行下载');
       }
@@ -479,6 +492,11 @@ export const useAria2Download = () => {
 
       // 处理部分任务失败的情况：逐个调用addDownload提交任务
       for (let i = 0; i < tasks.length; i++) {
+        if (abortController.signal.aborted) {
+          logger.info('批量下载已取消，停止添加新任务');
+          break;
+        }
+
         const task = tasks[i];
         const workId = `batch_${i + 1}_${Date.now()}`;
 
@@ -496,7 +514,19 @@ export const useAria2Download = () => {
           const errorMsg = error instanceof Error ? error.message : String(error);
           logger.error(`任务添加异常: ${task.out} - ${errorMsg}`);
         }
+
+        if (downloadInterval > 0 && i < tasks.length - 1 && !abortController.signal.aborted) {
+          await new Promise<void>((resolve) => {
+            const timer = setTimeout(resolve, downloadInterval * 1000);
+            abortController.signal.addEventListener('abort', () => {
+              clearTimeout(timer);
+              resolve();
+            }, { once: true });
+          });
+        }
       }
+
+      batchAbortRef.current = null;
 
       // 显示结果提示
       if (successCount > 0) {

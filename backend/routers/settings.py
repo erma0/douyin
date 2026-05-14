@@ -36,6 +36,9 @@ class SettingsUpdate(BaseModel):
     aria2Host: Optional[str] = None
     aria2Port: Optional[int] = Field(None, ge=1, le=65535)
     aria2Secret: Optional[str] = None
+    enableDownloadTitle: Optional[bool] = None
+    enableDownloadCover: Optional[bool] = None
+    downloadInterval: Optional[float] = Field(None, ge=0, le=60)
 
 
 class SettingsResponse(BaseModel):
@@ -52,6 +55,9 @@ class SettingsResponse(BaseModel):
     aria2Host: str = ARIA2_DEFAULTS["HOST"]
     aria2Port: int = ARIA2_DEFAULTS["PORT"]
     aria2Secret: str = ""
+    enableDownloadTitle: bool = False
+    enableDownloadCover: bool = False
+    downloadInterval: float = DOWNLOAD_DEFAULTS["DOWNLOAD_INTERVAL"]
 
 
 class FirstRunResponse(BaseModel):

@@ -95,6 +95,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     aria2Secret: APP_DEFAULTS.ARIA2_SECRET,
     enableDownloadTitle: APP_DEFAULTS.ENABLE_DOWNLOAD_TITLE,
     enableDownloadCover: APP_DEFAULTS.ENABLE_DOWNLOAD_COVER,
+    downloadInterval: APP_DEFAULTS.DOWNLOAD_INTERVAL,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -140,6 +141,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     // 验证同时下载任务数
     if (settings.maxConcurrency < 1 || settings.maxConcurrency > 10) {
       newErrors.maxConcurrency = "同时下载任务数必须在1-10之间";
+    }
+
+    if (settings.downloadInterval < 0 || settings.downloadInterval > 60) {
+      newErrors.downloadInterval = "下载间隔必须在0-60之间";
     }
 
     setErrors(newErrors);
@@ -390,7 +395,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 max={10}
                 onChange={(val) => {
                   setSettings({ ...settings, maxRetries: val });
-                  // 清除错误
                   if (errors.maxRetries) {
                     setErrors(prev => {
                       const newErrors = { ...prev };
@@ -414,7 +418,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 max={10}
                 onChange={(val) => {
                   setSettings({ ...settings, maxConcurrency: val });
-                  // 清除错误
                   if (errors.maxConcurrency) {
                     setErrors(prev => {
                       const newErrors = { ...prev };
@@ -428,6 +431,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <p className="mt-1.5 text-xs text-red-500">{errors.maxConcurrency}</p>
               )}
             </div>
+          </div>
+
+          {/* Download Interval */}
+          <div>
+            <label className="flex items-center justify-between cursor-pointer group">
+              <div>
+                <div className="text-sm font-semibold text-gray-700 mb-1">下载间隔</div>
+                <p className="text-xs text-gray-400">
+                  批量下载时每个任务之间的等待时间（秒），0表示不等待
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  max={60}
+                  step={0.5}
+                  value={settings.downloadInterval}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val >= 0 && val <= 60) {
+                      setSettings({ ...settings, downloadInterval: val });
+                    }
+                  }}
+                  className="w-20 px-3 py-2 border border-gray-200 rounded-xl bg-gray-50 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <span className="text-xs text-gray-400">秒</span>
+              </div>
+            </label>
           </div>
 
           {/* 增量采集开关 */}

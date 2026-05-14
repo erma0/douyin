@@ -48,6 +48,10 @@ class SettingsManager:
         "aria2Secret": (lambda x: isinstance(x, str), "必须是字符串"),
         "enableDownloadTitle": (lambda x: isinstance(x, bool), "必须是布尔值"),
         "enableDownloadCover": (lambda x: isinstance(x, bool), "必须是布尔值"),
+        "downloadInterval": (
+            lambda x: isinstance(x, (int, float)) and 0 <= x <= 60,
+            "必须是0-60的数字（秒）",
+        ),
     }
 
     def __init__(self, auto_load: bool = True) -> None:

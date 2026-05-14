@@ -67,6 +67,7 @@ export interface AppSettings {
   aria2Secret: string;
   enableDownloadTitle: boolean;
   enableDownloadCover: boolean;
+  downloadInterval: number;
 }
 
 export interface GlobalDownloadStat {

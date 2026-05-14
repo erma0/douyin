@@ -35,6 +35,7 @@ ARIA2_DEFAULTS = {
 DOWNLOAD_DEFAULTS = {
     "MAX_RETRIES": 3,
     "MAX_CONCURRENCY": 5,
+    "DOWNLOAD_INTERVAL": 0,
 }
 
 # 默认设置（用于首次运行创建配置文件）
@@ -50,8 +51,9 @@ DEFAULT_SETTINGS = {
     "aria2Host": ARIA2_DEFAULTS["HOST"],
     "aria2Port": ARIA2_DEFAULTS["PORT"],
     "aria2Secret": ARIA2_DEFAULTS["SECRET"],
-    "enableDownloadTitle": False,  # 是否下载标题文本文件
-    "enableDownloadCover": False,  # 是否下载封面图
+    "enableDownloadTitle": False,
+    "enableDownloadCover": False,
+    "downloadInterval": DOWNLOAD_DEFAULTS["DOWNLOAD_INTERVAL"],
 }
 
 # 窗口最小尺寸

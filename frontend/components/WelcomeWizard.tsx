@@ -35,7 +35,10 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
     enableIncrementalFetch: APP_DEFAULTS.ENABLE_INCREMENTAL_FETCH,
     aria2Host: APP_DEFAULTS.ARIA2_HOST,
     aria2Port: APP_DEFAULTS.ARIA2_PORT,
-    aria2Secret: APP_DEFAULTS.ARIA2_SECRET
+    aria2Secret: APP_DEFAULTS.ARIA2_SECRET,
+    enableDownloadTitle: APP_DEFAULTS.ENABLE_DOWNLOAD_TITLE,
+    enableDownloadCover: APP_DEFAULTS.ENABLE_DOWNLOAD_COVER,
+    downloadInterval: APP_DEFAULTS.DOWNLOAD_INTERVAL,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
