@@ -5,6 +5,7 @@
 管理任务状态、Aria2 连接等运行时资源。
 """
 
+import threading
 from typing import Any, Dict, List, Optional
 
 from loguru import logger
@@ -33,6 +34,7 @@ class AppState:
         self.task_status: Dict[str, Dict[str, Any]] = {}
         self.task_results: Dict[str, List[Dict[str, Any]]] = {}
         self.aria2_config_paths: Dict[str, str] = {}
+        self.task_cancel_events: Dict[str, threading.Event] = {}
 
         # Aria2 管理器
         self.aria2_manager: Optional[Aria2Manager] = self._init_aria2()
@@ -60,6 +62,25 @@ class AppState:
         except Exception as e:
             logger.error(f"初始化 Aria2 管理器失败: {e}")
             return None
+
+    def register_cancel_event(self, task_id: str) -> threading.Event:
+        event = threading.Event()
+        self.task_cancel_events[task_id] = event
+        return event
+
+    def request_cancel(self, task_id: str) -> bool:
+        event = self.task_cancel_events.get(task_id)
+        if event is None:
+            return False
+        event.set()
+        return True
+
+    def is_cancelled(self, task_id: str) -> bool:
+        event = self.task_cancel_events.get(task_id)
+        return event is not None and event.is_set()
+
+    def cleanup_cancel_event(self, task_id: str) -> None:
+        self.task_cancel_events.pop(task_id, None)
 
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""

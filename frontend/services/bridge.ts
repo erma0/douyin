@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 前后端通信桥接服务
  * 统一使用 HTTP API 与后端通信
  */
@@ -41,10 +41,11 @@ export interface Bridge {
   selectFolder: () => Promise<string>;
   subscribeToLogs: (callback: (log: any) => void) => Promise<() => void>;
   getTaskStatus: (taskId?: string) => Promise<any[]>;
+  getTaskResults: (taskId: string) => Promise<any[]>;
+  cancelTask: (taskId: string) => Promise<{ task_id: string; status: string }>;
   getAria2Config: () => Promise<{ host: string; port: number; secret: string }>;
   isFirstRun: () => Promise<boolean>;
   startAria2: () => Promise<void>;
-  getTaskResults: (taskId: string) => Promise<any[]>;
   getClipboardText: () => Promise<string>;
   readConfigFile: (filePath: string) => Promise<string>;
   getAria2ConfigPath: (taskId?: string) => Promise<string>;
@@ -129,6 +130,27 @@ export const bridge: Bridge = {
     }
   },
 
+  getTaskResults: async (taskId) => {
+    try {
+      return await api.task.results(taskId);
+    } catch (error) {
+      handleError(error, { taskId }, { customMessage: 'get task results failed' });
+      throw error;
+    }
+  },
+
+  cancelTask: async (taskId) => {
+    try {
+      logger.api.request('cancel task', { taskId });
+      const result = await api.task.cancel(taskId);
+      logger.api.response('task cancelled', { taskId });
+      return result;
+    } catch (error) {
+      handleError(error, { taskId }, { customMessage: 'cancel task failed' });
+      throw error;
+    }
+  },
+
   getAria2Config: async () => {
     try {
       return await api.aria2.config();
@@ -149,15 +171,6 @@ export const bridge: Bridge = {
       await api.aria2.start();
     } catch (error) {
       handleError(error, {}, { customMessage: 'start aria2 failed' });
-      throw error;
-    }
-  },
-
-  getTaskResults: async (taskId) => {
-    try {
-      return await api.task.results(taskId);
-    } catch (error) {
-      handleError(error, { taskId }, { customMessage: 'get task results failed' });
       throw error;
     }
   },

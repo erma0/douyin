@@ -9,6 +9,7 @@
 """
 
 import os
+import threading
 from threading import Lock
 
 import ujson as json
@@ -38,6 +39,7 @@ class Douyin:
         on_new_items: callable = None,
         enable_download_title: bool = False,
         enable_download_cover: bool = False,
+        cancel_event: threading.Event = None,
     ):
         """
         初始化爬虫
@@ -61,6 +63,7 @@ class Douyin:
         self.on_new_items = on_new_items  # 新增回调函数
         self.enable_download_title = enable_download_title  # 新增：是否下载标题
         self.enable_download_cover = enable_download_cover  # 新增：是否下载封面
+        self.cancel_event = cancel_event  # 取消信号
 
         # 初始化下载路径
         self.down_path = os.path.join(".", down_path)
@@ -87,10 +90,12 @@ class Douyin:
 
     def run(self):
         """运行爬虫"""
-        # 获取目标信息
         self._get_target_info()
 
-        # 根据类型执行不同的采集逻辑
+        if self.cancel_event and self.cancel_event.is_set():
+            logger.info("⏹ 采集任务已取消")
+            return
+
         if self.type in ["following", "follower"]:
             self.get_awemes_list()
         elif self.type in [
@@ -186,6 +191,14 @@ class Douyin:
         max_retry = 10
 
         while self.has_more:
+            if self.cancel_event and self.cancel_event.is_set():
+                logger.info(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                logger.info(f"⏹ 采集任务已取消")
+                logger.info(f"  当前已采集: {len(self.results)} 条数据")
+                logger.info(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                self.has_more = False
+                break
+
             try:
                 # 调用API获取数据
                 items_list, max_cursor, logid, self.has_more = (

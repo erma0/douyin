@@ -49,7 +49,7 @@ export interface TaskStatus {
   id: string;
   type: string;
   target: string;
-  status: 'running' | 'completed' | 'error';
+  status: 'running' | 'completed' | 'error' | 'cancelled' | 'cancelling';
   progress: number;
   result_count: number;
   error?: string;
@@ -200,6 +200,10 @@ export const api = {
     /** 获取任务结果 */
     results: (taskId: string) => 
       get<DouyinWork[]>(`/api/task/results/${encodeURIComponent(taskId)}`),
+    
+    /** 取消采集任务 */
+    cancel: (taskId: string) =>
+      post<TaskResponse>('/api/task/cancel', { task_id: taskId }),
   },
   
   // ========================================================================
