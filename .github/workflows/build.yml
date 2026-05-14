@@ -51,22 +51,12 @@ jobs:
       # ── Node 环境 ──
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - uses: pnpm/action-setup@v4
         with:
           version: latest
           run_install: false
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: pnpm-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-          restore-keys: pnpm-
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
