@@ -18,7 +18,7 @@ FastAPI Server - 后端 HTTP API 服务
 
 import os
 from contextlib import asynccontextmanager
-from typing import Any, Dict
+from typing import Any
 
 import click
 import uvicorn
@@ -29,7 +29,7 @@ from fastapi.staticfiles import StaticFiles
 from loguru import logger
 from pydantic import BaseModel
 
-from .constants import RESOURCE_ROOT, SERVER_DEFAULTS
+from .constants import APP_VERSION, RESOURCE_ROOT, SERVER_DEFAULTS
 from .routers import (
     aria2_router,
     file_router,
@@ -39,6 +39,8 @@ from .routers import (
 )
 from .sse import sse
 from .state import state
+
+_VERSION = APP_VERSION
 
 # ============================================================================
 # 响应模型
@@ -93,14 +95,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Douyin Collector API",
     description="抖音采集工具后端 HTTP API",
-    version="2.0.0",
+    version=_VERSION,
     lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -118,17 +120,17 @@ app.include_router(system_router)
 
 
 @app.get("/api", response_model=APIInfoResponse)
-def read_root() -> Dict[str, str]:
+def read_root() -> dict[str, str]:
     """根路径，返回 API 信息"""
     return {
         "name": "Douyin Collector API",
-        "version": "2.0.0",
+        "version": _VERSION,
         "status": "running",
     }
 
 
 @app.get("/api/health", response_model=HealthResponse)
-def health_check() -> Dict[str, Any]:
+def health_check() -> dict[str, Any]:
     """健康检查接口"""
     return state.health_check()
 

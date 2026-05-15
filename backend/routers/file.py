@@ -135,7 +135,7 @@ def check_file_exists(request: CheckFileExistsRequest) -> Dict[str, bool]:
         download_dir = os.path.abspath(settings.get("downloadPath", DOWNLOAD_DIR))
         abs_path = os.path.abspath(file_path)
 
-        if not abs_path.startswith(download_dir):
+        if not abs_path.startswith(download_dir + os.sep) and abs_path != download_dir:
             return {"exists": False}
 
         return {"exists": os.path.exists(abs_path) and os.path.isfile(abs_path)}
@@ -162,7 +162,7 @@ def read_config_file(request: ReadConfigFileRequest) -> Dict[str, str]:
         download_dir = os.path.abspath(settings.get("downloadPath", DOWNLOAD_DIR))
         abs_path = os.path.abspath(file_path)
 
-        if not abs_path.startswith(download_dir) or not abs_path.endswith(".txt"):
+        if (not abs_path.startswith(download_dir + os.sep) and abs_path != download_dir) or not abs_path.endswith(".txt"):
             logger.error(f"文件路径不安全: {abs_path}")
             raise HTTPException(status_code=400, detail="文件路径不安全")
 
@@ -255,7 +255,7 @@ def serve_media(file_path: str):
         abs_path = os.path.abspath(os.path.join(download_dir, file_path))
 
         # 安全检查：确保路径在下载目录内
-        if not abs_path.startswith(download_dir):
+        if not abs_path.startswith(download_dir + os.sep) and abs_path != download_dir:
             logger.warning(f"非法路径访问: {file_path}")
             raise HTTPException(status_code=403, detail="禁止访问")
 

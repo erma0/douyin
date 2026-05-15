@@ -43,13 +43,11 @@ export interface ParsedTask {
  * ```
  */
 export function parseAria2Config(configContent: string): ParsedTask[] {
-  // 处理空内容
   if (!configContent || configContent.trim().length === 0) {
     logger.warn('配置文件内容为空');
     return [];
   }
 
-  // 按行分割并过滤空行
   const lines = configContent
     .split('\n')
     .map(line => line.trim())
@@ -57,58 +55,50 @@ export function parseAria2Config(configContent: string): ParsedTask[] {
 
   const tasks: ParsedTask[] = [];
   let skippedCount = 0;
+  let currentUrl: string | null = null;
+  let currentDir: string | null = null;
+  let currentOut: string | null = null;
 
-  // 按3行一组解析
-  for (let i = 0; i < lines.length; i += 3) {
-    // 检查是否有完整的3行
-    if (i + 2 >= lines.length) {
-      logger.warn(`配置文件格式不完整，跳过最后 ${lines.length - i} 行`);
-      skippedCount += lines.length - i;
-      break;
-    }
-
-    const url = lines[i];
-    const dirLine = lines[i + 1];
-    const outLine = lines[i + 2];
-
-    // 解析dir和out（支持制表符或空格开头）
-    const dirMatch = dirLine.match(/^\s*dir=(.+)$/);
-    const outMatch = outLine.match(/^\s*out=(.+)$/);
-
-    // 验证格式
-    if (!url || !dirMatch || !outMatch) {
-      logger.warn(`跳过格式错误的任务组 ${Math.floor(i / 3) + 1}`, {
-        url: url || '(空)',
-        dirLine: dirLine || '(空)',
-        outLine: outLine || '(空)'
-      });
+  const flushTask = () => {
+    if (currentUrl && currentDir && currentOut) {
+      if (currentUrl.startsWith('http://') || currentUrl.startsWith('https://')) {
+        tasks.push({ url: currentUrl, dir: currentDir, out: currentOut });
+      } else {
+        logger.warn(`跳过无效URL的任务: ${currentUrl}`);
+        skippedCount++;
+      }
+    } else if (currentUrl || currentDir || currentOut) {
       skippedCount++;
-      continue;
+    }
+    currentUrl = null;
+    currentDir = null;
+    currentOut = null;
+  };
+
+  for (const line of lines) {
+    const dirMatch = line.match(/^\s*dir=(.+)$/);
+    const outMatch = line.match(/^\s*out=(.+)$/);
+
+    if (dirMatch) {
+      currentDir = dirMatch[1].trim();
+    } else if (outMatch) {
+      currentOut = outMatch[1].trim();
+    } else if (line.startsWith('http://') || line.startsWith('https://')) {
+      flushTask();
+      currentUrl = line;
+    } else {
+      if (!currentUrl) {
+        currentUrl = line;
+      }
     }
 
-    // 提取值
-    const dir = dirMatch[1].trim();
-    const out = outMatch[1].trim();
-
-    // 验证URL格式（基本检查）
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      logger.warn(`跳过无效URL的任务: ${url}`);
-      skippedCount++;
-      continue;
+    if (currentUrl && currentDir && currentOut) {
+      flushTask();
     }
-
-    // 验证dir和out不为空
-    if (!dir || !out) {
-      logger.warn(`跳过dir或out为空的任务组 ${Math.floor(i / 3) + 1}`);
-      skippedCount++;
-      continue;
-    }
-
-    // 添加到任务列表
-    tasks.push({ url, dir, out });
   }
 
-  // 输出解析结果统计
+  flushTask();
+
   logger.info(`配置文件解析完成: 成功 ${tasks.length} 个任务${skippedCount > 0 ? `，跳过 ${skippedCount} 个` : ''}`);
 
   return tasks;

@@ -133,7 +133,7 @@ class LoggerService {
     const now = new Date();
     const timeString = now.toTimeString().split(' ')[0] + '.' + now.getMilliseconds().toString().padStart(3, '0');
     return {
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substring(2, 11),
       timestamp: timeString,
       level,
       message,

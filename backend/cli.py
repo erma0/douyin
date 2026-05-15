@@ -14,13 +14,13 @@ import click
 import ujson as json
 from loguru import logger
 
-# 统一使用绝对导入
-from backend.constants import SETTINGS_FILE
+from backend.constants import APP_VERSION, SETTINGS_FILE
 from backend.lib.cookies import CookieManager
 from backend.lib.douyin import Douyin
 from backend.settings import settings
 
-version = "V5.2.260514"
+version = f"V{APP_VERSION}"
+
 banner = rf"""
   ____                    _          ____                    _           
  |  _ \  ___  _   _ _   _(_)_ __    / ___|_ __ __ ___      _| | ___ _ __ 
@@ -31,7 +31,6 @@ banner = rf"""
                               {version}
                 Github: https://github.com/erma0/douyin
 """
-print(banner)
 
 
 @click.command()
@@ -142,6 +141,7 @@ def main(
     # 批量采集（从文件读取）
     python -m backend.cli -u urls.txt
     """
+    print(banner)
 
     # 构建筛选条件
     filters = {}
@@ -263,7 +263,7 @@ def main(
     logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
 
-def start(url, limit, no_download, type, path, cookie, filters, download_title=False, download_cover=False):
+def start(url, limit, no_download, crawl_type, path, cookie, filters, download_title=False, download_cover=False):
     """
     启动单个采集任务
 
@@ -274,7 +274,7 @@ def start(url, limit, no_download, type, path, cookie, filters, download_title=F
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         logger.info(f"开始采集任务")
         logger.info(f"  目标: {url or '本账号'}")
-        logger.info(f"  类型: {type}")
+        logger.info(f"  类型: {crawl_type}")
         logger.info(f"  数量限制: {'不限' if limit == 0 else f'{limit}条'}")
         if filters:
             logger.info(f"  筛选条件: {filters}")
@@ -292,7 +292,7 @@ def start(url, limit, no_download, type, path, cookie, filters, download_title=F
         douyin = Douyin(
             target=url,
             limit=limit,
-            type=type,
+            type=crawl_type,
             down_path=path,
             cookie=cookie,
             user_agent=settings.get("userAgent", ""),

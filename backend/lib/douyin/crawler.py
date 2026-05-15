@@ -10,13 +10,14 @@
 
 import os
 import threading
+from collections.abc import Callable
 from threading import Lock
 
 import ujson as json
 from loguru import logger
 
-from ...utils.text import quit, save_json
-from ..cookies import VerifyCheckError
+from ...utils.text import abort, save_json
+from ..exceptions import VerifyCheckError
 from .client import DouyinClient
 from .parser import DataParser
 from .request import Request
@@ -35,11 +36,11 @@ class Douyin:
         down_path: str = "下载",
         cookie: str = "",
         user_agent: str = "",
-        filters: dict = None,
-        on_new_items: callable = None,
+        filters: dict | None = None,
+        on_new_items: Callable | None = None,
         enable_download_title: bool = False,
         enable_download_cover: bool = False,
-        cancel_event: threading.Event = None,
+        cancel_event: threading.Event | None = None,
     ):
         """
         初始化爬虫
@@ -88,6 +89,17 @@ class Douyin:
         self.render_data = {}
         self.aria2_conf = ""
 
+    def close(self) -> None:
+        if hasattr(self, "request") and self.request:
+            self.request.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+        return False
+
     def run(self):
         """运行爬虫"""
         self._get_target_info()
@@ -96,22 +108,12 @@ class Douyin:
             logger.info("⏹ 采集任务已取消")
             return
 
-        if self.type in ["following", "follower"]:
-            self.get_awemes_list()
-        elif self.type in [
-            "post",
-            "favorite",
-            "collection",
-            "search",
-            "music",
-            "hashtag",
-            "mix",
-        ]:
+        if self.type in ["following", "follower", "post", "favorite", "collection", "search", "music", "hashtag", "mix"]:
             self.get_awemes_list()
         elif self.type == "aweme":
             self.get_aweme_detail()
         else:
-            quit(f"获取目标类型错误, type: {self.type}")
+            abort(f"获取目标类型错误, type: {self.type}")
 
     def get_target_id(self):
         """
@@ -256,11 +258,16 @@ class Douyin:
                         if new_items and self.on_new_items:
                             self.on_new_items(new_items, self.type)
                     elif self.type in ["following", "follower"]:
+                        prev_count = len(self.results)
                         self.has_more = DataParser.parse_users(
                             items_list, self.results, self.limit, self.has_more
                         )
+                        new_user_count = len(self.results) - prev_count
+                        if new_user_count > 0 and self.on_new_items:
+                            new_users = self.results[prev_count:]
+                            self.on_new_items(new_users, self.type)
                     else:
-                        quit(f"类型错误，type：{self.type}")
+                        abort(f"类型错误，type：{self.type}")
             elif self.has_more:
                 retry += 1
                 logger.error(f"采集未完成，但请求结果为空... 进行第{retry}次重试")

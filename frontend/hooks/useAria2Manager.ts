@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from '../components/Toast';
 import { aria2Service, Aria2Task } from '../services/aria2Service';
+import { logger } from '../services/logger';
 
 export const useAria2Manager = (isOpen: boolean) => {
   const [activeTasks, setActiveTasks] = useState<Aria2Task[]>([]);
@@ -25,12 +26,12 @@ export const useAria2Manager = (isOpen: boolean) => {
         setStoppedTasks(stopped);
         setGlobalStats(stats);
       } catch (error) {
-        console.error('获取任务列表失败:', error);
+        logger.error('获取任务列表失败:', error instanceof Error ? error : undefined);
       }
     };
 
     fetchTasks();
-    const interval = setInterval(fetchTasks, 1000);
+    const interval = setInterval(fetchTasks, 2000);
     return () => clearInterval(interval);
   }, [isOpen]);
 

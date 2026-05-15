@@ -89,7 +89,7 @@ class Aria2Service {
     // 如果已经连接到相同的RPC服务，并且连接状态为已连接，则通知状态后返回
     const newRpcUrl = `http://${host}:${port}/jsonrpc`;
     if (this.rpcUrl === newRpcUrl && this.secret === secret && this.connected) {
-      console.log('[aria2Service] 已连接到相同的RPC服务，通知当前状态');
+      logger.debug('[aria2Service] 已连接到相同的RPC服务，通知当前状态');
       // 热更新时确保通知当前连接状态
       this.notifyConnectionStatus(true);
       return true;
@@ -99,14 +99,13 @@ class Aria2Service {
     this.secret = secret;
     this.connectionAttempts = 0;
 
-    // 如果需要自动重连，直接启动连接检查
-    if (autoReconnect) {
+    const connected = await this.testConnection();
+
+    if (!connected && autoReconnect) {
       this.startConnectionCheck();
     }
 
-    // 立即返回true，实际连接在后台进行
-    // 参考AriaNg的做法：不阻塞初始化，让轮询自动处理连接
-    return true;
+    return connected;
   }
 
   /**
@@ -120,7 +119,7 @@ class Aria2Service {
     const showDetailedLog = this.connectionAttempts <= 5;
 
     if (showDetailedLog) {
-      console.log(`[aria2Service] 测试连接 (尝试 ${this.connectionAttempts})`);
+      logger.debug(`[aria2Service] 测试连接 (尝试 ${this.connectionAttempts})`);
     }
 
     try {
@@ -135,26 +134,26 @@ class Aria2Service {
       this.stopConnectionCheck();
 
       if (showDetailedLog || wasDisconnected) {
-        console.log(`[aria2Service] ✓ 连接成功! Aria2版本: ${version?.version || 'unknown'}`);
+        logger.debug(`[aria2Service] ✓ 连接成功! Aria2版本: ${version?.version || 'unknown'}`);
       }
 
       // 只在状态变化时通知
       if (wasDisconnected) {
-        console.log('[aria2Service] 状态从断开变为连接，准备通知...');
-        console.log(`[aria2Service] 通知 ${this.connectionCallbacks.size} 个回调`);
+        logger.debug('[aria2Service] 状态从断开变为连接，准备通知...');
+        logger.debug(`[aria2Service] 通知 ${this.connectionCallbacks.size} 个回调`);
         this.notifyConnectionStatus(true);
-        console.log('[aria2Service] 通知完成');
+        logger.debug('[aria2Service] 通知完成');
       }
 
       return true;
     } catch (error) {
       if (showDetailedLog) {
-        console.log(`[aria2Service] 连接失败:`, error);
+        logger.debug(`[aria2Service] 连接失败: ${error}`);
       }
 
       // 检查是否达到最大尝试次数
       if (this.maxConnectionAttempts > 0 && this.connectionAttempts >= this.maxConnectionAttempts) {
-        console.error(`✗ Aria2连接失败，已达到最大尝试次数 ${this.maxConnectionAttempts}`);
+        logger.error(`✗ Aria2连接失败，已达到最大尝试次数 ${this.maxConnectionAttempts}`);
         this.connected = false;
         this.stopConnectionCheck();
         this.notifyConnectionStatus(false);
@@ -185,7 +184,7 @@ class Aria2Service {
       return;
     }
 
-    console.log('[aria2Service] 开始连接检查');
+    logger.debug('[aria2Service] 开始连接检查');
 
     // 立即执行一次连接测试，不延迟
     this.testConnection();
@@ -204,7 +203,7 @@ class Aria2Service {
     if (this.connectionCheckInterval) {
       clearInterval(this.connectionCheckInterval);
       this.connectionCheckInterval = null;
-      console.log('[aria2Service] 已停止连接检查');
+      logger.debug('[aria2Service] 已停止连接检查');
     }
   }
 
@@ -227,15 +226,14 @@ class Aria2Service {
    * @param connected 新的连接状态
    */
   private notifyConnectionStatus(connected: boolean): void {
-    console.log(`[aria2Service] notifyConnectionStatus(${connected}), 回调数量: ${this.connectionCallbacks.size}`);
-    console.trace('[aria2Service] notifyConnectionStatus 调用栈');
+    logger.debug(`[aria2Service] notifyConnectionStatus(${connected}), 回调数量: ${this.connectionCallbacks.size}`);
     let index = 0;
     this.connectionCallbacks.forEach((callback) => {
-      console.log(`[aria2Service] 调用回调 #${index}`);
+      logger.debug(`[aria2Service] 调用回调 #${index}`);
       callback(connected);
       index++;
     });
-    console.log('[aria2Service] 所有回调已调用');
+    logger.debug('[aria2Service] 所有回调已调用');
   }
 
   /**
@@ -312,11 +310,13 @@ class Aria2Service {
       throw new Error('Aria2未初始化');
     }
 
+    const finalParams = this.secret ? [`token:${this.secret}`, calls] : [calls];
+
     const requestBody = {
       jsonrpc: '2.0',
       id: String(this.requestId++),
       method: 'system.multicall',
-      params: [calls],
+      params: finalParams,
     };
 
     try {
@@ -377,7 +377,6 @@ class Aria2Service {
   async addDownload(url: string, options: Record<string, any> = {}): Promise<string> {
     if (!this.connected) {
       const error = 'Aria2未连接，请确保Aria2服务正在运行';
-      console.error(`[aria2Service] ✗ ${error}`);
       logger.error(`✗ ${error}`);
       throw new Error(error);
     }
@@ -446,7 +445,7 @@ class Aria2Service {
         const gid = await this.addDownload(urls[i], options[i]);
         gids.push(gid);
       } catch (error) {
-        console.error(`✗ 添加第${i + 1}个任务失败:`, error);
+        logger.error(`✗ 添加第${i + 1}个任务失败: ${error}`);
       }
     }
 
@@ -476,24 +475,23 @@ class Aria2Service {
     }
 
     try {
-      console.log(`[aria2Service] 开始读取配置文件: ${configFilePath}`);
+      logger.debug(`[aria2Service] 开始读取配置文件: ${configFilePath}`);
 
-      // 通过bridge调用后端API读取配置文件
       const configContent = await bridge.readConfigFile(configFilePath);
-      console.log(`[aria2Service] 配置文件读取成功，内容长度: ${configContent.length}`);
+      logger.debug(`[aria2Service] 配置文件读取成功，内容长度: ${configContent.length}`);
 
       const lines = configContent.split('\n').filter(line => line.trim());
-      console.log(`[aria2Service] 解析得到 ${lines.length} 行有效内容`);
+      logger.debug(`[aria2Service] 解析得到 ${lines.length} 行有效内容`);
 
       let successCount = 0;
       let failCount = 0;
       const tasks: Array<{ workId: string, gid: string, filename: string, url: string }> = [];
       const totalTasks = Math.floor(lines.length / 3);
 
-      console.log(`[aria2Service] 开始批量添加 ${totalTasks} 个下载任务`);
+      logger.debug(`[aria2Service] 开始批量添加 ${totalTasks} 个下载任务`);
 
       if (totalTasks === 0) {
-        console.warn(`[aria2Service] 配置文件中没有找到有效的下载任务`);
+        logger.warn(`[aria2Service] 配置文件中没有找到有效的下载任务`);
         return { successCount: 0, failCount: 0, tasks: [] };
       }
 
@@ -505,18 +503,18 @@ class Aria2Service {
         const dirLine = lines[i + 1].trim();
         const outLine = lines[i + 2].trim();
 
-        console.log(`[aria2Service] 处理任务组 ${Math.floor(i / 3) + 1}:`);
-        console.log(`  URL: ${url}`);
-        console.log(`  Dir: ${dirLine}`);
-        console.log(`  Out: ${outLine}`);
+        logger.debug(`[aria2Service] 处理任务组 ${Math.floor(i / 3) + 1}:`);
+        logger.debug(`  URL: ${url}`);
+        logger.debug(`  Dir: ${dirLine}`);
+        logger.debug(`  Out: ${outLine}`);
 
         // 验证格式 - 支持制表符或空格开头
         const dirMatch = dirLine.match(/^\s*dir=(.+)$/);
         const outMatch = outLine.match(/^\s*out=(.+)$/);
 
         if (!url || !dirMatch || !outMatch) {
-          console.warn(`[aria2Service] 跳过格式错误的任务组 ${Math.floor(i / 3) + 1}`);
-          console.warn(`  URL有效: ${!!url}, Dir匹配: ${!!dirMatch}, Out匹配: ${!!outMatch}`);
+          logger.warn(`[aria2Service] 跳过格式错误的任务组 ${Math.floor(i / 3) + 1}`);
+          logger.warn(`  URL有效: ${!!url}, Dir匹配: ${!!dirMatch}, Out匹配: ${!!outMatch}`);
           failCount++;
           continue;
         }
@@ -524,7 +522,7 @@ class Aria2Service {
         const dir = dirMatch[1]; // 提取dir值
         const out = outMatch[1]; // 提取out值
 
-        console.log(`[aria2Service] 解析结果: dir="${dir}", out="${out}"`);
+        logger.debug(`[aria2Service] 解析结果: dir="${dir}", out="${out}"`);
 
         try {
           const gid = await this.addDownload(url, {
@@ -543,24 +541,23 @@ class Aria2Service {
           });
 
           successCount++;
-          console.log(`[aria2Service] 任务 ${Math.floor(i / 3) + 1} 添加成功，GID: ${gid}`);
+          logger.debug(`[aria2Service] 任务 ${Math.floor(i / 3) + 1} 添加成功，GID: ${gid}`);
 
-          // 每10个任务输出一次进度
           if (successCount % 10 === 0) {
-            console.log(`[aria2Service] 已添加 ${successCount}/${totalTasks} 个任务`);
+            logger.debug(`[aria2Service] 已添加 ${successCount}/${totalTasks} 个任务`);
           }
         } catch (error) {
-          console.error(`[aria2Service] 添加任务失败: ${out}`, error);
+          logger.error(`[aria2Service] 添加任务失败: ${out}`, error instanceof Error ? error : undefined);
           failCount++;
         }
       }
 
-      console.log(`[aria2Service] 批量添加完成: 成功 ${successCount} 个，失败 ${failCount} 个`);
+      logger.debug(`[aria2Service] 批量添加完成: 成功 ${successCount} 个，失败 ${failCount} 个`);
       return { successCount, failCount, tasks };
 
     } catch (error) {
-      console.error('[aria2Service] 从配置文件批量添加失败:', error);
-      console.error('[aria2Service] 错误详情:', {
+      logger.error('[aria2Service] 从配置文件批量添加失败:', error instanceof Error ? error : undefined);
+      logger.error('[aria2Service] 错误详情:', {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         configFilePath
@@ -653,7 +650,7 @@ class Aria2Service {
     const statusMap = new Map<string, DownloadTask>();
 
     if (!this.connected) {
-      console.warn('[aria2Service] Aria2未连接，无法查询批量状态');
+      logger.warn('[aria2Service] Aria2未连接，无法查询批量状态');
       return statusMap;
     }
 
@@ -666,29 +663,17 @@ class Aria2Service {
       // 这样可以在一次HTTP请求中查询所有任务状态
       const multicallParams = gids.map(gid => ({
         methodName: 'aria2.tellStatus',
-        params: this.secret
-          ? [`token:${this.secret}`, gid, [
-            'gid',
-            'status',
-            'totalLength',
-            'completedLength',
-            'downloadSpeed',
-            'uploadSpeed',
-            'files',
-            'errorCode',
-            'errorMessage',
-          ]]
-          : [gid, [
-            'gid',
-            'status',
-            'totalLength',
-            'completedLength',
-            'downloadSpeed',
-            'uploadSpeed',
-            'files',
-            'errorCode',
-            'errorMessage',
-          ]]
+        params: [gid, [
+          'gid',
+          'status',
+          'totalLength',
+          'completedLength',
+          'downloadSpeed',
+          'uploadSpeed',
+          'files',
+          'errorCode',
+          'errorMessage',
+        ]]
       }));
 
       // 调用批量RPC方法
@@ -1057,7 +1042,7 @@ class Aria2Service {
       return true;
     } catch (error) {
       logger.warn('⚠ Aria2配置更新失败，将在下次启动时生效');
-      console.error('Failed to update Aria2 global options:', error);
+      logger.error('Failed to update Aria2 global options:', error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -1076,7 +1061,7 @@ class Aria2Service {
       const details = await this.call('aria2.tellStatus', [gid, ['files']]);
       return details;
     } catch (error) {
-      console.error('获取任务详情失败:', error);
+      logger.error('获取任务详情失败:', error instanceof Error ? error : undefined);
       return null;
     }
   }
@@ -1092,7 +1077,7 @@ class Aria2Service {
     // 清理所有回调引用
     this.connectionCallbacks.clear();
 
-    console.log('[aria2Service] 连接已关闭，资源已清理');
+    logger.debug('[aria2Service] 连接已关闭，资源已清理');
   }
 }
 

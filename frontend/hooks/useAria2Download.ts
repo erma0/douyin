@@ -59,11 +59,11 @@ export const useAria2Download = () => {
    */
   useEffect(() => {
     const unsubscribe = aria2Service.onConnectionChange((isConnected) => {
-      console.log(`[useAria2Download] 连接状态变化: ${isConnected}, 之前: ${prevConnectedRef.current}`);
+      logger.debug(`[useAria2Download] 连接状态变化: ${isConnected}, 之前: ${prevConnectedRef.current}`);
 
       // 只在状态从 false 变为 true 时显示提示
       if (isConnected && !prevConnectedRef.current) {
-        console.log('[useAria2Download] 显示连接成功提示');
+        logger.debug('[useAria2Download] 显示连接成功提示');
         toast.success('Aria2 下载服务已连接');
         logger.success('Aria2 下载服务已连接');
       }
@@ -72,16 +72,13 @@ export const useAria2Download = () => {
     });
 
     const initAria2 = async () => {
-      const ready = await bridge.waitForReady(30000);
-      if (!ready) return;
-
       try {
         const config = await bridge.getAria2Config();
         // 启动连接（后台异步进行）
         await aria2Service.connect(config.host, config.port, config.secret, true);
         logger.info('Aria2下载服务初始化完成');
       } catch (error) {
-        console.error('[useAria2Download] 初始化失败:', error);
+        logger.debug('[useAria2Download] 初始化失败:', error);
         logger.error('Aria2下载服务初始化失败', error instanceof Error ? error : undefined);
       }
     };
@@ -194,16 +191,25 @@ export const useAria2Download = () => {
           } else {
             // 任务不在任何列表中，可能已被清理
             // 从跟踪列表中移除，避免无限轮询
-            console.log(`[useAria2Download] 任务 ${workId} 不在 aria2 列表中，移除跟踪`);
+            logger.debug(`[useAria2Download] 任务 ${workId} 不在 aria2 列表中，移除跟踪`);
             downloads.delete(workId);
           }
         }
       } catch (error) {
-        console.error('[useAria2Download] 批量查询失败:', error);
+        logger.error('[useAria2Download] 批量查询失败:', error instanceof Error ? error : undefined);
       }
 
       // 更新进度
-      setProgress(prev => ({ ...prev, ...newProgress }));
+      setProgress(prev => {
+        const updated = { ...prev, ...newProgress };
+        const cleaned: Record<string, number> = {};
+        for (const [id, val] of Object.entries(updated)) {
+          if (val >= 0 && val < 100) {
+            cleaned[id] = val;
+          }
+        }
+        return cleaned;
+      });
 
       // 计算活跃任务数和总进度
       let activeCount = 0;
@@ -222,7 +228,7 @@ export const useAria2Download = () => {
         downloadSpeed: currentSpeed,
         totalProgress: activeCount > 0 ? Math.round(totalProgress / activeCount) : 0,
       });
-    }, 1000);
+    }, 2000);
   }, []);
 
   /**
@@ -403,7 +409,7 @@ export const useAria2Download = () => {
 
       return true;
     } catch (error) {
-      console.error('[useAria2Download] 取消任务失败:', error);
+      logger.error('[useAria2Download] 取消任务失败:', error instanceof Error ? error : undefined);
       // 即使取消失败也从映射表中移除，避免内存泄漏
       downloadsRef.current.delete(workId);
       return false;

@@ -13,7 +13,8 @@ dependencies = [
     "pyperclip>=1.11.0",
     "pywebview>=6.1 ; sys_platform != 'linux'",
     "pywebview[gtk]>=6.1 ; sys_platform == 'linux'",
-    "requests>=2.32.5",
+    "niquests>=3.10",
+    "pydantic>=2.0",
     "ujson>=5.11.0",
     "uvicorn>=0.40.0",
 ]

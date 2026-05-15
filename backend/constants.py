@@ -6,11 +6,20 @@
 
 import os
 
+from loguru import logger
+
 # 兼容独立脚本运行和模块导入两种方式
 try:
     from .utils.paths import get_app_root, get_resource_root
 except ImportError:
     from utils.paths import get_app_root, get_resource_root
+
+try:
+    from importlib.metadata import version as get_version
+    APP_VERSION = get_version("douyin-crawler")
+except Exception as e:
+    logger.debug(f"获取版本号失败: {e}")
+    APP_VERSION = "0.0.0"
 
 # 项目根目录（应用目录）
 PROJECT_ROOT = get_app_root()

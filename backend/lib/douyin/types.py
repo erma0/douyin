@@ -3,6 +3,21 @@
 抖音数据类型和常量定义
 """
 
+from enum import StrEnum
+
+
+class CrawlType(StrEnum):
+    POST = "post"
+    FAVORITE = "favorite"
+    COLLECTION = "collection"
+    SEARCH = "search"
+    MUSIC = "music"
+    HASHTAG = "hashtag"
+    MIX = "mix"
+    AWEME = "aweme"
+    FOLLOWING = "following"
+    FOLLOWER = "follower"
+
 
 # 作品类型
 class AwemeType:
@@ -156,9 +171,7 @@ USER_ID_PREFIX = "MS4wLjABAAAA"
 
 # 其他常量
 class SignMethod:
-    """签名方法名"""
-
-    DETAIL = "sign_datail"
+    DETAIL = "sign_datail"  # JS文件中的函数名，拼写与JS保持一致
     REPLY = "sign_reply"
 
 

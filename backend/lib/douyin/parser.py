@@ -5,8 +5,6 @@
 负责解析抖音API返回的数据，提取作品和用户信息
 """
 
-from typing import List
-
 from loguru import logger
 
 from ...utils.text import sanitize_filename, save_json
@@ -18,14 +16,14 @@ class DataParser:
 
     @staticmethod
     def parse_awemes(
-        awemes_list: List[dict],
+        awemes_list: list[dict],
         results: list,
         results_old: list,
         limit: int,
         has_more: bool,
         type: str,
         down_path: str,
-    ) -> tuple[List[dict], bool]:
+    ) -> tuple[list[dict], bool]:
         """
         解析作品列表
 
@@ -83,7 +81,7 @@ class DataParser:
         return new_items, has_more
 
     @staticmethod
-    def _parse_single_aweme(item: dict, type: str) -> dict:
+    def _parse_single_aweme(item: dict, type: str) -> dict | None:
         """
         解析单个作品数据
 
@@ -96,8 +94,9 @@ class DataParser:
         """
         _type = item.get("aweme_type", item.get("awemeType"))
         if  _type is None :
-            return
-        aweme = item.get("statistics", item.get("stats", {}))
+            return None
+        aweme = dict(item.get("statistics", item.get("stats", {})))
+        video_info = item.get("video", {})
 
         # 清理不需要的字段
         unnecessary_fields = [
@@ -119,17 +118,25 @@ class DataParser:
 
         # 根据作品类型处理下载地址
         if _type <= AwemeType.VIDEO_MAX or _type in AwemeType.VIDEO_SPECIAL:  # 视频
-            play_addr = item["video"].get("play_addr")
+            play_addr = video_info.get("play_addr")
             if play_addr:
                 download_addr = play_addr["url_list"][-1]
             else:
-                download_addr = item["download"]["urlList"][-1]
-                download_addr = download_addr.replace("watermark=1", "watermark=0")
+                download_addr = item.get("download", {}).get("urlList", [""])[-1]
+                if download_addr:
+                    download_addr = download_addr.replace("watermark=1", "watermark=0")
+                else:
+                    logger.warning(f"作品 {item.get('aweme_id', '未知')} 缺少下载地址")
+                    return None
             aweme["download_addr"] = download_addr
-        elif _type == AwemeType.IMAGE:  # 图文
+        elif _type == AwemeType.IMAGE:
+            images = item.get("images", [])
+            if not images:
+                logger.warning(f"图文作品 {item.get('aweme_id', '未知')} 缺少 images 字段")
+                return None
             aweme["download_addr"] = [
-                images.get("url_list", images.get("urlList"))[-1]
-                for images in item["images"]
+                img.get("url_list", img.get("urlList"))[-1]
+                for img in item["images"]
             ]
         elif _type == AwemeType.LIVE:  # 直播
             return None
@@ -145,7 +152,7 @@ class DataParser:
         aweme["time"] = item.get("create_time", item.get("createTime"))
         aweme["type"] = _type
         aweme["desc"] = sanitize_filename(item.get("desc"))
-        aweme["duration"] = item.get("duration", item["video"].get("duration"))
+        aweme["duration"] = item.get("duration", video_info.get("duration"))
 
         # 音乐信息
         music = item.get("music")
@@ -154,11 +161,13 @@ class DataParser:
             aweme["music_url"] = music.get("play_url", music.get("playUrl"))["uri"]
 
         # 封面
-        cover = item["video"].get("cover")
+        cover = video_info.get("cover")
         if isinstance(cover, dict):
             aweme["cover"] = cover["url_list"][-1]
+        elif video_info.get("dynamicCover"):
+            aweme["cover"] = f"https:{video_info['dynamicCover']}"
         else:
-            aweme["cover"] = f"https:{item['video']['dynamicCover']}"
+            aweme["cover"] = ""
 
         # 作者信息
         author = item.get("author", item.get("authorInfo"))
@@ -192,7 +201,7 @@ class DataParser:
 
     @staticmethod
     def parse_users(
-        user_list: List[dict], results: list, limit: int, has_more: bool
+        user_list: list[dict], results: list, limit: int, has_more: bool
     ) -> bool:
         """
         解析用户列表

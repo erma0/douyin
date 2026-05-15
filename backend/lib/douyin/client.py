@@ -10,7 +10,7 @@ from urllib.parse import unquote
 
 import ujson as json
 
-from ...utils.text import quit
+from ...utils.text import abort
 from .request import Request
 from .types import APIConfig, APIEndpoint
 
@@ -44,7 +44,7 @@ class DouyinClient:
         aweme_detail = resp.get("aweme_detail", {})
 
         if not aweme_detail:
-            quit("作品详情获取失败")
+            abort("作品详情获取失败")
 
         return aweme_detail
 
@@ -214,6 +214,6 @@ class DouyinClient:
                 "source_type": 3,  # 网页端默认排序 3最早/1最近/4综合
             }
         else:
-            quit(f"不支持的采集类型: {type}")
+            abort(f"不支持的采集类型: {type}")
 
         return uri, params, data

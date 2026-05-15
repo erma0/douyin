@@ -8,7 +8,7 @@ import os
 import threading
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from loguru import logger
@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from ..constants import DOWNLOAD_DIR
 from ..lib.cookies import CookieManager
+from ..lib.exceptions import VerifyCheckError
 from ..settings import settings
 from ..sse import SSEEventType, sse
 from ..state import state
@@ -34,7 +35,7 @@ class StartTaskRequest(BaseModel):
     type: str
     target: str
     limit: int = 0
-    filters: Optional[Dict[str, str]] = None
+    filters: dict[str, str] | None = None
 
 
 class TaskResponse(BaseModel):
@@ -53,7 +54,7 @@ class TaskStatus(BaseModel):
     status: str
     progress: int
     result_count: int
-    error: Optional[str]
+    error: str | None
     created_at: float
     updated_at: float
 
@@ -70,7 +71,7 @@ class CancelTaskRequest(BaseModel):
 
 
 @router.post("/start", response_model=TaskResponse)
-def start_task(request: StartTaskRequest) -> Dict[str, Any]:
+def start_task(request: StartTaskRequest) -> dict[str, Any]:
     """
     启动采集任务
 
@@ -93,8 +94,7 @@ def start_task(request: StartTaskRequest) -> Dict[str, Any]:
     # 生成唯一的任务ID
     task_id = f"task_{uuid.uuid4().hex[:8]}"
 
-    # 初始化任务状态
-    state.task_status[task_id] = {
+    state.init_task(task_id, {
         "id": task_id,
         "type": request.type,
         "target": request.target,
@@ -106,10 +106,7 @@ def start_task(request: StartTaskRequest) -> Dict[str, Any]:
         "error": None,
         "created_at": time.time(),
         "updated_at": time.time(),
-    }
-
-    # 初始化结果缓存
-    state.task_results[task_id] = []
+    })
 
     # 注册取消信号事件
     cancel_event = state.register_cancel_event(task_id)
@@ -142,7 +139,7 @@ def start_task(request: StartTaskRequest) -> Dict[str, Any]:
 
 
 @router.post("/cancel", response_model=TaskResponse)
-def cancel_task(request: CancelTaskRequest) -> Dict[str, Any]:
+def cancel_task(request: CancelTaskRequest) -> dict[str, Any]:
     """
     取消采集任务
 
@@ -150,10 +147,10 @@ def cancel_task(request: CancelTaskRequest) -> Dict[str, Any]:
     """
     task_id = request.task_id
 
-    if task_id not in state.task_status:
+    if not state.task_exists(task_id):
         raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
 
-    task_info = state.task_status[task_id]
+    task_info = state.get_task_status(task_id)[0]
 
     if task_info["status"] == "cancelling":
         return {"task_id": task_id, "status": "cancelling"}
@@ -164,8 +161,7 @@ def cancel_task(request: CancelTaskRequest) -> Dict[str, Any]:
     if not state.request_cancel(task_id):
         raise HTTPException(status_code=500, detail="取消信号发送失败")
 
-    task_info["status"] = "cancelling"
-    task_info["updated_at"] = time.time()
+    state.set_task_status(task_id, status="cancelling", updated_at=time.time())
 
     logger.info(f"⏹ 发送取消信号: 任务 {task_id}")
 
@@ -173,7 +169,7 @@ def cancel_task(request: CancelTaskRequest) -> Dict[str, Any]:
 
 
 @router.get("/status")
-def get_task_status(task_id: Optional[str] = None) -> List[Dict[str, Any]]:
+def get_task_status(task_id: str | None = None) -> list[dict[str, Any]]:
     """
     获取任务状态
 
@@ -181,26 +177,23 @@ def get_task_status(task_id: Optional[str] = None) -> List[Dict[str, Any]]:
     """
 
     if task_id:
-        if task_id in state.task_status:
-            return [state.task_status[task_id]]
-        else:
-            return []
+        return state.get_task_status(task_id)
     else:
-        return list(state.task_status.values())
+        return state.get_task_status()
 
 
 @router.get("/results/{task_id}")
-def get_task_results(task_id: str) -> List[Dict[str, Any]]:
+def get_task_results(task_id: str) -> list[dict[str, Any]]:
     """
     获取任务的采集结果
 
     - task_id: 任务ID
     """
 
-    if task_id not in state.task_results:
+    if not state.task_exists(task_id):
         raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
 
-    return state.task_results[task_id]
+    return state.get_task_results(task_id)
 
 
 # ============================================================================
@@ -213,7 +206,7 @@ def _execute_task(
     task_type: str,
     target: str,
     limit: int,
-    filters: Optional[Dict[str, str]],
+    filters: dict[str, str] | None,
     cancel_event: threading.Event = None,
 ) -> None:
     """执行采集任务（在后台线程中运行）"""
@@ -229,38 +222,46 @@ def _execute_task(
 
         logger.info("✓ Cookie验证通过，开始采集...")
 
+        seen_ids: set[str] = set()
+
         def handle_new_items(new_items, item_type):
             if not new_items:
                 return
 
-            logger.debug(f"收到 {len(new_items)} 条新结果，开始转换...")
+            unique_items = []
+            for item in new_items:
+                item_id = str(item.get("id", ""))
+                if item_id and item_id not in seen_ids:
+                    seen_ids.add(item_id)
+                    unique_items.append(item)
 
-            works = _convert_douyin_results(new_items, item_type)
-
-            if not works:
-                logger.warning(f"转换后没有有效数据！原始数据: {len(new_items)} 条")
+            if not unique_items:
+                logger.warning(f"所有数据已存在，跳过 {len(new_items)} 条重复数据")
                 return
 
-            state.task_results[task_id].extend(new_items)
+            logger.debug(f"收到 {len(unique_items)} 条新结果，开始转换...")
 
-            state.task_status[task_id]["result_count"] = len(
-                state.task_results[task_id]
-            )
-            state.task_status[task_id]["updated_at"] = time.time()
+            works = _convert_douyin_results(unique_items, item_type)
+
+            if not works:
+                logger.warning(f"转换后没有有效数据！原始数据: {len(unique_items)} 条")
+                return
+
+            count = state.add_results(task_id, works)
 
             logger.info(
-                f"推送 SSE: {len(works)} 条新结果，累计 {len(state.task_results[task_id])} 条"
+                f"推送 SSE: {len(works)} 条新结果，累计 {count} 条"
             )
             sse.broadcast_sync(
                 SSEEventType.TASK_RESULT,
                 {
                     "task_id": task_id,
                     "data": works,
-                    "total": len(state.task_results[task_id]),
+                    "total": count,
                 },
             )
 
-        douyin = Douyin(
+        with Douyin(
             target=target,
             limit=int(limit) if limit > 0 else 0,
             type=task_type,
@@ -272,87 +273,77 @@ def _execute_task(
             enable_download_title=settings.get("enableDownloadTitle", False),
             enable_download_cover=settings.get("enableDownloadCover", False),
             cancel_event=cancel_event,
-        )
+        ) as douyin:
 
-        logger.info("🚀 正在采集数据...")
-        douyin.run()
+            logger.info("🚀 正在采集数据...")
+            douyin.run()
 
-        detected_type = douyin.type
+            detected_type = douyin.type
 
-        state.aria2_config_paths[task_id] = douyin.aria2_conf
-        state.task_status[task_id]["aria2_conf"] = douyin.aria2_conf
+            state.set_aria2_config(task_id, douyin.aria2_conf)
 
-        has_new_results = (
-            douyin.results
-            and len(douyin.results) > len(state.task_results[task_id])
-            and douyin.results != douyin.results_old
-        )
+            is_cancelled = cancel_event is not None and cancel_event.is_set()
 
-        if has_new_results:
-            new_results = douyin.results[len(state.task_results[task_id]) :]
-            works = _convert_douyin_results(new_results, douyin.type)
-            state.task_results[task_id].extend(new_results)
+            if is_cancelled:
+                state.set_task_status(task_id, status="cancelled", updated_at=time.time())
 
-            if works:
+                result_count = len(state.get_task_results(task_id))
+                logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                logger.info(
+                    f"⏹ 任务已取消: 已采集 {result_count} 条数据"
+                )
+                logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
                 sse.broadcast_sync(
-                    SSEEventType.TASK_RESULT,
+                    SSEEventType.TASK_STATUS,
                     {
                         "task_id": task_id,
-                        "data": works,
-                        "total": len(state.task_results[task_id]),
+                        "status": "cancelled",
+                        "detected_type": detected_type,
+                        "total": result_count,
+                    },
+                )
+            else:
+                result_count = len(state.get_task_results(task_id))
+                state.set_task_status(task_id, status="completed", progress=100, updated_at=time.time())
+
+                logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                logger.success(
+                    f"✓ 任务完成: 成功采集 {result_count} 条数据"
+                )
+                logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+                is_incremental = (
+                    detected_type == "post" and result_count == 0
+                )
+                sse.broadcast_sync(
+                    SSEEventType.TASK_STATUS,
+                    {
+                        "task_id": task_id,
+                        "status": "completed",
+                        "detected_type": detected_type,
+                        "total": result_count,
+                        "is_incremental": is_incremental,
                     },
                 )
 
-        is_cancelled = cancel_event is not None and cancel_event.is_set()
+    except VerifyCheckError as e:
+        state.set_task_status(task_id, status="error", error="触发验证码，请完成验证后再继续", updated_at=time.time())
 
-        if is_cancelled:
-            state.task_status[task_id]["status"] = "cancelled"
-            state.task_status[task_id]["updated_at"] = time.time()
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        logger.error(f"✗ 检测到验证码: {e}")
+        logger.error(f"  请在浏览器中打开抖音完成验证后再继续")
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-            logger.info(
-                f"⏹ 任务已取消: 已采集 {len(state.task_results[task_id])} 条数据"
-            )
-            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-
-            sse.broadcast_sync(
-                SSEEventType.TASK_STATUS,
-                {
-                    "task_id": task_id,
-                    "status": "cancelled",
-                    "detected_type": detected_type,
-                    "total": len(state.task_results[task_id]),
-                },
-            )
-        else:
-            state.task_status[task_id]["status"] = "completed"
-            state.task_status[task_id]["progress"] = 100
-            state.task_status[task_id]["updated_at"] = time.time()
-
-            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-            logger.success(
-                f"✓ 任务完成: 成功采集 {len(state.task_results[task_id])} 条数据"
-            )
-            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-
-            is_incremental = (
-                detected_type == "post" and len(state.task_results[task_id]) == 0
-            )
-            sse.broadcast_sync(
-                SSEEventType.TASK_STATUS,
-                {
-                    "task_id": task_id,
-                    "status": "completed",
-                    "detected_type": detected_type,
-                    "total": len(state.task_results[task_id]),
-                    "is_incremental": is_incremental,
-                },
-            )
-
+        sse.broadcast_sync(
+            SSEEventType.TASK_ERROR,
+            {
+                "task_id": task_id,
+                "error": "触发验证码，请完成验证后再继续",
+            },
+        )
     except Exception as e:
-        state.task_status[task_id]["status"] = "error"
-        state.task_status[task_id]["error"] = str(e)
-        state.task_status[task_id]["updated_at"] = time.time()
+        state.set_task_status(task_id, status="error", error=str(e), updated_at=time.time())
 
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         logger.error(f"✗ 任务失败: {str(e)}")
@@ -370,8 +361,8 @@ def _execute_task(
 
 
 def _convert_douyin_results(
-    results: List[Dict[str, Any]], task_type: str
-) -> List[Dict[str, Any]]:
+    results: list[dict[str, Any]], task_type: str
+) -> list[dict[str, Any]]:
     """将爬虫结果转换为前端期望的格式"""
     works = []
 

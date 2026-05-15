@@ -6,7 +6,7 @@ Aria2 管理路由
 
 import os
 import threading
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from loguru import logger
@@ -57,25 +57,24 @@ class StartResponse(BaseModel):
 
 
 @router.get("/config", response_model=Aria2ConfigResponse)
-def get_aria2_config() -> Dict[str, Any]:
+def get_aria2_config() -> dict[str, Any]:
     """
     获取 Aria2 配置信息
 
     返回 Aria2 RPC 服务的连接配置。
     """
 
-    user_secret = settings.get("aria2Secret", ARIA2_DEFAULTS["SECRET"])
-    default_secret = ARIA2_DEFAULTS["SECRET"] if not user_secret else user_secret
+    secret = settings.get("aria2Secret") or ARIA2_DEFAULTS["SECRET"]
 
     return {
         "host": settings.get("aria2Host", ARIA2_DEFAULTS["HOST"]),
         "port": settings.get("aria2Port", ARIA2_DEFAULTS["PORT"]),
-        "secret": default_secret,
+        "secret": secret,
     }
 
 
 @router.get("/status", response_model=Aria2StatusResponse)
-def get_aria2_status() -> Dict[str, bool]:
+def get_aria2_status() -> dict[str, bool]:
     """
     获取 Aria2 连接状态
 
@@ -85,7 +84,7 @@ def get_aria2_status() -> Dict[str, bool]:
     is_connected = False
     if state.aria2_manager:
         try:
-            is_connected = state.aria2_manager._check_connection()
+            is_connected = state.aria2_manager.is_connected()
         except Exception:
             pass
 
@@ -93,7 +92,7 @@ def get_aria2_status() -> Dict[str, bool]:
 
 
 @router.post("/start", response_model=StartResponse)
-def start_aria2() -> Dict[str, str]:
+def start_aria2() -> dict[str, str]:
     """
     启动 Aria2 服务
 
@@ -117,7 +116,7 @@ def start_aria2() -> Dict[str, str]:
 
 
 @router.get("/config-path", response_model=Aria2ConfigPathResponse)
-def get_aria2_config_path(task_id: Optional[str] = None) -> Dict[str, str]:
+def get_aria2_config_path(task_id: str | None = None) -> dict[str, str]:
     """
     获取已完成任务的 aria2 配置文件路径
 
@@ -125,48 +124,23 @@ def get_aria2_config_path(task_id: Optional[str] = None) -> Dict[str, str]:
     """
 
     try:
-        # 如果没有指定 task_id，使用最新的任务
-        if task_id is None:
-            if state.aria2_config_paths:
-                latest_task_id = max(state.aria2_config_paths.keys())
-                config_path = state.aria2_config_paths[latest_task_id]
-            else:
-                # 从任务状态中查找
-                completed_tasks = [
-                    tid
-                    for tid, info in state.task_status.items()
-                    if info.get("status") == "completed" and "aria2_conf" in info
-                ]
+        config_path = state.get_aria2_config_path_for_task(task_id)
 
-                if completed_tasks:
-                    latest_task_id = max(completed_tasks)
-                    config_path = state.task_status[latest_task_id]["aria2_conf"]
-                    state.aria2_config_paths[latest_task_id] = config_path
-                else:
-                    raise HTTPException(
-                        status_code=404,
-                        detail="没有已完成的采集任务，请先完成一次采集后再使用批量下载功能",
-                    )
-        else:
-            # 指定了 task_id
-            if task_id in state.aria2_config_paths:
-                config_path = state.aria2_config_paths[task_id]
-            elif task_id in state.task_status:
-                task_info = state.task_status[task_id]
-                if task_info["status"] != "completed":
-                    raise HTTPException(
-                        status_code=400, detail=f"任务 {task_id} 尚未完成"
-                    )
-                if "aria2_conf" not in task_info:
-                    raise HTTPException(
-                        status_code=404, detail=f"任务 {task_id} 缺少配置文件路径"
-                    )
-                config_path = task_info["aria2_conf"]
-                state.aria2_config_paths[task_id] = config_path
+        if config_path is None:
+            if task_id:
+                task_status_list = state.get_task_status(task_id)
+                if not task_status_list:
+                    raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
+                task_info = task_status_list[0]
+                if task_info.get("status") != "completed":
+                    raise HTTPException(status_code=400, detail=f"任务 {task_id} 尚未完成")
+                raise HTTPException(status_code=404, detail=f"任务 {task_id} 缺少配置文件路径")
             else:
-                raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
+                raise HTTPException(
+                    status_code=404,
+                    detail="没有已完成的采集任务，请先完成一次采集后再使用批量下载功能",
+                )
 
-        # 检查文件是否存在
         if not os.path.exists(config_path):
             raise HTTPException(
                 status_code=404, detail=f"配置文件不存在: {config_path}"

@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, quote, unquote, urlparse
 import ujson as json
 from loguru import logger
 
-from ...utils.text import quit, sanitize_filename, url_redirect
+from ...utils.text import abort, sanitize_filename, url_redirect
 from .request import Request
 from .types import USER_ID_PREFIX, DouyinURL
 
@@ -113,28 +113,28 @@ class TargetHandler:
         ] and self.id.startswith(USER_ID_PREFIX):
             self.url = f"{DouyinURL.USER}/{self.id}"
         else:
-            quit(f"[{self.id}]目标输入错误，请检查参数")
+            abort(f"[{self.id}]目标输入错误，请检查参数")
 
     def _get_self_uid(self) -> str:
         """获取当前登录用户的UID"""
         url = DouyinURL.USER_SELF
         text = self.request.getHTML(url)
         if text == "":
-            quit(f"获取UID请求失败, url: {url}")
+            abort(f"获取UID请求失败, url: {url}")
 
         pattern = r'secUid\\":\\"([-\w]+)\\"'
         match = re.search(pattern, text)
         if match:
             return match.group(1)
         else:
-            quit(f"获取UID请求失败, url: {url}")
+            abort(f"获取UID请求失败, url: {url}")
 
-    def fetch_target_info(self) -> tuple[str, str]:
+    def fetch_target_info(self) -> tuple[str, str, str, dict, dict]:
         """
         获取目标信息
 
         Returns:
-            tuple: (title, aria2_conf_path)
+            tuple: (title, down_path, aria2_conf_path, info, render_data)
         """
         # 目标信息
         if self.type == "search":
@@ -160,7 +160,7 @@ class TargetHandler:
         render_data_list = re.findall(pattern, text)
 
         if not render_data_list:
-            quit(f"提取目标信息失败，可能是cookie无效。url: {self.url}")
+            abort(f"提取目标信息失败，可能是cookie无效。url: {self.url}")
 
         render_data = render_data_list[-1].replace('\\"', '"').replace("\\\\", "\\")
         self.render_data = json.loads(render_data)
@@ -182,4 +182,4 @@ class TargetHandler:
             self.info = self.render_data["user"]["user"]
             self.title = self.info["nickname"]
         else:
-            quit(f"获取目标信息请求失败, type: {self.type}")
+            abort(f"获取目标信息请求失败, type: {self.type}")

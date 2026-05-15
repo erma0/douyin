@@ -7,6 +7,7 @@
 """
 
 import os
+import threading
 import time
 from typing import Any, Callable, Dict, List, Tuple
 
@@ -63,6 +64,7 @@ class SettingsManager:
         """
         self._settings: Dict[str, Any] = {}
         self._is_first_run: bool = not os.path.exists(SETTINGS_FILE)
+        self._lock = threading.Lock()
 
         # 确保配置目录存在
         os.makedirs(CONFIG_DIR, exist_ok=True)
@@ -129,21 +131,13 @@ class SettingsManager:
         return self._settings
 
     def save(self, updates: Dict[str, Any]) -> None:
-        """
-        更新并保存配置
-
-        Args:
-            updates: 要更新的配置项
-
-        Raises:
-            ValueError: 配置验证失败
-        """
         is_valid, errors = self._validate(updates)
         if not is_valid:
             raise ValueError("配置验证失败:\n" + "\n".join(f"  - {e}" for e in errors))
 
-        self._settings.update(updates)
-        self._save_file()
+        with self._lock:
+            self._settings.update(updates)
+            self._save_file()
         logger.success(f"✓ 配置已保存: {', '.join(updates.keys())}")
 
     def _validate(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
@@ -160,19 +154,19 @@ class SettingsManager:
         return len(errors) == 0, errors
 
     def _repair_and_complete(self) -> None:
-        """修复无效配置项并补充缺失项"""
         need_save = False
 
-        # 验证并修复无效项
-        is_valid, errors = self._validate(self._settings)
-        if not is_valid:
-            logger.warning("⚠ 配置包含无效项，自动修复...")
-            for err in errors:
-                key = err.split(":")[0].strip()
-                if key in DEFAULT_SETTINGS:
+        for key, (check, msg) in self.VALIDATORS.items():
+            if key in self._settings:
+                try:
+                    if not check(self._settings[key]):
+                        self._settings[key] = DEFAULT_SETTINGS[key]
+                        logger.warning(f"  - 已修复 {key}")
+                        need_save = True
+                except Exception:
                     self._settings[key] = DEFAULT_SETTINGS[key]
                     logger.warning(f"  - 已修复 {key}")
-            need_save = True
+                    need_save = True
 
         # 补充缺失项
         for key, default in DEFAULT_SETTINGS.items():

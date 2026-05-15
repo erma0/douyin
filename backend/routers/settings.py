@@ -80,8 +80,10 @@ class SaveResponse(BaseModel):
 
 @router.get("", response_model=SettingsResponse)
 def get_settings() -> Dict[str, Any]:
-    """获取当前应用设置"""
-    return settings.data
+    data = settings.data
+    if not data.get("aria2Secret"):
+        data["aria2Secret"] = ARIA2_DEFAULTS["SECRET"]
+    return data
 
 
 @router.post("", response_model=SaveResponse)

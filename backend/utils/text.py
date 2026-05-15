@@ -4,9 +4,11 @@ import re
 import time
 from typing import Union
 
-import requests
+import niquests as requests
 import ujson as json
 from loguru import logger
+
+from ..lib.exceptions import CrawlerError
 
 
 def gen_random_str(length: int = 16, lower: bool = False) -> str:
@@ -17,7 +19,7 @@ def gen_random_str(length: int = 16, lower: bool = False) -> str:
     return "".join(random.choice(chars) for _ in range(length))
 
 
-def get_timestamp(type: str = "ms") -> int:
+def get_timestamp(type: str = "ms") -> str:
     """获取当前时间戳（毫秒）"""
     if type == "ms":
         return str(int(time.time() * 1000))
@@ -27,7 +29,7 @@ def get_timestamp(type: str = "ms") -> int:
         raise ValueError("只支持 'ms' 或 's'（毫秒或秒）")
 
 
-def extract_valid_urls(input_data: Union[str, list]) -> Union[str, list, None]:
+def extract_valid_urls(input_data: str | list[str]) -> str | list[str] | None:
     """
     提取有效的URL
 
@@ -82,24 +84,22 @@ def sanitize_filename(
 
     # 按字节限制长度（考虑中文字符）
     if len(safe_text.encode("utf-8")) > max_bytes:
-        # 按字节截断，避免截断中文字符
-        safe_text_bytes = safe_text.encode("utf-8")[:max_bytes]
-        # 解码时忽略不完整的字符
+        ellipsis_bytes = 3 if add_ellipsis else 0
+        safe_text_bytes = safe_text.encode("utf-8")[: max_bytes - ellipsis_bytes]
         safe_text = safe_text_bytes.decode("utf-8", errors="ignore").strip()
-        # 添加省略号标识
         if safe_text and add_ellipsis:
             safe_text = safe_text + "..."
 
     return safe_text if safe_text else "无标题"
 
 
-def quit(str: str = ""):
+def abort(message: str = ""):
     """
-    抛出异常而不是退出程序（适用于GUI应用）
+    抛出业务异常（适用于GUI应用）
     """
-    if str:
-        logger.error(str)
-    raise Exception(str if str else "程序异常退出")
+    if message:
+        logger.error(message)
+    raise CrawlerError(message if message else "程序异常退出")
 
 
 def url_redirect(url: str) -> str:
@@ -110,10 +110,14 @@ def url_redirect(url: str) -> str:
         url: 原始URL
 
     Returns:
-        最终重定向的URL
+        最终重定向的URL，失败时返回原URL
     """
-    r = requests.head(url, allow_redirects=True)
-    return r.url
+    try:
+        r = requests.head(url, allow_redirects=True, timeout=10)
+        return r.url
+    except Exception as e:
+        logger.debug(f"URL重定向检测失败: {url}, 错误: {e}")
+        return url
 
 
 def save_json(filename: str, data: dict) -> None:

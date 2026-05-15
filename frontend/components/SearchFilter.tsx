@@ -22,6 +22,10 @@ export const SearchFilter: React.FC<SearchFilterProps> = ({
   const [localFilters, setLocalFilters] = useState<FilterSettings>(filters);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
+
   // 点击外部关闭
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

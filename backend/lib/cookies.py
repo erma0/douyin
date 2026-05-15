@@ -5,15 +5,12 @@ Cookie工具模块
 提供Cookie的格式转换和验证功能。
 """
 
-from typing import Dict, Any
+from typing import Any
 
-import requests
+import niquests as requests
 from loguru import logger
 
-
-class VerifyCheckError(Exception):
-    """验证码检测异常"""
-    pass
+from .exceptions import VerifyCheckError
 
 
 class CookieManager:
@@ -74,7 +71,7 @@ class CookieManager:
         return True
 
     @staticmethod
-    def cookies_str_to_dict(cookie_string: str) -> Dict[str, str]:
+    def cookies_str_to_dict(cookie_string: str) -> dict[str, str]:
         """
         将Cookie字符串转换为字典格式
 
@@ -115,7 +112,7 @@ class CookieManager:
         return cookie_dict
 
     @staticmethod
-    def cookies_dict_to_str(cookie_dict: Dict[str, str]) -> str:
+    def cookies_dict_to_str(cookie_dict: dict[str, str]) -> str:
         """
         将Cookie字典转换为字符串格式
 

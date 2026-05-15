@@ -9,13 +9,15 @@
 """
 import os
 import random
+import threading
 from urllib.parse import quote
 
 import exejs
-import requests
+import niquests as requests
 from loguru import logger
 
-from ..cookies import CookieManager, VerifyCheckError
+from ..cookies import CookieManager
+from ..exceptions import VerifyCheckError
 from .types import (
     APIEndpoint,
     CookieField,
@@ -46,44 +48,68 @@ class Request(object):
     """
 
     HOST = DouyinURL.BASE
-    # JS 签名脚本
-    SIGN = _load_sign_script()
+    _SIGN = None
+    _sign_lock = threading.Lock()
+
+    @classmethod
+    def _get_sign(cls):
+        if cls._SIGN is None:
+            with cls._sign_lock:
+                if cls._SIGN is None:
+                    try:
+                        cls._SIGN = _load_sign_script()
+                    except Exception as e:
+                        logger.error(f"加载JS签名脚本失败: {e}")
+                        raise
+        return cls._SIGN
 
     def __init__(self, cookie="", UA=""):
-        """
-        初始化请求对象
-
-        Args:
-            cookie: Cookie字符串，用于身份验证
-            UA: User-Agent字符串，如果需要访问搜索页面等内容需要提供与cookie对应的UA
-        """
         self.PARAMS = RequestParams.BASE.copy()
         self.HEADERS = RequestHeaders.DEFAULT.copy()
         self.WEBID = ""
 
         self.COOKIES = CookieManager.cookies_str_to_dict(cookie) if cookie else {}
 
-        # 如果提供了UA，更新请求头和参数以匹配浏览器版本
-        if UA:
-            # 从UA中提取Chrome版本号
-            version = UA.split(" Chrome/")[1].split(" ")[0]
-            _version = version.split(".")[0]
-            # 更新请求头中的UA和版本信息
-            self.HEADERS.update(
-                {
-                    "User-Agent": UA,
-                    "sec-ch-ua": f'"Chromium";v="{_version}", "Not(A:Brand";v="24", "Google Chrome";v="{_version}"',
-                }
-            )
-            # 更新参数中的浏览器和引擎版本
-            self.PARAMS.update(
-                {
-                    "browser_version": version,
-                    "engine_version": version,
-                }
-            )
+        self._session = self._create_session()
 
-    def get_sign(self, uri: str, params: dict) -> dict:
+        if UA:
+            try:
+                version = UA.split(" Chrome/")[1].split(" ")[0]
+                _version = version.split(".")[0]
+                self.HEADERS.update(
+                    {
+                        "User-Agent": UA,
+                        "sec-ch-ua": f'"Chromium";v="{_version}", "Not(A:Brand";v="24", "Google Chrome";v="{_version}"',
+                    }
+                )
+                self.PARAMS.update(
+                    {
+                        "browser_version": version,
+                        "engine_version": version,
+                    }
+                )
+            except (IndexError, ValueError):
+                logger.warning(f"无法解析 User-Agent 中的 Chrome 版本: {UA}")
+
+    def close(self) -> None:
+        if self._session:
+            self._session.close()
+            self._session = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+        return False
+
+    @staticmethod
+    def _create_session() -> requests.Session:
+        session = requests.Session()
+        session.max_redirects = 5
+        return session
+
+    def get_sign(self, uri: str, params: dict) -> str:
         """
         生成请求签名(a_bogus)
 
@@ -101,7 +127,7 @@ class Request(object):
         if "reply" in uri:
             call_name = SignMethod.REPLY
         # 调用JS脚本生成签名
-        a_bogus = self.SIGN.call(call_name, query, self.HEADERS.get("User-Agent"))
+        a_bogus = self._get_sign().call(call_name, query, self.HEADERS.get("User-Agent"))
         return a_bogus
 
     def get_params(self, params: dict) -> dict:
@@ -167,58 +193,41 @@ class Request(object):
         return ms_token
 
     def getHTML(self, url) -> str:
-        """
-        获取网页HTML内容
-
-        Args:
-            url: 目标URL
-
-        Returns:
-            str: HTML内容，失败返回空字符串
-        """
         headers = self.HEADERS.copy()
-        # 修改fetch目标为document类型
         headers["sec-fetch-dest"] = "document"
-        response = requests.get(url, headers=headers, cookies=self.COOKIES)
+        response = self._session.get(
+            url, headers=headers, cookies=self.COOKIES, timeout=(10, 30)
+        )
         if response.status_code != 200 or response.text == "":
             logger.error(f"HTML请求失败, url: {url}, header: {headers}")
             return ""
         return response.text
 
     def getJSON(self, uri: str, params: dict, data: dict = None):
-        """
-        发送JSON API请求
-
-        Args:
-            uri: API路径
-            params: 请求参数
-            data: POST请求的数据，如果提供则使用POST方法，否则使用GET
-
-        Returns:
-            dict: 响应的JSON数据，失败返回空字典
-        """
         url = f"{self.HOST}{uri}"
-        # 合并基础参数
         params.update(self.PARAMS)
-        # 注意：单个作品详情/音乐/粉丝接口需要签名
         if uri in [
             APIEndpoint.AWEME_DETAIL,
             APIEndpoint.MUSIC_AWEME,
             APIEndpoint.USER_FOLLOWER,
         ]:
             params["a_bogus"] = self.get_sign(uri, params)
-        # 根据是否有data决定使用POST还是GET
         if data:
-            response = requests.post(
+            response = self._session.post(
                 url,
                 params=params,
                 data=data,
                 headers=self.HEADERS,
                 cookies=self.COOKIES,
+                timeout=(10, 30),
             )
         else:
-            response = requests.get(
-                url, params=params, headers=self.HEADERS, cookies=self.COOKIES
+            response = self._session.get(
+                url,
+                params=params,
+                headers=self.HEADERS,
+                cookies=self.COOKIES,
+                timeout=(10, 30),
             )
 
         # 检查响应状态

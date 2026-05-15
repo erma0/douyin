@@ -60,6 +60,7 @@ class SSEClient {
   private eventSource: EventSource | null = null;
   private url: string = '';
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private connectingTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 2000;
@@ -85,19 +86,17 @@ class SSEClient {
     if (this.eventSource) {
       const state = this.eventSource.readyState;
       if (state === EventSource.OPEN || state === EventSource.CONNECTING) {
-        console.warn('[SSE] 已连接或正在连接中，忽略重复连接');
         return;
       }
     }
-    
+
     this.url = url;
-    console.log('[SSE] 正在连接...', url);
-    
+
     this.eventSource = new EventSource(url);
     
     this.eventSource.onopen = () => {
-      console.log('[SSE] ✓ 连接成功');
       this.reconnectAttempts = 0;
+      this.clearConnectingTimeout();
       if (this.reconnectTimer) {
         clearTimeout(this.reconnectTimer);
         this.reconnectTimer = null;
@@ -121,12 +120,22 @@ class SSEClient {
       this.handleEvent('log', event);
     });
     
-    this.eventSource.onerror = (error) => {
-      console.error('[SSE] 连接错误:', error);
-      
+    this.eventSource.onerror = () => {
       if (this.eventSource?.readyState === EventSource.CLOSED) {
-        console.log('[SSE] 连接已关闭');
+        this.clearConnectingTimeout();
         this.handleReconnect();
+      } else if (this.eventSource?.readyState === EventSource.CONNECTING) {
+        if (!this.connectingTimeoutTimer) {
+          this.connectingTimeoutTimer = setTimeout(() => {
+            if (this.eventSource?.readyState === EventSource.CONNECTING) {
+              this.eventSource.close();
+              this.clearConnectingTimeout();
+              this.handleReconnect();
+            } else {
+              this.connectingTimeoutTimer = null;
+            }
+          }, 30000);
+        }
       }
     };
   }
@@ -159,19 +168,26 @@ class SSEClient {
    */
   private handleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('[SSE] 达到最大重连次数，放弃重连');
+      this.reconnectAttempts = 0;
+      this.reconnectDelay = 8000;
       return;
     }
-    
+
     this.reconnectAttempts++;
-    console.log(`[SSE] ${this.reconnectDelay / 1000}秒后尝试重连 (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-    
+    const delay = this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1);
+
     this.reconnectTimer = setTimeout(() => {
       if (this.eventSource?.readyState === EventSource.CLOSED) {
-        console.log('[SSE] 重新连接...');
         this.connect(this.url);
       }
-    }, this.reconnectDelay);
+    }, delay);
+  }
+
+  private clearConnectingTimeout(): void {
+    if (this.connectingTimeoutTimer) {
+      clearTimeout(this.connectingTimeoutTimer);
+      this.connectingTimeoutTimer = null;
+    }
   }
   
   /**
@@ -179,7 +195,6 @@ class SSEClient {
    */
   disconnect(): void {
     if (this.eventSource) {
-      console.log('[SSE] 断开连接');
       this.eventSource.close();
       this.eventSource = null;
     }
@@ -187,6 +202,7 @@ class SSEClient {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+    this.clearConnectingTimeout();
     this.reconnectAttempts = 0;
   }
   

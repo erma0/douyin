@@ -18,7 +18,6 @@ Aria2管理模块 - 简化版
 import os
 import subprocess
 import time
-from typing import Optional
 
 from loguru import logger
 
@@ -26,6 +25,7 @@ from ..constants import (
     ARIA2_CONF_FILE,
     ARIA2_DEFAULTS,
     CONFIG_DIR,
+    DOWNLOAD_DIR,
     DOWNLOAD_DEFAULTS,
     RESOURCE_ROOT,
 )
@@ -74,6 +74,9 @@ class Aria2Manager:
         self.max_concurrency = max_concurrency
         self.aria2_process = None
 
+    def is_connected(self) -> bool:
+        return self._check_connection()
+
     def _check_connection(self) -> bool:
         """
         检查Aria2 RPC服务是否可用（增强版本）
@@ -98,9 +101,11 @@ class Aria2Manager:
 
             # 1. 快速检查端口是否开放
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(0.1)  # 100ms超时
-            result = sock.connect_ex((self.host, self.port))
-            sock.close()
+            sock.settimeout(0.1)
+            try:
+                result = sock.connect_ex((self.host, self.port))
+            finally:
+                sock.close()
 
             if result != 0:
                 return False
@@ -136,11 +141,12 @@ class Aria2Manager:
 
             return False
 
-        except (socket.error, urllib.error.URLError, json.JSONDecodeError, Exception):
-            # 静默处理，避免日志干扰
+        except Exception as e:
+            logger.debug(f"Aria2连接检查失败: {e}")
             return False
 
-    def _find_aria2_executable(self) -> Optional[str]:
+    @staticmethod
+    def _find_aria2_executable() -> str | None:
         """
         查找Aria2可执行文件（优化版 - 快速查找）
 
@@ -221,7 +227,7 @@ class Aria2Manager:
             download_dir = self.download_dir
         else:
             # 默认使用应用根目录下的 download 文件夹
-            download_dir = CONFIG_DIR
+            download_dir = DOWNLOAD_DIR
 
         os.makedirs(download_dir, exist_ok=True)
 
@@ -321,44 +327,49 @@ class Aria2Manager:
                 try:
                     self.aria2_process.terminate()
                     self.aria2_process.wait(timeout=2)
-                except:
+                except Exception:
                     try:
                         self.aria2_process.kill()
-                    except:
+                    except Exception:
                         pass
 
     def cleanup(self) -> None:
-        """
-        清理Aria2资源
-
-        在应用退出时调用，负责：
-        1. 终止自己启动的Aria2进程
-        2. 查找并终止所有aria2c进程（避免僵尸进程）
-        3. 等待进程正常退出
-        4. 清理连接状态
-
-        Note:
-            - 使用terminate()优雅终止进程
-            - 等待最多2秒，避免无限等待
-            - 超时后强制终止进程
-            - 会终止所有aria2c进程，确保端口释放
-        """
         logger.info("清理Aria2资源...")
 
-        # 停止自己启动的Aria2进程
         if self.aria2_process:
             try:
-                # 发送终止信号
                 self.aria2_process.terminate()
-                # 等待进程退出（最多1秒）
                 try:
                     self.aria2_process.wait(timeout=1)
                     logger.info("✓ Aria2进程已终止")
                 except subprocess.TimeoutExpired:
-                    # 超时则强制终止
                     self.aria2_process.kill()
                     logger.info("✓ Aria2进程已强制终止")
             except Exception as e:
                 logger.error(f"✗ 终止Aria2进程失败: {e}")
 
+        self._kill_orphan_aria2_processes()
+
         logger.info("✓ Aria2资源清理完成")
+
+    def _kill_orphan_aria2_processes(self) -> None:
+        import psutil
+
+        current_pid = os.getpid()
+        killed = 0
+        for proc in psutil.process_iter(["pid", "name", "ppid", "cmdline"]):
+            try:
+                if proc.info["name"] and "aria2c" in proc.info["name"].lower():
+                    try:
+                        cmdline = proc.cmdline()
+                        if ARIA2_CONF_FILE in cmdline:
+                            proc.terminate()
+                            proc.wait(timeout=2)
+                            killed += 1
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        pass
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
+        if killed:
+            logger.info(f"✓ 清理了 {killed} 个残留Aria2进程")
