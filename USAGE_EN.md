@@ -74,12 +74,18 @@ Click "Download All" to automatically download collection results via Aria2.
 
 ### Settings
 
-| Option | Default |
-|--------|---------|
-| Download Path | `./download` |
-| Max Retries | 3 |
-| Max Concurrency | 5 |
-| Aria2 Port | 6800 |
+| Option | Default | Description |
+|--------|---------|-------------|
+| Download Path | `./download` | Download file save directory |
+| Max Retries | 3 | Max download retry count (0-10) |
+| Max Concurrency | 5 | Concurrent download tasks (1-10) |
+| Aria2 Host | `localhost` | Aria2 RPC host address |
+| Aria2 Port | 6800 | Aria2 RPC service port |
+| Aria2 Secret | `douyin_crawler_default_secret` | Aria2 RPC secret |
+| Incremental Fetch | Enabled | Only collect new works (user homepage only) |
+| Download Title | Disabled | Save work title as text file |
+| Download Cover | Disabled | Download work cover image |
+| Download Interval | 0 | Download task interval in seconds (0-60), 0 = no interval |
 
 ---
 
@@ -142,11 +148,37 @@ curl http://localhost:8000/api/task/results/task_xxx
 ```
 
 Main endpoints:
+
+**Task Management**
 - `POST /api/task/start` - Start task
+- `POST /api/task/cancel` - Cancel task
 - `GET /api/task/status` - Task status
 - `GET /api/task/results/{task_id}` - Collection results
+
+**Settings Management**
 - `GET /api/settings` - Get settings
 - `POST /api/settings` - Save settings
+- `GET /api/settings/first-run` - Check if first run
+
+**Aria2 Management**
+- `GET /api/aria2/config` - Get Aria2 config
+- `GET /api/aria2/status` - Get Aria2 connection status
+- `POST /api/aria2/start` - Start Aria2 service
+- `GET /api/aria2/config-path` - Get config file path for completed tasks
+
+**File Operations**
+- `POST /api/file/open-folder` - Open folder
+- `POST /api/file/check-exists` - Check if file exists
+- `POST /api/file/read-config` - Read config file
+- `GET /api/file/find-local/{work_id}` - Find locally downloaded file
+- `GET /api/file/media/{file_path:path}` - Media file streaming
+
+**System Utilities**
+- `GET /api/system/clipboard` - Get clipboard content
+- `POST /api/system/open-url` - Open URL
+- `POST /api/system/cookie-login` - Login to get Cookie (GUI only)
+
+**Real-time Communication**
 - `GET /api/events` - SSE event stream
 
 ### Command Line Mode
@@ -166,12 +198,34 @@ python -m backend.cli -u urls.txt -l 50
 
 # Collection only, no download
 python -m backend.cli -u link --no-download
+
+# Download with title and cover
+python -m backend.cli -u link --download-title --download-cover
 ```
 
 Filter parameters:
 - `--sort-type`: 0=comprehensive, 1=most likes, 2=newest
 - `--publish-time`: 0=unlimited, 1=within a day, 7=within a week, 180=within half a year
 - `--filter-duration`: 0-1=under 1 min, 1-5=1-5 min, 5-10000=over 5 min
+
+Download options:
+- `--download-title`: Save work title as text file
+- `--download-cover`: Download work cover image
+
+> 💡 Tip: CLI options take priority over config file settings
+
+### Docker Deployment
+
+```bash
+# Using compose (Recommended)
+docker compose up -d
+
+# Or build and run manually
+docker build -t douyin-crawler .
+docker run -d -p 80:8000 -e DOUYIN_HOST=0.0.0.0 douyin-crawler
+```
+
+> 💡 Tip: Cookie can be provided via `DOUYIN_COOKIE` in `.env` file; specify backend URL at build time with `--build-arg VITE_API_BASE_URL=http://your-host`
 
 ---
 

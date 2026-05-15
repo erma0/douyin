@@ -39,6 +39,9 @@
 ### 🎯 Application Features
 - 🔄 **Incremental Collection**: Smart incremental collection of user homepage works
 - ⬇️ **Batch Download**: Integrated Aria2, supports video/image batch download
+- 📄 **Title Download**: Optionally download work title text files
+- 🖼️ **Cover Download**: Optionally download work cover images
+- ⏱️ **Download Interval**: Configurable download task interval to avoid rate limiting
 - 🎨 **Multiple Modes**: GUI desktop app / Web server / CLI command line
 - 🌐 **RESTful API**: v2.0 provides complete HTTP API
 - 🔧 **Cross-platform Support**: Windows / macOS / Linux

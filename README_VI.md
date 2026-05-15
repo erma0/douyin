@@ -39,6 +39,9 @@
 ### 🎯 Tính năng ứng dụng
 - 🔄 **Thu thập tăng dần**: Thu thập tăng dần thông minh các tác phẩm trang chủ người dùng
 - ⬇️ **Tải xuống hàng loạt**: Tích hợp Aria2, hỗ trợ tải xuống hàng loạt video/hình ảnh
+- 📄 **Tải tiêu đề**: Tùy chọn tải xuống tệp văn bản tiêu đề tác phẩm
+- 🖼️ **Tải bìa**: Tùy chọn tải xuống hình ảnh bìa tác phẩm
+- ⏱️ **Khoảng thời gian tải xuống**: Cấu hình khoảng thời gian giữa các tác vụ tải xuống để tránh giới hạn
 - 🎨 **Nhiều chế độ**: Ứng dụng GUI / Máy chủ Web / Dòng lệnh CLI
 - 🌐 **RESTful API**: v2.0 cung cấp HTTP API đầy đủ
 - 🔧 **Hỗ trợ đa nền tảng**: Windows / macOS / Linux

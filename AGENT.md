@@ -132,7 +132,10 @@ uv sync && cd frontend && pnpm install && pnpm build && cd .. && python -m backe
 ## 注意事项
 
 - Cookie 是采集必要条件，通过 `config/settings.json` 或 CLI `-c` 提供
-- 增量采集仅对 `post` 类型生效
+- 增量采集仅对 `post` 类型生效，需 `results_old` 非空且 `_has_received_data` 为真
 - 验证码异常 (`VerifyCheckError`) 终止任务，需人工处理
-- Aria2 需独立启动，默认端口 6800
+- Aria2 需独立启动，默认端口 6800，密钥 `douyin_crawler_default_secret`
+- 下载间隔 `downloadInterval`（0-60秒）可避免触发频率限制
+- SSE 事件循环引用在首次连接时缓存，确保跨线程消息发送可靠
+- 应用关闭时资源清理在后台线程执行，避免阻塞主线程
 - 环境变量前缀 `DOUYIN_`（端口、主机、日志级别等）

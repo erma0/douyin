@@ -77,12 +77,15 @@ Cookie 是获取数据的必要凭证。
 | 选项           | 默认值       | 说明                     |
 | -------------- | ------------ | ------------------------ |
 | 下载路径       | `./download` | 下载文件保存目录         |
-| 最大重试次数   | 3            | 下载失败最大重试次数     |
-| 最大并发数     | 5            | 同时下载的任务数量       |
+| 最大重试次数   | 3            | 下载失败最大重试次数（0-10） |
+| 最大并发数     | 5            | 同时下载的任务数量（1-10） |
+| Aria2 主机     | `localhost`  | Aria2 RPC 服务主机地址   |
 | Aria2 端口     | 6800         | Aria2 RPC 服务端口       |
+| Aria2 密钥     | `douyin_crawler_default_secret` | Aria2 RPC 密钥 |
 | 增量采集       | 开启         | 仅采集新作品（仅用户主页）|
 | 下载标题文本   | 关闭         | 同时保存作品标题为文本文件 |
 | 下载封面图     | 关闭         | 同时下载作品封面图片     |
+| 下载间隔       | 0            | 下载任务间隔秒数（0-60），0为不间隔 |
 
 ---
 
@@ -146,11 +149,36 @@ curl http://localhost:8000/api/task/results/task_xxx
 
 主要端点：
 
+**任务管理**
 - `POST /api/task/start` - 启动任务
+- `POST /api/task/cancel` - 取消任务
 - `GET /api/task/status` - 任务状态
 - `GET /api/task/results/{task_id}` - 采集结果
+
+**设置管理**
 - `GET /api/settings` - 获取设置
 - `POST /api/settings` - 保存设置
+- `GET /api/settings/first-run` - 检查是否首次运行
+
+**Aria2 管理**
+- `GET /api/aria2/config` - 获取 Aria2 配置
+- `GET /api/aria2/status` - 获取 Aria2 连接状态
+- `POST /api/aria2/start` - 启动 Aria2 服务
+- `GET /api/aria2/config-path` - 获取已完成任务的配置文件路径
+
+**文件操作**
+- `POST /api/file/open-folder` - 打开文件夹
+- `POST /api/file/check-exists` - 检查文件是否存在
+- `POST /api/file/read-config` - 读取配置文件
+- `GET /api/file/find-local/{work_id}` - 查找本地已下载文件
+- `GET /api/file/media/{file_path:path}` - 媒体文件流服务
+
+**系统工具**
+- `GET /api/system/clipboard` - 获取剪贴板内容
+- `POST /api/system/open-url` - 打开 URL
+- `POST /api/system/cookie-login` - 登录获取 Cookie（仅 GUI）
+
+**实时通信**
 - `GET /api/events` - SSE 事件流
 
 ### 命令行模式
@@ -187,6 +215,19 @@ python -m backend.cli -u 链接 --download-title --download-cover
 - `--download-cover`: 同时下载作品封面图片
 
 > 💡 提示：命令行选项优先级高于配置文件中的设置
+
+### Docker 部署
+
+```bash
+# 使用 compose 启动（推荐）
+docker compose up -d
+
+# 或手动构建运行
+docker build -t douyin-crawler .
+docker run -d -p 80:8000 -e DOUYIN_HOST=0.0.0.0 douyin-crawler
+```
+
+> 💡 提示：Cookie 可通过 `.env` 文件中的 `DOUYIN_COOKIE` 变量提供；构建时可通过 `--build-arg VITE_API_BASE_URL=http://your-host` 指定后端地址
 
 ---
 
