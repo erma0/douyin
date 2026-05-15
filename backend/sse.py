@@ -41,6 +41,7 @@ class SSEManager:
         self._clients: list[asyncio.Queue] = []
         self._sync_lock = threading.Lock()
         self._heartbeat_interval = heartbeat_interval
+        self._loop: asyncio.AbstractEventLoop | None = None
 
     async def connect(self) -> AsyncGenerator[str, None]:
         """
@@ -49,6 +50,9 @@ class SSEManager:
         Yields:
             SSE 格式的消息字符串
         """
+        if self._loop is None:
+            self._loop = asyncio.get_running_loop()
+
         queue: asyncio.Queue = asyncio.Queue()
 
         with self._sync_lock:
@@ -103,18 +107,21 @@ class SSEManager:
             clients_snapshot = list(self._clients)
             client_count = len(clients_snapshot)
 
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
+        loop = self._loop
+        if loop is None:
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                logger.warning(f"[SSE] 无事件循环，无法发送消息: {event_type}")
+                return
 
         sent_count = 0
         for queue in clients_snapshot:
             try:
-                if loop:
+                if loop.is_running():
                     loop.call_soon_threadsafe(queue.put_nowait, message)
                 else:
-                    logger.warning(f"[SSE] 无事件循环，无法发送消息: {event_type}")
+                    logger.warning(f"[SSE] 事件循环未运行，无法发送消息: {event_type}")
                     continue
                 sent_count += 1
             except asyncio.QueueFull:

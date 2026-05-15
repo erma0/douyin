@@ -129,14 +129,14 @@ def on_closing(window: webview.Window) -> bool:
     if result:
         logger.info("🔄 正在关闭应用...")
 
-        # 清理后端资源
-        try:
-            state.cleanup()
-        except Exception as e:
-            logger.warning(f"清理资源时出错: {e}")
+        def _cleanup():
+            try:
+                state.cleanup()
+            except Exception as e:
+                logger.warning(f"清理资源时出错: {e}")
 
-        # 等待资源释放
-        time.sleep(0.5)
+        threading.Thread(target=_cleanup, daemon=True).start()
+
         return True
 
     return False

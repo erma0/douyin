@@ -211,7 +211,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden transform transition-all scale-100"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+        <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
           <h3 className="text-lg font-bold text-gray-800">系统设置</h3>
           <button
             onClick={onClose}
@@ -221,7 +221,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="px-5 py-4 space-y-4">
           {/* Cookie Setting */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -335,7 +335,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 }
               }}
               placeholder="请输入 douyin.com 的 Cookie..."
-              className={`w-full h-32 px-4 py-3 border rounded-xl bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none ${errors.cookie ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-blue-500'
+              className={`w-full h-24 px-4 py-2.5 border rounded-xl bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none ${errors.cookie ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-blue-500'
                 }`}
             />
             {errors.cookie && (
@@ -526,7 +526,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </div>
         </div>
 
-        <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3">
+        <div className="px-5 py-3 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3">
           <button
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl text-gray-600 font-medium hover:bg-gray-200 transition-colors text-sm"

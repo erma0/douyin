@@ -175,7 +175,14 @@ export function useTaskManager() {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       logger.error(`取消任务失败: ${errorMsg}`);
-      toast.error(`取消失败: ${errorMsg}`);
+
+      if (errorMsg.includes('completed') || errorMsg.includes('已完成')) {
+        const { setIsLoading } = useAppStore.getState();
+        setIsLoading(false);
+        logger.info('任务已完成，恢复界面状态');
+      } else {
+        toast.error(`取消失败: ${errorMsg}`);
+      }
     }
   }, []);
 

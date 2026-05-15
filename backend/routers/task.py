@@ -314,7 +314,10 @@ def _execute_task(
                 logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
                 is_incremental = (
-                    detected_type == "post" and result_count == 0
+                    detected_type == "post"
+                    and result_count == 0
+                    and len(douyin.results_old) > 0
+                    and douyin._has_received_data
                 )
                 sse.broadcast_sync(
                     SSEEventType.TASK_STATUS,

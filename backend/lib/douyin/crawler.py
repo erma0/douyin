@@ -76,6 +76,7 @@ class Douyin:
         self.results_old = []
         self.results = []
         self.lock = Lock()
+        self._has_received_data = False
 
         # 初始化请求客户端
         self.request = Request(cookie, user_agent)
@@ -155,12 +156,13 @@ class Douyin:
     def get_aweme_detail(self):
         """获取单个作品详情"""
         try:
-            # 优先从render_data获取
             if self.render_data.get("aweme"):
                 aweme_detail = self.render_data["aweme"]["detail"]
+                self._has_received_data = True
             else:
-                # 通过API获取
                 aweme_detail = self.client.fetch_aweme_detail(self.id)
+                if aweme_detail:
+                    self._has_received_data = True
         except VerifyCheckError as e:
             logger.error(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
             logger.error(f"✗ 检测到验证码: {e}")
@@ -209,8 +211,8 @@ class Douyin:
                     )
                 )
 
-                # 重置重试计数
                 if items_list:
+                    self._has_received_data = True
                     retry = 0
 
             except VerifyCheckError as e:
