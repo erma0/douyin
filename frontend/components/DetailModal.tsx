@@ -15,6 +15,7 @@ import React, { useEffect, useState } from 'react';
 import { bridge } from '../services/bridge';
 import { logger } from '../services/logger';
 import { DouyinWork } from '../types';
+import { generateFilename } from '../utils/formatters';
 import { withErrorHandling } from '../utils/errorHandler';
 import { toast } from './Toast';
 
@@ -189,7 +190,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({
       const settings = await bridge.getSettings();
       const downloadPath = settings.downloadPath || '';
       const cookie = settings.cookie || '';
-      const baseFilename = `${work.id}_${work.desc || '无标题'}`;
+      const filenameFields = settings.filenameFields || ['id', 'title'];
+      const filenameSeparator = settings.filenameSeparator || '_';
+      const baseFilename = generateFilename(work, filenameFields, filenameSeparator);
 
       let successCount = 0;
 

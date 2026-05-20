@@ -20,13 +20,13 @@ export interface DouyinWork {
     nickname: string;
     avatar: string;
     uid: string;
-    unique_id?: string; // 抖音号
-    short_id?: string; // 短ID
+    unique_id?: string;
+    short_id?: string;
   };
   type: 'video' | 'image';
   cover: string;
-  videoUrl?: string; // For video type
-  images?: string[]; // For image type
+  videoUrl?: string;
+  images?: string[];
   music?: {
     id: string;
     title: string;
@@ -39,7 +39,8 @@ export interface DouyinWork {
     share_count: number;
   };
   create_time: string;
-  duration?: number; // 视频时长（毫秒）
+  create_timestamp: number;
+  duration?: number;
 }
 
 export interface DownloadProgress {
@@ -68,6 +69,8 @@ export interface AppSettings {
   enableDownloadTitle: boolean;
   enableDownloadCover: boolean;
   downloadInterval: number;
+  filenameFields: string[];
+  filenameSeparator: string;
 }
 
 export interface GlobalDownloadStat {

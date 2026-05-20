@@ -6,6 +6,7 @@ import { aria2Service } from '../services/aria2Service';
 import { bridge, isGUIMode } from '../services/bridge';
 import { logger } from '../services/logger';
 import { AppSettings } from '../types';
+import { FILENAME_FIELDS, generateFilenamePreview } from '../utils/formatters';
 import { toast } from './Toast';
 
 interface SettingsModalProps {
@@ -82,6 +83,82 @@ const NumberInput: React.FC<NumberInputProps> = ({ label, value, min, max, onCha
   );
 };
 
+interface FilenameFieldsEditorProps {
+  fields: string[];
+  separator: string;
+  onChange: (fields: string[]) => void;
+}
+
+const FilenameFieldsEditor: React.FC<FilenameFieldsEditorProps> = ({ fields, separator, onChange }) => {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === index) return;
+    const newFields = [...fields];
+    const [removed] = newFields.splice(dragIndex, 1);
+    newFields.splice(index, 0, removed);
+    onChange(newFields);
+    setDragIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+  };
+
+  const handleRemove = (index: number) => {
+    if (fields.length <= 1) return;
+    const newFields = fields.filter((_, i) => i !== index);
+    onChange(newFields);
+  };
+
+  const getFieldLabel = (key: string) => {
+    return FILENAME_FIELDS.find(f => f.key === key)?.label || key;
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 min-h-[36px] p-2.5 bg-white rounded-lg border border-gray-100">
+      {fields.length === 0 ? (
+        <span className="text-xs text-gray-400">请至少选择一个字段</span>
+      ) : (
+        fields.map((field, index) => (
+          <React.Fragment key={`${field}-${index}`}>
+            {index > 0 && (
+              <span className="text-xs text-gray-300 font-mono">{separator}</span>
+            )}
+            <span
+              draggable
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium cursor-grab active:cursor-grabbing transition-all ${
+                dragIndex === index
+                  ? 'bg-blue-100 text-blue-700 shadow-sm opacity-60'
+                  : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+              }`}
+            >
+              {getFieldLabel(field)}
+              {fields.length > 1 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleRemove(index); }}
+                  className="ml-0.5 hover:text-red-500 transition-colors"
+                  title="移除"
+                >
+                  <X size={10} />
+                </button>
+              )}
+            </span>
+          </React.Fragment>
+        ))
+      )}
+    </div>
+  );
+};
+
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [settings, setSettings] = useState<AppSettings>({
     cookie: APP_DEFAULTS.COOKIE,
@@ -96,6 +173,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     enableDownloadTitle: APP_DEFAULTS.ENABLE_DOWNLOAD_TITLE,
     enableDownloadCover: APP_DEFAULTS.ENABLE_DOWNLOAD_COVER,
     downloadInterval: APP_DEFAULTS.DOWNLOAD_INTERVAL,
+    filenameFields: APP_DEFAULTS.FILENAME_FIELDS as string[],
+    filenameSeparator: APP_DEFAULTS.FILENAME_SEPARATOR,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -110,7 +189,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const loadSettings = async () => {
     try {
       const data = await bridge.getSettings();
-      setSettings(data);
+      setSettings({
+        ...data,
+        filenameFields: data.filenameFields || ['id', 'title'],
+        filenameSeparator: data.filenameSeparator || '_',
+      });
     } catch (e) {
       console.error("Failed to load settings", e);
     }
@@ -208,7 +291,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden transform transition-all scale-100"
+        className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] shadow-2xl overflow-hidden transform transition-all scale-100 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
@@ -221,7 +304,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </button>
         </div>
 
-        <div className="px-5 py-4 space-y-4">
+        <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1">
           {/* Cookie Setting */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -523,6 +606,75 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </div>
             </label>
+          </div>
+
+          {/* 文件名自定义设置 */}
+          <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/50">
+            <div className="mb-3">
+              <div className="text-sm font-semibold text-gray-700 mb-1">文件名格式</div>
+              <p className="text-xs text-gray-400">
+                点击选择文件名中包含的字段，拖动调整顺序
+              </p>
+            </div>
+
+            {/* 已选字段预览条 */}
+            <FilenameFieldsEditor
+              fields={settings.filenameFields}
+              separator={settings.filenameSeparator}
+              onChange={(fields) => setSettings({ ...settings, filenameFields: fields })}
+            />
+
+            {/* 可选字段 chips */}
+            <div className="flex flex-wrap gap-2 mt-3">
+              {FILENAME_FIELDS.map((field) => {
+                const isSelected = settings.filenameFields.includes(field.key);
+                return (
+                  <button
+                    key={field.key}
+                    onClick={() => {
+                      const newFields = isSelected
+                        ? settings.filenameFields.filter(f => f !== field.key)
+                        : [...settings.filenameFields, field.key];
+                      if (newFields.length === 0) return;
+                      setSettings({ ...settings, filenameFields: newFields });
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      isSelected
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300 hover:text-blue-600'
+                    }`}
+                  >
+                    {field.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 分隔符设置 */}
+            <div className="mt-3 flex items-center gap-3">
+              <label className="text-xs text-gray-500 shrink-0">分隔符</label>
+              <input
+                type="text"
+                value={settings.filenameSeparator}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val && !/[<>:"/\\|?*]/.test(val)) {
+                    setSettings({ ...settings, filenameSeparator: val });
+                  }
+                }}
+                className="w-16 px-3 py-1.5 border border-gray-200 rounded-lg bg-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                maxLength={3}
+              />
+              <span className="text-xs text-gray-400">字段之间的连接符</span>
+            </div>
+
+            {/* 实时预览 */}
+            <div className="mt-3 p-2.5 bg-white rounded-lg border border-gray-100">
+              <div className="text-xs text-gray-400 mb-1">预览</div>
+              <div className="text-sm text-gray-700 font-mono truncate" title={generateFilenamePreview(settings.filenameFields, settings.filenameSeparator)}>
+                {generateFilenamePreview(settings.filenameFields, settings.filenameSeparator)}
+              </div>
+            </div>
           </div>
         </div>
 

@@ -23,8 +23,6 @@ router = APIRouter(prefix="/api/settings", tags=["设置管理"])
 
 
 class SettingsUpdate(BaseModel):
-    """设置更新请求模型（支持部分更新）"""
-
     cookie: Optional[str] = None
     userAgent: Optional[str] = None
     downloadPath: Optional[str] = None
@@ -39,11 +37,11 @@ class SettingsUpdate(BaseModel):
     enableDownloadTitle: Optional[bool] = None
     enableDownloadCover: Optional[bool] = None
     downloadInterval: Optional[float] = Field(None, ge=0, le=60)
+    filenameFields: Optional[list[str]] = None
+    filenameSeparator: Optional[str] = None
 
 
 class SettingsResponse(BaseModel):
-    """设置响应模型"""
-
     cookie: str = ""
     userAgent: str = ""
     downloadPath: str = ""
@@ -58,6 +56,8 @@ class SettingsResponse(BaseModel):
     enableDownloadTitle: bool = False
     enableDownloadCover: bool = False
     downloadInterval: float = DOWNLOAD_DEFAULTS["DOWNLOAD_INTERVAL"]
+    filenameFields: list[str] = ["id", "title"]
+    filenameSeparator: str = "_"
 
 
 class FirstRunResponse(BaseModel):

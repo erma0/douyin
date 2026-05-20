@@ -63,6 +63,8 @@ DEFAULT_SETTINGS = {
     "enableDownloadTitle": False,
     "enableDownloadCover": False,
     "downloadInterval": DOWNLOAD_DEFAULTS["DOWNLOAD_INTERVAL"],
+    "filenameFields": ["id", "title"],
+    "filenameSeparator": "_",
 }
 
 # 窗口最小尺寸

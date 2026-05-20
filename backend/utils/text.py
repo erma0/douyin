@@ -10,6 +10,76 @@ from loguru import logger
 
 from ..lib.exceptions import CrawlerError
 
+FILENAME_FIELDS_MAP = {
+    "id": "id",
+    "title": "desc",
+    "author": "author_nickname",
+    "date": "_date",
+    "type": "_type",
+    "duration": "_duration",
+    "music": "music_title",
+    "no": "no",
+}
+
+
+def generate_filename(
+    item: dict,
+    fields: list[str] | None = None,
+    separator: str = "_",
+) -> str:
+    if not fields:
+        fields = ["id", "title"]
+
+    parts = []
+    for field in fields:
+        value = _resolve_field(item, field)
+        if value:
+            parts.append(str(value))
+
+    if not parts:
+        return str(item.get("id", "unknown"))
+
+    filename = separator.join(parts)
+    return sanitize_filename(filename, max_bytes=200)
+
+
+def _resolve_field(item: dict, field: str) -> str:
+    if field not in FILENAME_FIELDS_MAP:
+        return ""
+
+    mapped = FILENAME_FIELDS_MAP[field]
+
+    if mapped.startswith("_"):
+        if mapped == "_date":
+            ts = item.get("time")
+            if ts:
+                try:
+                    return time.strftime("%Y-%m-%d", time.localtime(ts))
+                except Exception:
+                    return ""
+            return ""
+        elif mapped == "_type":
+            aweme_type = item.get("type", 4)
+            if aweme_type == 68:
+                return "图文"
+            return "视频"
+        elif mapped == "_duration":
+            duration = item.get("duration")
+            if duration:
+                try:
+                    seconds = int(duration) // 1000
+                    m = seconds // 60
+                    s = seconds % 60
+                    return f"{m:02d}-{s:02d}"
+                except Exception:
+                    return ""
+            return ""
+
+    value = item.get(mapped, "")
+    if value is None:
+        return ""
+    return str(value)
+
 
 def gen_random_str(length: int = 16, lower: bool = False) -> str:
     """生成随机字符串"""

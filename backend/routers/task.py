@@ -276,6 +276,8 @@ def _execute_task(
             enable_download_title=settings.get("enableDownloadTitle", False),
             enable_download_cover=settings.get("enableDownloadCover", False),
             cancel_event=cancel_event,
+            filename_fields=settings.get("filenameFields", ["id", "title"]),
+            filename_separator=settings.get("filenameSeparator", "_"),
         ) as douyin:
 
             logger.info("🚀 正在采集数据...")
@@ -397,6 +399,7 @@ def _convert_douyin_results(
                 "create_time": time.strftime(
                     "%Y-%m-%d", time.localtime(item.get("time", time.time()))
                 ),
+                "create_timestamp": item.get("time", 0),
             }
 
             # 添加视频时长

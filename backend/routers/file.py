@@ -198,12 +198,14 @@ def find_local_file(work_id: str) -> Dict[str, Any]:
         download_dir = os.path.abspath(settings.get("downloadPath", DOWNLOAD_DIR))
 
         # 查找视频文件
-        # 1. 直接在下载目录: {work_id}_*.mp4
+        # 1. 直接在下载目录: {work_id}_*.mp4 (默认命名格式)
         # 2. 在子目录中: aweme_{work_id}/{work_id}_*.mp4 或 {work_id}_*/{work_id}_*.mp4
+        # 3. 自定义命名格式: *{work_id}*.mp4 (文件名中包含work_id)
         video_patterns = [
             os.path.join(download_dir, f"{work_id}_*.mp4"),
             os.path.join(download_dir, f"aweme_{work_id}", f"{work_id}_*.mp4"),
             os.path.join(download_dir, f"{work_id}_*", f"{work_id}_*.mp4"),
+            os.path.join(download_dir, f"*{work_id}*.mp4"),
         ]
 
         for pattern in video_patterns:
@@ -214,6 +216,7 @@ def find_local_file(work_id: str) -> Dict[str, Any]:
 
         # 查找图集文件
         # 1. 在子目录中: aweme_{work_id}/*.jpg 或 {work_id}_*/*.jpg
+        # 2. 自定义命名格式: *{work_id}*/*.jpg (目录名中包含work_id)
         image_dir_patterns = [
             os.path.join(download_dir, f"aweme_{work_id}"),
             os.path.join(download_dir, f"{work_id}_*"),
@@ -233,6 +236,23 @@ def find_local_file(work_id: str) -> Dict[str, Any]:
                             os.path.relpath(img, download_dir) for img in images
                         ]
                         return {"found": True, "video_path": None, "images": rel_paths}
+
+        # 自定义命名格式的图集目录
+        custom_image_dirs = glob.glob(os.path.join(download_dir, f"*{work_id}*"))
+        for dir_path in custom_image_dirs:
+            if os.path.isdir(dir_path) and dir_path not in [
+                d for p in image_dir_patterns for d in glob.glob(p)
+            ]:
+                images = []
+                for ext in [".jpg", ".jpeg", ".png", ".webp"]:
+                    images.extend(glob.glob(os.path.join(dir_path, f"*{ext}")))
+
+                if images:
+                    images.sort()
+                    rel_paths = [
+                        os.path.relpath(img, download_dir) for img in images
+                    ]
+                    return {"found": True, "video_path": None, "images": rel_paths}
 
         return {"found": False, "video_path": None, "images": None}
 

@@ -39,6 +39,8 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ isOpen, onClose, o
     enableDownloadTitle: APP_DEFAULTS.ENABLE_DOWNLOAD_TITLE,
     enableDownloadCover: APP_DEFAULTS.ENABLE_DOWNLOAD_COVER,
     downloadInterval: APP_DEFAULTS.DOWNLOAD_INTERVAL,
+    filenameFields: APP_DEFAULTS.FILENAME_FIELDS as string[],
+    filenameSeparator: APP_DEFAULTS.FILENAME_SEPARATOR,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);

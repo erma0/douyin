@@ -37,6 +37,8 @@ export const APP_DEFAULTS = {
   ENABLE_DOWNLOAD_TITLE: false,
   ENABLE_DOWNLOAD_COVER: false,
   DOWNLOAD_INTERVAL: DOWNLOAD_DEFAULTS.DOWNLOAD_INTERVAL,
+  FILENAME_FIELDS: ['id', 'title'] as string[],
+  FILENAME_SEPARATOR: '_',
 } as const;
 
 /**

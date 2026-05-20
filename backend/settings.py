@@ -53,6 +53,14 @@ class SettingsManager:
             lambda x: isinstance(x, (int, float)) and 0 <= x <= 60,
             "必须是0-60的数字（秒）",
         ),
+        "filenameFields": (
+            lambda x: isinstance(x, list) and all(isinstance(i, str) for i in x),
+            "必须是字符串列表",
+        ),
+        "filenameSeparator": (
+            lambda x: isinstance(x, str) and len(x) > 0,
+            "必须是非空字符串",
+        ),
     }
 
     def __init__(self, auto_load: bool = True) -> None:

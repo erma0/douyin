@@ -16,7 +16,7 @@ from threading import Lock
 import ujson as json
 from loguru import logger
 
-from ...utils.text import abort, save_json
+from ...utils.text import abort, generate_filename, save_json
 from ..exceptions import VerifyCheckError
 from .client import DouyinClient
 from .parser import DataParser
@@ -41,6 +41,8 @@ class Douyin:
         enable_download_title: bool = False,
         enable_download_cover: bool = False,
         cancel_event: threading.Event | None = None,
+        filename_fields: list[str] | None = None,
+        filename_separator: str = "_",
     ):
         """
         初始化爬虫
@@ -56,15 +58,20 @@ class Douyin:
             on_new_items: 新数据回调函数，接收(new_items, type)参数
             enable_download_title: 是否下载标题文本文件
             enable_download_cover: 是否下载封面图
+            cancel_event: 取消信号
+            filename_fields: 文件名字段列表
+            filename_separator: 文件名字段分隔符
         """
         self.target = target
         self.limit = limit
         self.type = type
         self.filters = filters or {}
-        self.on_new_items = on_new_items  # 新增回调函数
-        self.enable_download_title = enable_download_title  # 新增：是否下载标题
-        self.enable_download_cover = enable_download_cover  # 新增：是否下载封面
-        self.cancel_event = cancel_event  # 取消信号
+        self.on_new_items = on_new_items
+        self.enable_download_title = enable_download_title
+        self.enable_download_cover = enable_download_cover
+        self.cancel_event = cancel_event
+        self.filename_fields = filename_fields or ["id", "title"]
+        self.filename_separator = filename_separator
 
         # 初始化下载路径
         self.down_path = os.path.join(".", down_path)
@@ -310,10 +317,14 @@ class Douyin:
         else:
             for line in self.results:
                 desc = line.get("desc") or "无标题"
-                filename = f'{line["id"]}_{desc}'
+                filename = generate_filename(
+                    line, self.filename_fields, self.filename_separator
+                )
 
                 if self.type == "mix":
-                    filename = f"第{line['no']}集_{filename}"
+                    no_val = line.get("no")
+                    if no_val:
+                        filename = f"第{no_val}集{self.filename_separator}{filename}"
 
                 # 确定当前作品的下载目录
                 item_down_path = self.down_path
@@ -321,7 +332,8 @@ class Douyin:
                 # 图文作品使用子目录
                 if isinstance(line["download_addr"], list):
                     if self.type == "aweme":
-                        item_down_path = self.down_path.replace(line["id"], filename)
+                        parent = os.path.dirname(self.down_path)
+                        item_down_path = os.path.join(parent, filename)
                     else:
                         item_down_path = os.path.join(self.down_path, filename)
 
