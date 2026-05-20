@@ -33,6 +33,7 @@ export interface TaskStatusEvent {
   detected_type?: string;
   total?: number;
   is_incremental?: boolean;
+  error?: string;
 }
 
 /** 任务错误事件数据 */

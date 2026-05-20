@@ -155,6 +155,9 @@ def cancel_task(request: CancelTaskRequest) -> dict[str, Any]:
     if task_info["status"] == "cancelling":
         return {"task_id": task_id, "status": "cancelling"}
 
+    if task_info["status"] in ("completed", "cancelled", "error", "failed"):
+        return {"task_id": task_id, "status": task_info["status"]}
+
     if task_info["status"] not in ("running",):
         raise HTTPException(status_code=400, detail=f"任务当前状态为 {task_info['status']}，无法取消")
 
