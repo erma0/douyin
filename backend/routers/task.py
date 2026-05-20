@@ -20,6 +20,7 @@ from ..lib.exceptions import CookieExpiredError, VerifyCheckError
 from ..settings import settings
 from ..sse import SSEEventType, sse
 from ..state import state
+from ..utils.text import load_json
 
 router = APIRouter(prefix="/api/task", tags=["任务管理"])
 
@@ -199,6 +200,30 @@ def get_task_results(task_id: str) -> list[dict[str, Any]]:
     return state.get_task_results(task_id)
 
 
+@router.get("/history")
+def get_task_history(rel_path: str) -> list[dict[str, Any]]:
+    """
+    获取增量采集的历史数据
+
+    - rel_path: 相对于下载目录的子路径（不含.json后缀）
+    """
+
+    download_dir = os.path.abspath(settings.get("downloadPath", DOWNLOAD_DIR))
+    abs_path = os.path.abspath(os.path.join(download_dir, rel_path))
+
+    if not abs_path.startswith(download_dir + os.sep) and abs_path != download_dir:
+        raise HTTPException(status_code=400, detail="路径不安全")
+
+    if ".." in rel_path:
+        raise HTTPException(status_code=400, detail="路径不安全")
+
+    data = load_json(abs_path)
+    if data is None:
+        return []
+
+    return _convert_douyin_results(data, "post")
+
+
 # ============================================================================
 # 内部函数
 # ============================================================================
@@ -320,10 +345,15 @@ def _execute_task(
 
                 is_incremental = (
                     detected_type == "post"
-                    and result_count == 0
                     and len(douyin.results_old) > 0
                     and douyin._has_received_data
                 )
+                rel_down_path = None
+                if is_incremental:
+                    download_dir = os.path.abspath(settings.get("downloadPath", DOWNLOAD_DIR))
+                    abs_down_path = os.path.abspath(douyin.down_path)
+                    if abs_down_path.startswith(download_dir):
+                        rel_down_path = os.path.relpath(abs_down_path, download_dir)
                 sse.broadcast_sync(
                     SSEEventType.TASK_STATUS,
                     {
@@ -332,6 +362,7 @@ def _execute_task(
                         "detected_type": detected_type,
                         "total": result_count,
                         "is_incremental": is_incremental,
+                        "rel_down_path": rel_down_path,
                     },
                 )
 

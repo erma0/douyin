@@ -141,7 +141,7 @@ export function useTaskManager() {
       }
     });
 
-    const unsubStatus = sseClient.onTaskStatus((event: TaskStatusEvent) => {
+    const unsubStatus = sseClient.onTaskStatus(async (event: TaskStatusEvent) => {
       if (!taskId || event.task_id !== taskId) return;
 
       if (event.status === 'error') {
@@ -181,17 +181,29 @@ export function useTaskManager() {
             logger.info('采集已取消');
             toast.info('采集已取消');
           }
+        } else if (event.is_incremental && event.rel_down_path) {
+          try {
+            const historyData = await bridge.getHistoryData(event.rel_down_path);
+            const { setResults } = useAppStore.getState();
+            setResults(historyData);
+            const newCount = event.total || 0;
+            if (newCount > 0) {
+              logger.success(`增量采集完成，新增 ${newCount} 条作品，共 ${historyData.length} 条`);
+              toast.success(`增量采集完成，新增 ${newCount} 条作品，共 ${historyData.length} 条`);
+            } else {
+              logger.info('✓ 增量采集完成，暂无新作品');
+              toast.info('增量采集完成，暂无新作品（已是最新状态）');
+            }
+          } catch {
+            logger.info('增量采集完成，加载历史数据失败');
+            toast.info('增量采集完成');
+          }
         } else if (event.total && event.total > 0) {
           logger.success(`采集成功，共获取到 ${event.total} 条数据`);
           toast.success(`采集成功，共获取到 ${event.total} 条数据`);
         } else {
-          if (event.is_incremental) {
-            logger.info('✓ 增量采集完成，暂无新作品');
-            toast.info('增量采集完成，暂无新作品（已是最新状态）');
-          } else {
-            logger.info('采集完成，但未获取到数据');
-            toast.info('采集完成，但未获取到数据，请检查链接是否正确或cookie是否有效');
-          }
+          logger.info('采集完成，但未获取到数据');
+          toast.info('采集完成，但未获取到数据，请检查链接是否正确或cookie是否有效');
         }
 
         cleanupSubscriptions();

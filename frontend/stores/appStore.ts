@@ -65,9 +65,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   setMaxCount: (count) => set({ maxCount: count }),
   setIsLoading: (loading) => set({ isLoading: loading }),
   setResults: (results) =>
-    set((state) => ({
-      results: typeof results === 'function' ? results(state.results) : results,
-    })),
+    set((state) => {
+      const newResults = typeof results === 'function' ? results(state.results) : results;
+      const ids = new Set<string>();
+      newResults.forEach((item) => ids.add(item.id));
+      return { results: newResults, _resultIds: ids } as any;
+    }),
   setSelectedWorkId: (id) => set({ selectedWorkId: id }),
   setResultsTaskType: (type) => set({ resultsTaskType: type }),
   setSavedInputVal: (val) => set({ savedInputVal: val }),

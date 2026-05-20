@@ -195,7 +195,7 @@ def save_json(filename: str, data: dict) -> None:
     保存字典为JSON文件
 
     Args:
-        filename: 文件名（包含路径）
+        filename: 文件名（包含路径，不含.json后缀）
         data: 要保存的字典数据
     """
     path = os.path.dirname(filename)
@@ -208,3 +208,26 @@ def save_json(filename: str, data: dict) -> None:
     except Exception as e:
         logger.error(f"保存JSON文件 {filename} 时出错: {e}")
         raise
+
+
+def load_json(filename: str) -> list[dict] | None:
+    """
+    从JSON文件加载数据
+
+    Args:
+        filename: 文件名（包含路径，不含.json后缀）
+
+    Returns:
+        解析后的数据列表，文件不存在时返回None
+    """
+    json_path = f"{filename}.json"
+    if not os.path.exists(json_path):
+        return None
+
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else None
+    except Exception as e:
+        logger.error(f"加载JSON文件 {json_path} 时出错: {e}")
+        return None

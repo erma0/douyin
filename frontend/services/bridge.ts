@@ -42,6 +42,7 @@ export interface Bridge {
   subscribeToLogs: (callback: (log: any) => void) => Promise<() => void>;
   getTaskStatus: (taskId?: string) => Promise<any[]>;
   getTaskResults: (taskId: string) => Promise<any[]>;
+  getHistoryData: (relPath: string) => Promise<any[]>;
   cancelTask: (taskId: string) => Promise<{ task_id: string; status: string }>;
   getAria2Config: () => Promise<{ host: string; port: number; secret: string }>;
   isFirstRun: () => Promise<boolean>;
@@ -136,6 +137,15 @@ export const bridge: Bridge = {
     } catch (error) {
       handleError(error, { taskId }, { customMessage: 'get task results failed' });
       throw error;
+    }
+  },
+
+  getHistoryData: async (relPath) => {
+    try {
+      return await api.task.history(relPath);
+    } catch (error) {
+      handleError(error, { relPath }, { customMessage: 'get history data failed', showToast: false });
+      return [];
     }
   },
 

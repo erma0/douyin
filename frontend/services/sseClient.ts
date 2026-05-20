@@ -33,6 +33,7 @@ export interface TaskStatusEvent {
   detected_type?: string;
   total?: number;
   is_incremental?: boolean;
+  rel_down_path?: string;
   error?: string;
 }
 

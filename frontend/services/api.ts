@@ -201,6 +201,10 @@ export const api = {
     results: (taskId: string) => 
       get<DouyinWork[]>(`/api/task/results/${encodeURIComponent(taskId)}`),
     
+    /** 获取增量采集的历史数据 */
+    history: (relPath: string) =>
+      get<DouyinWork[]>(`/api/task/history?rel_path=${encodeURIComponent(relPath)}`),
+    
     /** 取消采集任务 */
     cancel: (taskId: string) =>
       post<TaskResponse>('/api/task/cancel', { task_id: taskId }),
