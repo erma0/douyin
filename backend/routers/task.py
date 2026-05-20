@@ -16,7 +16,7 @@ from pydantic import BaseModel
 
 from ..constants import DOWNLOAD_DIR
 from ..lib.cookies import CookieManager
-from ..lib.exceptions import VerifyCheckError
+from ..lib.exceptions import CookieExpiredError, VerifyCheckError
 from ..settings import settings
 from ..sse import SSEEventType, sse
 from ..state import state
@@ -335,6 +335,21 @@ def _execute_task(
                     },
                 )
 
+    except CookieExpiredError as e:
+        state.set_task_status(task_id, status="error", error="Cookie已失效，请在设置中更新Cookie", updated_at=time.time())
+
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        logger.error(f"✗ Cookie已失效: {e}")
+        logger.error(f"  请在设置中更新Cookie后再继续")
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+        sse.broadcast_sync(
+            SSEEventType.TASK_ERROR,
+            {
+                "task_id": task_id,
+                "error": "Cookie已失效，请在设置中更新Cookie",
+            },
+        )
     except VerifyCheckError as e:
         state.set_task_status(task_id, status="error", error="触发验证码，请完成验证后再继续", updated_at=time.time())
 

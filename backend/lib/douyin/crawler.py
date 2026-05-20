@@ -17,7 +17,7 @@ import ujson as json
 from loguru import logger
 
 from ...utils.text import abort, generate_filename, save_json
-from ..exceptions import VerifyCheckError
+from ..exceptions import CookieExpiredError, VerifyCheckError
 from .client import DouyinClient
 from .parser import DataParser
 from .request import Request
@@ -170,6 +170,12 @@ class Douyin:
                 aweme_detail = self.client.fetch_aweme_detail(self.id)
                 if aweme_detail:
                     self._has_received_data = True
+        except CookieExpiredError as e:
+            logger.error(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            logger.error(f"✗ Cookie已失效: {e}")
+            logger.error(f"  请在设置中更新Cookie后再继续")
+            logger.error(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            raise
         except VerifyCheckError as e:
             logger.error(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
             logger.error(f"✗ 检测到验证码: {e}")
@@ -222,6 +228,14 @@ class Douyin:
                     self._has_received_data = True
                     retry = 0
 
+            except CookieExpiredError as e:
+                logger.error(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                logger.error(f"✗ Cookie已失效: {e}")
+                logger.error(f"  请在设置中更新Cookie后再继续")
+                logger.error(f"  当前已采集: {len(self.results)} 条数据")
+                logger.error(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                self.has_more = False
+                raise
             except VerifyCheckError as e:
                 # 验证码异常，直接停止任务，不重试
                 logger.error(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")

@@ -17,7 +17,7 @@ import niquests as requests
 from loguru import logger
 
 from ..cookies import CookieManager
-from ..exceptions import VerifyCheckError
+from ..exceptions import CookieExpiredError, VerifyCheckError
 from .types import (
     APIEndpoint,
     CookieField,
@@ -230,12 +230,17 @@ class Request(object):
                 timeout=(10, 30),
             )
 
-        # 检查响应状态
-        if response.status_code != 200 or response.text == "":
+        if response.status_code != 200:
             logger.error(
                 f"JSON请求失败：url: {url},  params: {params}, code: {response.status_code}, body: {response.text}"
             )
             return {}
+
+        if response.text == "":
+            logger.error(
+                f"响应体为空（Cookie可能已失效）：url: {url},  params: {params}, code: {response.status_code}"
+            )
+            raise CookieExpiredError("Cookie可能已失效，响应体为空，请在设置中更新Cookie")
 
         try:
             json_data = response.json()

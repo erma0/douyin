@@ -12,3 +12,7 @@ class AuthError(CrawlerError):
 
 class VerifyCheckError(AuthError):
     pass
+
+
+class CookieExpiredError(AuthError):
+    pass
